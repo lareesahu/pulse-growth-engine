@@ -1,28 +1,587 @@
+import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { invokeLLM } from "./_core/llm";
+import {
+  upsertUser, getUserByOpenId,
+  getBrandsByUserId, getBrandById, createBrand, updateBrand,
+  getBrandRules, createBrandRule, deleteBrandRule,
+  getContentPillars, createContentPillar, updateContentPillar, deleteContentPillar,
+  getAudienceProfiles, createAudienceProfile, updateAudienceProfile, deleteAudienceProfile,
+  getPromptTemplates, createPromptTemplate, updatePromptTemplate, deletePromptTemplate,
+  getPlatformPreferences, upsertPlatformPreference,
+  getCampaigns, createCampaign, updateCampaign,
+  getIdeas, getIdeaById, createIdea, updateIdea, getIdeaStats,
+  getContentPackageByIdeaId, getContentPackageById, getContentPackagesByBrand, createContentPackage, updateContentPackage,
+  getVariantsByPackageId, getVariantById, createVariant, updateVariant,
+  getAssetsByPackageId, createAsset, updateAsset,
+  getIntegrations, upsertIntegration,
+  getPublishJobs, createPublishJob, updatePublishJob, getPublishStats,
+  logAudit, getAuditLog, getAnalyticsSummary,
+} from "./db";
 
+// ─── Brand Router ─────────────────────────────────────────────────────────────
+const brandRouter = router({
+  list: protectedProcedure.query(async ({ ctx }) => getBrandsByUserId(ctx.user.id)),
+
+  get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => getBrandById(input.id)),
+
+  create: protectedProcedure.input(z.object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+    mission: z.string().optional(),
+    positioning: z.string().optional(),
+    website: z.string().optional(),
+    activePlatforms: z.array(z.string()).optional(),
+  })).mutation(async ({ ctx, input }) => {
+    await createBrand({ ...input, userId: ctx.user.id });
+    await logAudit({ brandId: undefined, actorUserId: ctx.user.id, entityType: "brand", action: "created", description: `Brand "${input.name}" created` });
+    return { success: true };
+  }),
+
+  update: protectedProcedure.input(z.object({
+    id: z.number(),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    mission: z.string().optional(),
+    positioning: z.string().optional(),
+    audienceSummary: z.string().optional(),
+    toneSummary: z.string().optional(),
+    website: z.string().optional(),
+    colorPalette: z.any().optional(),
+    activePlatforms: z.array(z.string()).optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const { id, ...data } = input;
+    await updateBrand(id, data);
+    await logAudit({ brandId: id, actorUserId: ctx.user.id, entityType: "brand", action: "updated", description: "Brand profile updated" });
+    return { success: true };
+  }),
+
+  // Brand Rules
+  getRules: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => getBrandRules(input.brandId)),
+
+  addRule: protectedProcedure.input(z.object({
+    brandId: z.number(),
+    ruleType: z.enum(["do_say", "dont_say", "banned_claim", "required_phrase", "cta_style", "platform_rule", "visual_rule", "prompt_guardrail"]),
+    scope: z.enum(["global", "platform_specific"]).optional(),
+    platform: z.string().optional(),
+    content: z.string(),
+    priority: z.number().optional(),
+  })).mutation(async ({ input }) => { await createBrandRule(input); return { success: true }; }),
+
+  deleteRule: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => { await deleteBrandRule(input.id); return { success: true }; }),
+
+  // Content Pillars
+  getPillars: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => getContentPillars(input.brandId)),
+
+  addPillar: protectedProcedure.input(z.object({
+    brandId: z.number(),
+    name: z.string(),
+    description: z.string().optional(),
+    priority: z.number().optional(),
+  })).mutation(async ({ input }) => { await createContentPillar(input); return { success: true }; }),
+
+  updatePillar: protectedProcedure.input(z.object({ id: z.number(), name: z.string().optional(), description: z.string().optional() }))
+    .mutation(async ({ input }) => { const { id, ...data } = input; await updateContentPillar(id, data); return { success: true }; }),
+
+  deletePillar: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => { await deleteContentPillar(input.id); return { success: true }; }),
+
+  // Audience Profiles
+  getAudiences: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => getAudienceProfiles(input.brandId)),
+
+  addAudience: protectedProcedure.input(z.object({
+    brandId: z.number(),
+    segment: z.string(),
+    description: z.string().optional(),
+    painPoints: z.string().optional(),
+    goals: z.string().optional(),
+    isPrimary: z.boolean().optional(),
+  })).mutation(async ({ input }) => { await createAudienceProfile(input); return { success: true }; }),
+
+  updateAudience: protectedProcedure.input(z.object({ id: z.number(), segment: z.string().optional(), description: z.string().optional(), painPoints: z.string().optional(), goals: z.string().optional() }))
+    .mutation(async ({ input }) => { const { id, ...data } = input; await updateAudienceProfile(id, data); return { success: true }; }),
+
+  deleteAudience: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => { await deleteAudienceProfile(input.id); return { success: true }; }),
+
+  // Prompt Templates
+  getPrompts: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => getPromptTemplates(input.brandId)),
+
+  addPrompt: protectedProcedure.input(z.object({
+    brandId: z.number(),
+    name: z.string(),
+    platform: z.string(),
+    pillar: z.string().optional(),
+    promptText: z.string(),
+  })).mutation(async ({ input }) => { await createPromptTemplate(input); return { success: true }; }),
+
+  updatePrompt: protectedProcedure.input(z.object({ id: z.number(), name: z.string().optional(), promptText: z.string().optional(), isActive: z.boolean().optional() }))
+    .mutation(async ({ input }) => { const { id, ...data } = input; await updatePromptTemplate(id, data); return { success: true }; }),
+
+  deletePrompt: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => { await deletePromptTemplate(input.id); return { success: true }; }),
+
+  // Platform Preferences
+  getPlatformPrefs: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => getPlatformPreferences(input.brandId)),
+
+  savePlatformPref: protectedProcedure.input(z.object({
+    brandId: z.number(),
+    platform: z.string(),
+    postFormat: z.string().optional(),
+    hashtagStrategy: z.string().optional(),
+    frequency: z.string().optional(),
+    toneNotes: z.string().optional(),
+  })).mutation(async ({ input }) => {
+    const { brandId, platform, ...data } = input;
+    await upsertPlatformPreference(brandId, platform, data);
+    return { success: true };
+  }),
+});
+
+// ─── Campaigns Router ─────────────────────────────────────────────────────────
+const campaignRouter = router({
+  list: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => getCampaigns(input.brandId)),
+
+  create: protectedProcedure.input(z.object({
+    brandId: z.number(),
+    title: z.string(),
+    objective: z.string().optional(),
+    targetPlatforms: z.array(z.string()).optional(),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+  })).mutation(async ({ input }) => {
+    await createCampaign({
+      ...input,
+      startDate: input.startDate ? new Date(input.startDate) : undefined,
+      endDate: input.endDate ? new Date(input.endDate) : undefined,
+    });
+    return { success: true };
+  }),
+
+  update: protectedProcedure.input(z.object({
+    id: z.number(),
+    title: z.string().optional(),
+    objective: z.string().optional(),
+    status: z.enum(["draft", "active", "completed", "archived"]).optional(),
+  })).mutation(async ({ input }) => { const { id, ...data } = input; await updateCampaign(id, data); return { success: true }; }),
+});
+
+// ─── Ideas Router ─────────────────────────────────────────────────────────────
+const ideaRouter = router({
+  list: protectedProcedure.input(z.object({
+    brandId: z.number(),
+    status: z.enum(["proposed", "in_review", "approved", "rejected", "archived"]).optional(),
+  })).query(async ({ input }) => getIdeas(input.brandId, input.status)),
+
+  get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => getIdeaById(input.id)),
+
+  stats: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => getIdeaStats(input.brandId)),
+
+  create: protectedProcedure.input(z.object({
+    brandId: z.number(),
+    title: z.string(),
+    angle: z.string().optional(),
+    summary: z.string().optional(),
+    pillarId: z.number().optional(),
+    campaignId: z.number().optional(),
+    funnelStage: z.enum(["awareness", "consideration", "conversion", "retention"]).optional(),
+    targetPlatforms: z.array(z.string()).optional(),
+  })).mutation(async ({ ctx, input }) => {
+    await createIdea({ ...input, createdByUserId: ctx.user.id, status: "proposed", sourceType: "manual" });
+    await logAudit({ brandId: input.brandId, actorUserId: ctx.user.id, entityType: "idea", action: "created", description: `Idea created: "${input.title}"` });
+    return { success: true };
+  }),
+
+  update: protectedProcedure.input(z.object({
+    id: z.number(),
+    title: z.string().optional(),
+    angle: z.string().optional(),
+    summary: z.string().optional(),
+    pillarId: z.number().optional(),
+    funnelStage: z.enum(["awareness", "consideration", "conversion", "retention"]).optional(),
+    targetPlatforms: z.array(z.string()).optional(),
+  })).mutation(async ({ input }) => { const { id, ...data } = input; await updateIdea(id, data); return { success: true }; }),
+
+  updateStatus: protectedProcedure.input(z.object({
+    id: z.number(),
+    status: z.enum(["proposed", "in_review", "approved", "rejected", "archived"]),
+  })).mutation(async ({ ctx, input }) => {
+    const idea = await getIdeaById(input.id);
+    if (!idea) throw new Error("Idea not found");
+    const updateData: any = { status: input.status };
+    if (input.status === "approved") { updateData.approvedByUserId = ctx.user.id; updateData.approvedAt = new Date(); }
+    await updateIdea(input.id, updateData);
+    await logAudit({ brandId: idea.brandId, actorUserId: ctx.user.id, entityType: "idea", entityId: input.id, action: input.status, description: `Idea "${idea.title}" → ${input.status}` });
+    return { success: true };
+  }),
+
+  generateBatch: protectedProcedure.input(z.object({
+    brandId: z.number(),
+    count: z.number().min(1).max(30).default(10),
+    campaignId: z.number().optional(),
+    targetPlatforms: z.array(z.string()).optional(),
+    funnelFocus: z.enum(["awareness", "consideration", "conversion", "retention"]).optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const [brand, pillars] = await Promise.all([getBrandById(input.brandId), getContentPillars(input.brandId)]);
+    if (!brand) throw new Error("Brand not found");
+
+    const pillarNames = pillars.length > 0 ? pillars.map(p => p.name).join(", ") : "Brand Strategy, Thought Leadership, Case Studies, Industry Insights, Behind the Scenes";
+
+    const response = await invokeLLM({
+      messages: [
+        { role: "system", content: `You are Caelum Liu, Chief Growth Officer for ${brand.name}. Generate unique, strategic content ideas. Return ONLY valid JSON.` },
+        { role: "user", content: `Generate ${input.count} unique content ideas for ${brand.name}.
+Brand mission: ${brand.mission || ""}
+Brand positioning: ${brand.positioning || ""}
+Content pillars: ${pillarNames}
+Target platforms: ${(input.targetPlatforms || brand.activePlatforms || ["linkedin", "instagram"]).join(", ")}
+Funnel focus: ${input.funnelFocus || "awareness"}
+
+Return ONLY valid JSON: { "ideas": [{ "title": "...", "angle": "...", "summary": "...", "pillarName": "...", "funnelStage": "awareness|consideration|conversion|retention" }] }` },
+      ],
+      response_format: { type: "json_object" } as any,
+    });
+
+    let generatedIdeas: any[] = [];
+    try {
+      const raw = (response.choices?.[0]?.message?.content as string) || "{}";
+      generatedIdeas = JSON.parse(raw).ideas || [];
+    } catch { generatedIdeas = []; }
+
+    let created = 0;
+    for (const idea of generatedIdeas.slice(0, input.count)) {
+      const matchedPillar = pillars.find(p => p.name.toLowerCase().includes((idea.pillarName || "").toLowerCase()));
+      await createIdea({
+        brandId: input.brandId,
+        title: idea.title,
+        angle: idea.angle,
+        summary: idea.summary,
+        pillarId: matchedPillar?.id,
+        campaignId: input.campaignId,
+        funnelStage: idea.funnelStage || "awareness",
+        targetPlatforms: input.targetPlatforms || brand.activePlatforms || ["linkedin", "instagram"],
+        createdByUserId: ctx.user.id,
+        status: "proposed",
+        sourceType: "batch",
+      });
+      created++;
+    }
+
+    await logAudit({ brandId: input.brandId, actorUserId: ctx.user.id, entityType: "idea", action: "batch_generated", description: `${created} ideas generated in batch` });
+    return { success: true, count: created };
+  }),
+});
+
+// ─── Content Router ───────────────────────────────────────────────────────────
+const contentRouter = router({
+  getPackage: protectedProcedure.input(z.object({ ideaId: z.number() })).query(async ({ input }) => {
+    const pkg = await getContentPackageByIdeaId(input.ideaId);
+    if (!pkg) return null;
+    const [variants, pkgAssets] = await Promise.all([getVariantsByPackageId(pkg.id), getAssetsByPackageId(pkg.id)]);
+    return { ...pkg, variants, assets: pkgAssets };
+  }),
+
+  getPackageById: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+    const pkg = await getContentPackageById(input.id);
+    if (!pkg) return null;
+    const [variants, pkgAssets] = await Promise.all([getVariantsByPackageId(pkg.id), getAssetsByPackageId(pkg.id)]);
+    return { ...pkg, variants, assets: pkgAssets };
+  }),
+
+  listPackages: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => getContentPackagesByBrand(input.brandId)),
+
+  generate: protectedProcedure.input(z.object({
+    ideaId: z.number(),
+    targetPlatforms: z.array(z.string()).optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const idea = await getIdeaById(input.ideaId);
+    if (!idea) throw new Error("Idea not found");
+    if (idea.status !== "approved") throw new Error("Only approved ideas can be generated");
+
+    const [brand, pillars, rules] = await Promise.all([
+      getBrandById(idea.brandId),
+      getContentPillars(idea.brandId),
+      getBrandRules(idea.brandId),
+    ]);
+    if (!brand) throw new Error("Brand not found");
+
+    const pillarName = pillars.find(p => p.id === idea.pillarId)?.name || "General";
+    const doSay = rules.filter(r => r.ruleType === "do_say").map(r => r.content).join("; ");
+    const dontSay = rules.filter(r => r.ruleType === "dont_say").map(r => r.content).join("; ");
+    const platforms = input.targetPlatforms || idea.targetPlatforms || brand.activePlatforms || ["linkedin", "instagram", "webflow"];
+
+    // Create package record
+    const pkgResult = await createContentPackage({
+      ideaId: idea.id,
+      brandId: idea.brandId,
+      status: "generating",
+      version: 1,
+    });
+
+    const pkgId = (pkgResult as any).insertId;
+
+    const systemPrompt = `You are Caelum Liu, Chief Growth Officer for ${brand.name}. You are a world-class brand content strategist. Generate high-quality, on-brand content packages. Always return ONLY valid JSON.`;
+
+    const userPrompt = `Generate a complete content package for this approved idea:
+
+Title: ${idea.title}
+Angle: ${idea.angle || ""}
+Summary: ${idea.summary || ""}
+Content Pillar: ${pillarName}
+Funnel Stage: ${idea.funnelStage || "awareness"}
+
+Brand: ${brand.name}
+Mission: ${brand.mission || ""}
+Positioning: ${brand.positioning || ""}
+Tone: ${brand.toneSummary || "authoritative, empathetic, forward-thinking"}
+${doSay ? `Do say: ${doSay}` : ""}
+${dontSay ? `Don't say: ${dontSay}` : ""}
+
+Target platforms: ${platforms.join(", ")}
+
+Return ONLY valid JSON with this structure:
+{
+  "masterHook": "Compelling one-line hook",
+  "masterAngle": "Core strategic angle for this piece",
+  "keyPoints": ["point 1", "point 2", "point 3", "point 4", "point 5"],
+  "cta": "Primary call to action",
+  "blogContent": "Full blog article (800-1200 words, markdown formatted with ## subheadings)",
+  "variants": {
+    "linkedin": { "title": "...", "body": "LinkedIn post (1200-1800 chars, thought leadership, ends with engagement question)", "hashtags": ["tag1", "tag2"] },
+    "instagram": { "caption": "Instagram caption (150-300 chars, strong hook, visual-first)", "hashtags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7", "tag8", "tag9", "tag10"] },
+    "webflow": { "title": "SEO article title", "body": "Full article for blog (same as blogContent but formatted for web)" },
+    "wechat": { "title": "WeChat title", "body": "WeChat article (Chinese-friendly tone, 400-600 chars, warm and insightful)" }
+  },
+  "imagePrompt": "Detailed image generation prompt: hyperrealistic, 16:9, cool teal/blue/violet neon tones, professional, no text or symbols, cinematic lighting"
+}`;
+
+    const response = await invokeLLM({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      response_format: { type: "json_object" } as any,
+    });
+
+    let generated: any = {};
+    try {
+      const raw = (response.choices?.[0]?.message?.content as string) || "{}";
+      generated = JSON.parse(raw);
+    } catch { generated = {}; }
+
+    // Update content package with generated content
+    await updateContentPackage(pkgId, {
+      masterHook: generated.masterHook || idea.title,
+      masterAngle: generated.masterAngle || idea.angle || "",
+      keyPoints: generated.keyPoints || [],
+      cta: generated.cta || "",
+      blogContent: generated.blogContent || "",
+      status: "generated",
+      generationModel: "gemini-2.5-flash",
+      generationPrompt: userPrompt,
+    });
+
+    // Create platform variants
+    const variantData = generated.variants || {};
+    for (const platform of platforms) {
+      const v = variantData[platform] || {};
+      await createVariant({
+        contentPackageId: pkgId,
+        brandId: idea.brandId,
+        platform: platform as any,
+        formatType: platform === "webflow" ? "article" : platform === "linkedin" ? "long_post" : platform === "instagram" ? "caption" : "short_post",
+        title: v.title || generated.masterHook || idea.title,
+        body: v.body || "",
+        caption: v.caption || "",
+        hashtags: v.hashtags || [],
+        status: "generated",
+        version: 1,
+      });
+    }
+
+    // Create image prompt asset
+    if (generated.imagePrompt) {
+      await createAsset({
+        contentPackageId: pkgId,
+        assetType: "image_prompt",
+        promptText: generated.imagePrompt,
+        status: "ready",
+        version: 1,
+      });
+    }
+
+    await logAudit({ brandId: idea.brandId, actorUserId: ctx.user.id, entityType: "content_package", entityId: pkgId, action: "generated", description: `Content package generated for: "${idea.title}"` });
+
+    return { success: true, packageId: pkgId };
+  }),
+
+  updatePackage: protectedProcedure.input(z.object({
+    id: z.number(),
+    masterHook: z.string().optional(),
+    masterAngle: z.string().optional(),
+    keyPoints: z.array(z.string()).optional(),
+    cta: z.string().optional(),
+    blogContent: z.string().optional(),
+    status: z.enum(["pending_generation", "generating", "generated", "needs_revision", "approved_for_publish", "archived"]).optional(),
+  })).mutation(async ({ input }) => { const { id, ...data } = input; await updateContentPackage(id, data); return { success: true }; }),
+
+  updateVariant: protectedProcedure.input(z.object({
+    id: z.number(),
+    title: z.string().optional(),
+    body: z.string().optional(),
+    caption: z.string().optional(),
+    hashtags: z.array(z.string()).optional(),
+    status: z.enum(["draft", "generated", "needs_revision", "approved", "queued", "published", "failed", "archived"]).optional(),
+  })).mutation(async ({ input }) => { const { id, ...data } = input; await updateVariant(id, data); return { success: true }; }),
+
+  generateImage: protectedProcedure.input(z.object({
+    contentPackageId: z.number(),
+    assetId: z.number().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const { generateImage } = await import("./_core/imageGeneration");
+    const pkgAssets = await getAssetsByPackageId(input.contentPackageId);
+    const promptAsset = pkgAssets.find(a => a.assetType === "image_prompt" && a.status === "ready");
+    if (!promptAsset?.promptText) throw new Error("No image prompt found");
+
+    await updateAsset(promptAsset.id, { status: "generating" });
+    try {
+      const { url } = await generateImage({ prompt: promptAsset.promptText });
+      await createAsset({
+        contentPackageId: input.contentPackageId,
+        variantId: input.assetId,
+        assetType: "image_output",
+        promptText: promptAsset.promptText,
+        outputUrl: url,
+        provider: "manus-image",
+        status: "ready",
+        version: 1,
+      });
+      await updateAsset(promptAsset.id, { status: "ready" });
+      return { success: true, url };
+    } catch (e: any) {
+      await updateAsset(promptAsset.id, { status: "failed" });
+      throw new Error(`Image generation failed: ${e.message}`);
+    }
+  }),
+});
+
+// ─── Publishing Router ────────────────────────────────────────────────────────
+const publishingRouter = router({
+  list: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => getPublishJobs(input.brandId)),
+
+  stats: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => getPublishStats(input.brandId)),
+
+  createJob: protectedProcedure.input(z.object({
+    variantId: z.number(),
+    contentPackageId: z.number(),
+    brandId: z.number(),
+    platform: z.string(),
+    actionType: z.enum(["publish_now", "schedule"]).default("publish_now"),
+    scheduledFor: z.string().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    await createPublishJob({
+      variantId: input.variantId,
+      contentPackageId: input.contentPackageId,
+      brandId: input.brandId,
+      platform: input.platform,
+      actionType: input.actionType,
+      scheduledFor: input.scheduledFor ? new Date(input.scheduledFor) : undefined,
+      publishStatus: input.actionType === "schedule" ? "scheduled" : "queued",
+    });
+    await updateVariant(input.variantId, { status: "queued" });
+    await logAudit({ brandId: input.brandId, actorUserId: ctx.user.id, entityType: "publish_job", action: "created", description: `Publish job created for ${input.platform}` });
+    return { success: true };
+  }),
+
+  markPublished: protectedProcedure.input(z.object({ jobId: z.number() })).mutation(async ({ ctx, input }) => {
+    await updatePublishJob(input.jobId, { publishStatus: "published", publishedAt: new Date() });
+    return { success: true };
+  }),
+
+  markFailed: protectedProcedure.input(z.object({ jobId: z.number(), errorLog: z.string().optional() })).mutation(async ({ input }) => {
+    await updatePublishJob(input.jobId, { publishStatus: "failed", errorLog: input.errorLog });
+    return { success: true };
+  }),
+
+  retry: protectedProcedure.input(z.object({ jobId: z.number() })).mutation(async ({ input }) => {
+    const jobs = await getPublishJobs(0); // We'll get by id differently
+    await updatePublishJob(input.jobId, { publishStatus: "queued", lastAttemptAt: new Date() });
+    return { success: true };
+  }),
+});
+
+// ─── Integrations Router ──────────────────────────────────────────────────────
+const integrationsRouter = router({
+  list: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => getIntegrations(input.brandId)),
+
+  save: protectedProcedure.input(z.object({
+    brandId: z.number(),
+    platform: z.string(),
+    accountName: z.string().optional(),
+    apiKey: z.string().optional(),
+    apiSecret: z.string().optional(),
+    accessToken: z.string().optional(),
+    refreshToken: z.string().optional(),
+    extraConfig: z.record(z.string(), z.string()).optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const { brandId, platform, ...data } = input;
+    await upsertIntegration(brandId, platform, { ...data, extraConfig: data.extraConfig as Record<string, string> | undefined, status: "connected", lastTestedAt: new Date() });
+    await logAudit({ brandId, actorUserId: ctx.user.id, entityType: "integration", action: "saved", description: `${platform} integration saved` });
+    return { success: true };
+  }),
+
+  disconnect: protectedProcedure.input(z.object({ brandId: z.number(), platform: z.string() })).mutation(async ({ input }) => {
+    await upsertIntegration(input.brandId, input.platform, { status: "disconnected", apiKey: null, accessToken: null });
+    return { success: true };
+  }),
+});
+
+// ─── Analytics Router ─────────────────────────────────────────────────────────
+const analyticsRouter = router({
+  summary: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => getAnalyticsSummary(input.brandId)),
+
+  aiRecommendations: protectedProcedure.input(z.object({ brandId: z.number() })).mutation(async ({ input }) => {
+    const [brand, stats] = await Promise.all([getBrandById(input.brandId), getIdeaStats(input.brandId)]);
+    if (!brand) throw new Error("Brand not found");
+    const response = await invokeLLM({
+      messages: [
+        { role: "system", content: "You are a content strategy AI. Provide 3 concise, actionable recommendations. Return ONLY valid JSON." },
+        { role: "user", content: `Brand: ${brand.name}. Idea stats: ${JSON.stringify(stats)}. Mission: ${brand.mission}. Give 3 recommendations as JSON: { "recommendations": [{ "title": "...", "description": "...", "priority": "high|medium|low", "action": "..." }] }` },
+      ],
+      response_format: { type: "json_object" } as any,
+    });
+    try {
+      const raw = (response.choices?.[0]?.message?.content as string) || "{}";
+      return JSON.parse(raw);
+    } catch { return { recommendations: [] }; }
+  }),
+});
+
+// ─── Activity Router ──────────────────────────────────────────────────────────
+const activityRouter = router({
+  list: protectedProcedure.input(z.object({ brandId: z.number(), limit: z.number().optional().default(50) }))
+    .query(async ({ input }) => getAuditLog(input.brandId, input.limit)),
+});
+
+// ─── App Router ───────────────────────────────────────────────────────────────
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
+      return { success: true } as const;
     }),
   }),
-
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  brand: brandRouter,
+  campaign: campaignRouter,
+  idea: ideaRouter,
+  content: contentRouter,
+  publishing: publishingRouter,
+  integrations: integrationsRouter,
+  analytics: analyticsRouter,
+  activity: activityRouter,
 });
 
 export type AppRouter = typeof appRouter;
