@@ -140,12 +140,12 @@ export default function Integrations() {
 
   return (
     <AppLayout brandId={activeBrandId} onBrandChange={setActiveBrandId}>
-      <div className="p-6 space-y-5">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-5">
         {/* Header */}
         <div>
           <h1 className="text-xl font-bold text-foreground">Integrations</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {activeBrand?.name} · Connect your publishing platforms. All credentials are stored securely in the database.
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {activeBrand?.name} · Connect publishing platforms. Credentials stored securely.
           </p>
         </div>
 
@@ -159,15 +159,15 @@ export default function Integrations() {
             return (
               <Card key={platform.key} className="border-border bg-card">
                 <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 rounded-full" style={{ background: platform.color }} />
-                      <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-3">
+                      <div className="w-3 h-3 rounded-full mt-1 flex-shrink-0" style={{ background: platform.color }} />
+                      <div className="min-w-0">
                         <CardTitle className="text-sm">{platform.label}</CardTitle>
-                        <p className="text-xs text-muted-foreground mt-0.5">{platform.description}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{platform.description}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       {isConnected ? (
                         <>
                           <Badge className="text-[10px] px-2 py-0.5 bg-green-500/10 text-green-400 border-green-500/30">

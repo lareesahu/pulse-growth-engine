@@ -8,6 +8,13 @@
       "when": 1772988242337,
       "tag": "0000_aromatic_the_fallen",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1772999344271,
+      "tag": "0001_hesitant_boomerang",
+      "breakpoints": true
     }
   ]
 }

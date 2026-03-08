@@ -52,15 +52,15 @@ export default function PublishingCenter() {
 
   return (
     <AppLayout brandId={activeBrandId} onBrandChange={setActiveBrandId}>
-      <div className="p-6 space-y-5">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-5">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold text-foreground">Publishing Center</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">{activeBrand?.name} · Manage and monitor all publish jobs</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{activeBrand?.name} · Publish jobs</p>
           </div>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-36 h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-32 h-9 text-xs flex-shrink-0"><SelectValue /></SelectTrigger>
             <SelectContent>
               {["all", "queued", "scheduled", "publishing", "published", "failed"].map(s => (
                 <SelectItem key={s} value={s} className="capitalize">{s === "all" ? "All Status" : s}</SelectItem>
@@ -70,7 +70,7 @@ export default function PublishingCenter() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {statCards.map(s => (
             <Card key={s.label} className="border-border bg-card">
               <CardContent className="p-4">

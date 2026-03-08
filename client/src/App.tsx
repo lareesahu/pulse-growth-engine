@@ -12,6 +12,9 @@ import ContentDetail from "./pages/ContentDetail";
 import PublishingCenter from "./pages/PublishingCenter";
 import Analytics from "./pages/Analytics";
 import Integrations from "./pages/Integrations";
+import ReviewQueue from "./pages/ReviewQueue";
+import InspectorSettings from "./pages/InspectorSettings";
+import ForumOpportunities from "./pages/ForumOpportunities";
 
 function Router() {
   return (
@@ -24,6 +27,9 @@ function Router() {
       <Route path="/publishing" component={PublishingCenter} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/integrations" component={Integrations} />
+      <Route path="/review" component={ReviewQueue} />
+      <Route path="/inspector" component={InspectorSettings} />
+      <Route path="/forums" component={ForumOpportunities} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

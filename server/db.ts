@@ -4,10 +4,13 @@ import {
   users, brands, brandRules, contentPillars, audienceProfiles, promptTemplates,
   platformPreferences, campaigns, ideas, contentPackages, platformVariants,
   assets, integrationAccounts, publishJobs, auditEvents, performanceRecords,
+  inspectorRules, inspectionReports, pipelineRuns, inspectorThresholds, vitalityPredictions,
   InsertUser, InsertBrand, InsertBrandRule, InsertContentPillar, InsertAudienceProfile,
   InsertPromptTemplate, InsertPlatformPreference, InsertCampaign, InsertIdea,
   InsertContentPackage, InsertPlatformVariant, InsertAsset, InsertIntegrationAccount,
   InsertPublishJob, InsertAuditEvent, InsertPerformanceRecord,
+  InsertInspectorRule, InsertInspectionReport, InsertPipelineRun,
+  InsertInspectorThreshold, InsertVitalityPrediction,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -325,4 +328,165 @@ export async function getAnalyticsSummary(brandId: number) {
       rejected: allIdeas.filter(i => i.status === "rejected").length,
     },
   };
+}
+
+// ─── Inspector Rules ──────────────────────────────────────────────────────────
+export async function getInspectorRules(brandId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(inspectorRules)
+    .where(and(eq(inspectorRules.brandId, brandId), eq(inspectorRules.isActive, true)))
+    .orderBy(inspectorRules.sortOrder, inspectorRules.createdAt);
+}
+
+export async function getAllInspectorRules(brandId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(inspectorRules)
+    .where(eq(inspectorRules.brandId, brandId))
+    .orderBy(inspectorRules.sortOrder, inspectorRules.createdAt);
+}
+
+export async function createInspectorRule(data: InsertInspectorRule) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.insert(inspectorRules).values(data);
+}
+
+export async function updateInspectorRule(id: number, data: Partial<InsertInspectorRule>) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.update(inspectorRules).set(data).where(eq(inspectorRules.id, id));
+}
+
+export async function deleteInspectorRule(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.delete(inspectorRules).where(eq(inspectorRules.id, id));
+}
+
+// ─── Inspection Reports ───────────────────────────────────────────────────────
+export async function createInspectionReport(data: InsertInspectionReport) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const [result] = await db.insert(inspectionReports).values(data).$returningId();
+  return result;
+}
+
+export async function getInspectionReportsByPackage(contentPackageId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(inspectionReports)
+    .where(eq(inspectionReports.contentPackageId, contentPackageId))
+    .orderBy(inspectionReports.createdAt);
+}
+
+// ─── Pipeline Runs ────────────────────────────────────────────────────────────
+export async function createPipelineRun(data: InsertPipelineRun) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const [result] = await db.insert(pipelineRuns).values(data).$returningId();
+  return result;
+}
+
+export async function updatePipelineRun(id: number, data: Partial<InsertPipelineRun>) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.update(pipelineRuns).set(data).where(eq(pipelineRuns.id, id));
+}
+
+export async function getLatestPipelineRun(brandId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const results = await db.select().from(pipelineRuns)
+    .where(eq(pipelineRuns.brandId, brandId))
+    .orderBy(desc(pipelineRuns.startedAt))
+    .limit(1);
+  return results[0] ?? null;
+}
+
+export async function getPipelineRuns(brandId: number, limit = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(pipelineRuns)
+    .where(eq(pipelineRuns.brandId, brandId))
+    .orderBy(desc(pipelineRuns.startedAt))
+    .limit(limit);
+}
+
+// ─── Review Queue ─────────────────────────────────────────────────────────────
+export async function getReviewQueue(brandId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  // Packages that are fully generated and awaiting final approval
+  return db.select().from(contentPackages)
+    .where(and(
+      eq(contentPackages.brandId, brandId),
+      eq(contentPackages.status, "generated")
+    ))
+    .orderBy(desc(contentPackages.createdAt));
+}
+
+// ─── Inspector Thresholds ─────────────────────────────────────────────────────
+export async function getInspectorThresholds(brandId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(inspectorThresholds).where(eq(inspectorThresholds.brandId, brandId));
+}
+
+export async function upsertInspectorThreshold(brandId: number, dimension: string, data: { minScore?: number; isActive?: boolean; weight?: number }) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(inspectorThresholds)
+    .values({ brandId, dimension, minScore: data.minScore ?? 7, isActive: data.isActive ?? true, weight: data.weight ?? 1 })
+    .onDuplicateKeyUpdate({ set: { ...data } });
+}
+
+export async function seedDefaultThresholds(brandId: number) {
+  const dimensions = [
+    { dimension: "humanisation", minScore: 7, weight: 2 },
+    { dimension: "authenticity", minScore: 8, weight: 3 },
+    { dimension: "accuracy", minScore: 8, weight: 3 },
+    { dimension: "platformFit", minScore: 7, weight: 2 },
+    { dimension: "originality", minScore: 7, weight: 2 },
+    { dimension: "vitality", minScore: 6, weight: 1 },
+  ];
+  for (const d of dimensions) {
+    await upsertInspectorThreshold(brandId, d.dimension, { minScore: d.minScore, weight: d.weight });
+  }
+}
+
+// ─── Vitality Predictions ─────────────────────────────────────────────────────
+export async function createVitalityPrediction(data: InsertVitalityPrediction) {
+  const db = await getDb();
+  if (!db) return;
+  return db.insert(vitalityPredictions).values(data);
+}
+
+export async function getVitalityPredictions(brandId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(vitalityPredictions)
+    .where(eq(vitalityPredictions.brandId, brandId))
+    .orderBy(desc(vitalityPredictions.createdAt))
+    .limit(limit);
+}
+
+export async function updateVitalityPrediction(id: number, data: Partial<InsertVitalityPrediction>) {
+  const db = await getDb();
+  if (!db) return;
+  return db.update(vitalityPredictions).set(data).where(eq(vitalityPredictions.id, id));
+}
+
+export async function getVitalityModelAccuracy(brandId: number) {
+  const db = await getDb();
+  if (!db) return { totalPredictions: 0, resolvedPredictions: 0, avgError: 0, accuracy: 0 };
+  const records = await db.select().from(vitalityPredictions)
+    .where(eq(vitalityPredictions.brandId, brandId));
+  const resolved = records.filter(r => r.actualEngagement !== null && r.predictionError !== null);
+  const avgError = resolved.length > 0
+    ? resolved.reduce((sum, r) => sum + (r.predictionError ?? 0), 0) / resolved.length
+    : 0;
+  const accuracy = Math.max(0, Math.round(100 - avgError));
+  return { totalPredictions: records.length, resolvedPredictions: resolved.length, avgError: Math.round(avgError), accuracy };
 }

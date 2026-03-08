@@ -96,16 +96,16 @@ export default function BrandWorkspace() {
 
   return (
     <AppLayout brandId={activeBrandId} onBrandChange={setActiveBrandId}>
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-2">
           <div>
             <h1 className="text-xl font-bold text-foreground">Brand Workspace</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Manage brand DNA, voice, audience, and content rules</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Manage brand DNA, voice, audience, and content rules</p>
           </div>
           <Dialog open={showNewBrand} onOpenChange={setShowNewBrand}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm"><Plus size={14} className="mr-2" /> New Brand</Button>
+              <Button variant="outline" size="sm" className="flex-shrink-0 min-h-[44px]"><Plus size={14} className="mr-1.5" /> New Brand</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Create New Brand</DialogTitle></DialogHeader>
@@ -121,22 +121,24 @@ export default function BrandWorkspace() {
           <div className="text-center py-12 text-muted-foreground">No brand selected. Create one to get started.</div>
         ) : (
           <Tabs defaultValue="strategy">
-            <TabsList className="bg-card border border-border">
-              <TabsTrigger value="strategy"><BookOpen size={14} className="mr-1.5" />Strategy</TabsTrigger>
-              <TabsTrigger value="voice"><MessageSquare size={14} className="mr-1.5" />Voice & Tone</TabsTrigger>
-              <TabsTrigger value="audience"><Users size={14} className="mr-1.5" />Audience</TabsTrigger>
-              <TabsTrigger value="pillars"><Target size={14} className="mr-1.5" />Pillars</TabsTrigger>
-              <TabsTrigger value="prompts"><Sparkles size={14} className="mr-1.5" />Prompts</TabsTrigger>
-              <TabsTrigger value="platforms"><Globe size={14} className="mr-1.5" />Platforms</TabsTrigger>
-              <TabsTrigger value="rules"><Settings size={14} className="mr-1.5" />Rules</TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+              <TabsList className="bg-card border border-border w-max min-w-full">
+                <TabsTrigger value="strategy" className="text-xs px-2.5"><BookOpen size={13} className="mr-1 hidden sm:inline" />Strategy</TabsTrigger>
+                <TabsTrigger value="voice" className="text-xs px-2.5"><MessageSquare size={13} className="mr-1 hidden sm:inline" />Voice</TabsTrigger>
+                <TabsTrigger value="audience" className="text-xs px-2.5"><Users size={13} className="mr-1 hidden sm:inline" />Audience</TabsTrigger>
+                <TabsTrigger value="pillars" className="text-xs px-2.5"><Target size={13} className="mr-1 hidden sm:inline" />Pillars</TabsTrigger>
+                <TabsTrigger value="prompts" className="text-xs px-2.5"><Sparkles size={13} className="mr-1 hidden sm:inline" />Prompts</TabsTrigger>
+                <TabsTrigger value="platforms" className="text-xs px-2.5"><Globe size={13} className="mr-1 hidden sm:inline" />Platforms</TabsTrigger>
+                <TabsTrigger value="rules" className="text-xs px-2.5"><Settings size={13} className="mr-1 hidden sm:inline" />Rules</TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* ── STRATEGY ── */}
             <TabsContent value="strategy" className="mt-4">
               <Card className="border-border bg-card">
                 <CardHeader><CardTitle className="text-sm">Brand Strategy</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><Label className="text-xs">Brand Name</Label><Input value={brandForm.name} onChange={e => setBrandForm(f => ({ ...f, name: e.target.value }))} className="mt-1" /></div>
                     <div><Label className="text-xs">Website</Label><Input value={brandForm.website} onChange={e => setBrandForm(f => ({ ...f, website: e.target.value }))} placeholder="https://..." className="mt-1" /></div>
                   </div>

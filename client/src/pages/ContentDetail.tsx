@@ -119,38 +119,42 @@ export default function ContentDetail() {
 
   return (
     <AppLayout brandId={activeBrandId} onBrandChange={setActiveBrandId}>
-      <div className="p-6 space-y-5">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-5">
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <Link href="/ideas">
-            <Button variant="ghost" size="sm" className="h-8"><ArrowLeft size={14} className="mr-1.5" /> Ideas</Button>
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-lg font-bold text-foreground">{pkg.masterHook || "Content Package"}</h1>
-            <div className="flex items-center gap-2 mt-0.5">
-              <Badge variant="outline" className={`text-[10px] px-1.5 py-0 status-${pkg.status}`}>{pkg.status}</Badge>
-              <span className="text-xs text-muted-foreground">{new Date(pkg.createdAt).toLocaleDateString()}</span>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Link href="/ideas">
+              <Button variant="ghost" size="sm" className="h-9 px-2"><ArrowLeft size={14} className="mr-1" /> Ideas</Button>
+            </Link>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base font-bold text-foreground leading-tight truncate">{pkg.masterHook || "Content Package"}</h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                <Badge variant="outline" className={`text-[10px] px-1.5 py-0 status-${pkg.status}`}>{pkg.status}</Badge>
+                <span className="text-[10px] text-muted-foreground">{new Date(pkg.createdAt).toLocaleDateString()}</span>
+              </div>
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleGenerateVariants} disabled={generatingVariants}>
-              {generatingVariants ? <RefreshCw size={14} className="mr-2 animate-spin" /> : <Sparkles size={14} className="mr-2" />}
+            <Button variant="outline" size="sm" className="flex-1 min-h-[44px] text-xs" onClick={handleGenerateVariants} disabled={generatingVariants}>
+              {generatingVariants ? <RefreshCw size={13} className="mr-1.5 animate-spin" /> : <Sparkles size={13} className="mr-1.5" />}
               {generatingVariants ? "Generating..." : "Generate Variants"}
             </Button>
-            <Button variant="outline" size="sm" onClick={handleGenerateImages} disabled={generatingImages}>
-              {generatingImages ? <RefreshCw size={14} className="mr-2 animate-spin" /> : <Image size={14} className="mr-2" />}
-              {generatingImages ? "Generating..." : "Generate Images"}
+            <Button variant="outline" size="sm" className="flex-1 min-h-[44px] text-xs" onClick={handleGenerateImages} disabled={generatingImages}>
+              {generatingImages ? <RefreshCw size={13} className="mr-1.5 animate-spin" /> : <Image size={13} className="mr-1.5" />}
+              {generatingImages ? "Generating..." : "Images"}
             </Button>
           </div>
         </div>
 
         <Tabs defaultValue="overview">
-          <TabsList className="bg-card border border-border">
-            <TabsTrigger value="overview"><FileText size={14} className="mr-1.5" />Overview</TabsTrigger>
-            <TabsTrigger value="blog"><FileText size={14} className="mr-1.5" />Blog Post</TabsTrigger>
-            <TabsTrigger value="variants"><Sparkles size={14} className="mr-1.5" />Platform Variants ({variants.length})</TabsTrigger>
-            <TabsTrigger value="assets"><Image size={14} className="mr-1.5" />Assets ({assets.length})</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+            <TabsList className="bg-card border border-border w-max">
+              <TabsTrigger value="overview" className="text-xs px-3"><FileText size={13} className="mr-1 hidden sm:inline" />Overview</TabsTrigger>
+              <TabsTrigger value="blog" className="text-xs px-3"><FileText size={13} className="mr-1 hidden sm:inline" />Blog</TabsTrigger>
+              <TabsTrigger value="variants" className="text-xs px-3"><Sparkles size={13} className="mr-1 hidden sm:inline" />Variants ({variants.length})</TabsTrigger>
+              <TabsTrigger value="assets" className="text-xs px-3"><Image size={13} className="mr-1 hidden sm:inline" />Assets ({assets.length})</TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Overview */}
           <TabsContent value="overview" className="mt-4">

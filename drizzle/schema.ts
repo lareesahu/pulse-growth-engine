@@ -269,6 +269,107 @@ export const auditEvents = mysqlTable("audit_events", {
 export type AuditEvent = typeof auditEvents.$inferSelect;
 export type InsertAuditEvent = typeof auditEvents.$inferInsert;
 
+// ─── Inspector Rules ────────────────────────────────────────────────────────────
+export const inspectorRules = mysqlTable("inspector_rules", {
+  id: int("id").autoincrement().primaryKey(),
+  brandId: int("brandId").notNull(),
+  ruleType: mysqlEnum("ruleType", [
+    "banned_phrase",    // exact phrase to never use
+    "banned_pattern",  // regex pattern to never use
+    "required_phrase", // phrase that must appear
+    "char_limit",      // max character count per platform
+    "tone_rule",       // tone instruction for LLM check
+    "formatting_rule", // e.g. no ** no em-dash
+    "image_rule",      // image style requirement
+    "custom_prompt",   // free-form LLM instruction
+  ]).notNull(),
+  platform: varchar("platform", { length: 64 }), // null = global
+  ruleValue: text("ruleValue").notNull(),          // the rule content
+  severity: mysqlEnum("severity", ["error", "warning", "info"]).default("error").notNull(),
+  autoFix: boolean("autoFix").default(false),      // attempt LLM auto-fix
+  isActive: boolean("isActive").default(true),
+  sortOrder: int("sortOrder").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type InspectorRule = typeof inspectorRules.$inferSelect;
+export type InsertInspectorRule = typeof inspectorRules.$inferInsert;
+// ─── Inspector Thresholds ─────────────────────────────────────────────────────────
+export const inspectorThresholds = mysqlTable("inspector_thresholds", {
+  id: int("id").autoincrement().primaryKey(),
+  brandId: int("brandId").notNull(),
+  dimension: varchar("dimension", { length: 64 }).notNull(), // humanisation|authenticity|accuracy|platformFit|originality|vitality
+  minScore: int("minScore").default(7).notNull(),            // 1-10, content below this is auto-rejected
+  isActive: boolean("isActive").default(true).notNull(),
+  weight: int("weight").default(1).notNull(),                // relative weight in vitality calculation
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type InspectorThreshold = typeof inspectorThresholds.$inferSelect;
+export type InsertInspectorThreshold = typeof inspectorThresholds.$inferInsert;
+
+// ─── Inspection Reports ──────────────────────────────────────────────────────────
+export const inspectionReports = mysqlTable("inspection_reports", {
+  id: int("id").autoincrement().primaryKey(),
+  contentPackageId: int("contentPackageId").notNull(),
+  brandId: int("brandId").notNull(),
+  // Multi-dimensional scores (1-10 each)
+  humanisationScore: int("humanisationScore"),
+  authenticityScore: int("authenticityScore"),
+  accuracyScore: int("accuracyScore"),
+  platformFitScore: int("platformFitScore"),
+  originalityScore: int("originalityScore"),
+  vitalityScore: int("vitalityScore"),              // composite prediction score
+  overallScore: int("overallScore"),                // weighted average 0-100
+  passed: boolean("passed").default(false).notNull(),
+  failedDimensions: json("failedDimensions").$type<string[]>(),
+  issues: json("issues").$type<Array<{ dimension: string; score: number; feedback: string; suggestion: string }>>(),
+  fixedContent: json("fixedContent").$type<Record<string, string>>(),
+  regenerationFeedback: text("regenerationFeedback"),  // feedback sent back to LLM on failure
+  attemptNumber: int("attemptNumber").default(1),
+  inspectorVersion: varchar("inspectorVersion", { length: 32 }).default("2.0"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type InspectionReport = typeof inspectionReports.$inferSelect;
+export type InsertInspectionReport = typeof inspectionReports.$inferInsert;
+// ─── Pipeline Runs ──────────────────────────────────────────────────────────
+export const pipelineRuns = mysqlTable("pipeline_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  brandId: int("brandId").notNull(),
+  triggeredByUserId: int("triggeredByUserId"),
+  status: mysqlEnum("status", ["running", "completed", "failed", "partial"]).default("running").notNull(),
+  stage: varchar("stage", { length: 128 }),
+  ideasGenerated: int("ideasGenerated").default(0),
+  ideasApproved: int("ideasApproved").default(0),
+  packagesGenerated: int("packagesGenerated").default(0),
+  packagesInspected: int("packagesInspected").default(0),
+  packagesPassedInspection: int("packagesPassedInspection").default(0),
+  packagesFailedInspection: int("packagesFailedInspection").default(0),
+  packagesRegenerated: int("packagesRegenerated").default(0),
+  readyForReview: int("readyForReview").default(0),
+  errorLog: text("errorLog"),
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+});
+export type PipelineRun = typeof pipelineRuns.$inferSelect;
+export type InsertPipelineRun = typeof pipelineRuns.$inferInsert;
+
+// ─── Vitality Predictions (Learning Engine) ───────────────────────────────────────
+export const vitalityPredictions = mysqlTable("vitality_predictions", {
+  id: int("id").autoincrement().primaryKey(),
+  contentPackageId: int("contentPackageId").notNull(),
+  brandId: int("brandId").notNull(),
+  platform: varchar("platform", { length: 64 }).notNull(),
+  predictedScore: int("predictedScore").notNull(),   // 1-100 predicted vitality
+  actualEngagement: int("actualEngagement"),          // actual engagement score after publishing
+  predictionError: int("predictionError"),            // |predicted - actual|
+  modelVersion: varchar("modelVersion", { length: 32 }).default("1.0"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+});
+export type VitalityPrediction = typeof vitalityPredictions.$inferSelect;
+export type InsertVitalityPrediction = typeof vitalityPredictions.$inferInsert;
+
 // ─── Performance Records ──────────────────────────────────────────────────────
 export const performanceRecords = mysqlTable("performance_records", {
   id: int("id").autoincrement().primaryKey(),

@@ -72,3 +72,68 @@
 - [ ] Write start.sh / start.bat launcher scripts for local use
 - [ ] Write README with local setup instructions (node, pnpm install, run)
 - [ ] Package full project folder and upload to Google Drive
+
+## Mobile Responsiveness (iPhone 17 — 393px)
+- [x] AppLayout: bottom tab bar on mobile, slide-in drawer for full nav
+- [x] Dashboard: single-column stat cards, stacked pipeline rows
+- [x] Brand Workspace: full-width tabs (scrollable), stacked form fields
+- [x] Ideas Board: single-column kanban with horizontal scroll or stacked columns
+- [x] Content Detail: stacked variant tabs, full-width text areas
+- [x] Publishing Center: stacked job cards, compact stats bar
+- [x] Analytics: stacked charts, full-width recommendation panel
+- [x] Integrations: stacked platform cards, full-width input fields
+- [x] Global: touch-friendly tap targets (min 44px), no horizontal overflow
+
+## Autopilot Pipeline (Full Automation)
+- [ ] Backend: runPipeline procedure — generate ideas → auto-approve → generate packages → generate variants → generate images in one chain
+- [ ] Backend: review queue endpoint — list all fully-generated content packages awaiting final approval
+- [ ] Backend: approveForPublishing mutation — approve a package and auto-create publish jobs for all variants
+- [ ] Frontend: Review Queue page — single scrollable feed, one card per content package, swipe/tap approve or reject
+- [ ] Frontend: Dashboard redesign — single "Run Pipeline" CTA + live pipeline status tracker
+- [ ] Frontend: Remove multi-step navigation requirement (pipeline runs silently in background)
+
+## AI Inspector + Full Pipeline Automation
+- [ ] DB: inspector_rules table (brandId, ruleType, ruleValue, severity, autoFix, platform)
+- [ ] DB: inspection_reports table (variantId, passed, issues, fixedContent, score)
+- [ ] Backend: runPipeline — full chain: generate ideas → auto-approve → packages → variants → images → inspect
+- [ ] Backend: AI Inspector procedure — runs each variant through GPT-4 with brand ruleset, auto-corrects, returns report
+- [ ] Backend: review queue endpoint — list packages with inspection reports, awaiting final approval
+- [ ] Backend: approveForPublishing — approve package, auto-create publish jobs for all passing variants
+- [ ] Frontend: Inspector Settings page — manage rules (no **, no em-dashes, banned phrases, char limits, tone, image rules)
+- [ ] Frontend: Review Queue page — scrollable feed, inspector score badge, issues list, approve/reject per card
+- [ ] Frontend: Dashboard — Run Pipeline button, live progress (Generating / Inspecting / Ready to Review), queue badge
+
+## Bug Fixes (from v1.0 Test Report)
+- [ ] CRITICAL: Idea card click navigation broken — clicking card does not navigate to /content/:ideaId
+- [ ] Module 4 blocked until navigation fix is applied
+
+## New Features (Pipeline Automation + Inspector)
+- [ ] Backend: runPipeline — full chain generate ideas → auto-approve → packages → variants → images → inspect
+- [ ] Backend: AI Inspector — runs each variant through GPT-4 with brand ruleset, auto-corrects, returns report
+- [ ] Backend: review queue endpoint — packages with inspection reports awaiting final approval
+- [ ] Backend: approveForPublishing — approve package, auto-create publish jobs
+- [ ] Backend: seed default inspector rules (no **, no em-dashes, banned phrases, char limits)
+- [ ] Frontend: Inspector Settings page — manage rules by type/platform/severity/autoFix
+- [ ] Frontend: Review Queue page — scrollable feed, inspector score badge, approve/reject
+- [ ] Frontend: Dashboard redesign — Run Pipeline CTA, live progress, review queue badge
+
+## Multi-Dimensional AI Inspector + Learning Engine
+- [ ] Schema: add inspectorThresholds table (per-dimension min scores per brand)
+- [ ] Schema: update inspectionReports to store per-dimension scores (humanisation, authenticity, accuracy, platformFit, originality, vitality)
+- [ ] Schema: add vitalityPredictions table for tracking prediction vs actual performance
+- [ ] Backend: enhanced AI Inspector — 6-dimension scoring, threshold check, auto-regeneration with feedback loop (max 2 retries)
+- [ ] Backend: performance learning endpoint — log actual post performance, recalibrate vitality model
+- [ ] Backend: inspector thresholds CRUD — set min score per dimension per brand
+- [ ] Frontend: Inspector Settings page — dimension toggles, threshold sliders, prediction accuracy chart, evolution log
+- [ ] Frontend: Review Queue — per-dimension score rings, vitality badge, inspector feedback visible per card
+- [ ] Frontend: Dashboard redesign — Run Pipeline CTA, progress tracker, review queue count, vitality leaderboard
+- [ ] Seed: default thresholds for Pulse Branding (all dimensions default 7/10)
+
+## Forum Opportunities Tab
+- [ ] Backend: forum opportunity scanner — uses brand pillars + keywords to search for relevant threads via web search
+- [ ] Backend: AI drafts tailored reply or post for each opportunity using brand voice and Caelum persona
+- [ ] ForumOpportunities page: card feed with thread title, source platform icon, link to original, AI-drafted reply, one-click copy
+- [ ] Filter by platform (Reddit / Quora / LinkedIn / All)
+- [ ] "Refresh Opportunities" button to re-scan for new threads
+- [ ] Mark opportunity as "Used" or "Skip" to track what's been actioned
+- [ ] Register /forums route in App.tsx and add to sidebar nav

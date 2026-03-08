@@ -54,16 +54,18 @@ export default function Analytics() {
 
   return (
     <AppLayout brandId={activeBrandId} onBrandChange={setActiveBrandId}>
-      <div className="p-6 space-y-5">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-5">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Analytics</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">{activeBrand?.name} · Content performance overview</p>
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Analytics</h1>
+              <p className="text-xs text-muted-foreground mt-0.5">{activeBrand?.name} · Content performance</p>
+            </div>
           </div>
-          <Button onClick={handleGetRecommendations} disabled={loadingRecs} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+          <Button onClick={handleGetRecommendations} disabled={loadingRecs} className="w-full min-h-[44px]" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
             <Brain size={14} className="mr-2" />
-            {loadingRecs ? "Analysing..." : "AI Recommendations"}
+            {loadingRecs ? "Analysing..." : "Get AI Recommendations from Caelum"}
           </Button>
         </div>
 

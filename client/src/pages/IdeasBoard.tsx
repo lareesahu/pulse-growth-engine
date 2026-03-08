@@ -84,17 +84,20 @@ export default function IdeasBoard() {
 
   return (
     <AppLayout brandId={activeBrandId} onBrandChange={setActiveBrandId}>
-      <div className="p-6 space-y-5">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-5">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Ideas Board</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">{activeBrand?.name} · {ideas.length} ideas total</p>
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Ideas Board</h1>
+              <p className="text-xs text-muted-foreground mt-0.5">{activeBrand?.name} · {ideas.length} ideas total</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          {/* Controls row — scrollable on mobile */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
             {/* Pillar filter */}
             <Select value={filterPillar} onValueChange={setFilterPillar}>
-              <SelectTrigger className="w-40 h-8 text-xs"><SelectValue placeholder="All pillars" /></SelectTrigger>
+              <SelectTrigger className="w-36 h-9 text-xs flex-shrink-0"><SelectValue placeholder="All pillars" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Pillars</SelectItem>
                 {pillars.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
@@ -102,22 +105,22 @@ export default function IdeasBoard() {
             </Select>
 
             {/* Batch generate */}
-            <div className="flex items-center gap-1 border border-border rounded-md overflow-hidden">
+            <div className="flex items-center gap-0 border border-border rounded-md overflow-hidden flex-shrink-0">
               <Select value={String(batchCount)} onValueChange={v => setBatchCount(Number(v))}>
-                <SelectTrigger className="w-16 h-8 text-xs border-0 rounded-none"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-14 h-9 text-xs border-0 rounded-none"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {[5, 10, 15, 20, 30].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Button size="sm" className="h-8 rounded-none text-xs" onClick={handleBatchGenerate} disabled={generating} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+              <Button size="sm" className="h-9 rounded-none text-xs px-3 flex-shrink-0" onClick={handleBatchGenerate} disabled={generating} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
                 {generating ? <RefreshCw size={12} className="mr-1.5 animate-spin" /> : <Brain size={12} className="mr-1.5" />}
-                {generating ? "Generating..." : "Generate Ideas"}
+                {generating ? "Generating..." : "Generate"}
               </Button>
             </div>
 
             <Dialog open={showNewIdea} onOpenChange={setShowNewIdea}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8"><Plus size={14} className="mr-1" /> Add Idea</Button>
+                <Button variant="outline" size="sm" className="h-9 flex-shrink-0"><Plus size={14} className="mr-1" /> Add</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Add New Idea</DialogTitle></DialogHeader>
@@ -151,13 +154,13 @@ export default function IdeasBoard() {
 
         {/* Kanban board */}
         {isLoading ? (
-          <div className="grid grid-cols-5 gap-4">
-            {STATUSES.map(s => <Skeleton key={s.key} className="h-64" />)}
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {STATUSES.map(s => <Skeleton key={s.key} className="h-64 min-w-[240px]" />)}
           </div>
         ) : (
-          <div className="grid grid-cols-5 gap-4 overflow-x-auto pb-2">
+          <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-5 md:gap-4 snap-x snap-mandatory">
             {STATUSES.map(status => (
-              <div key={status.key} className="min-w-[220px]">
+              <div key={status.key} className="min-w-[260px] md:min-w-0 flex-shrink-0 snap-start">
                 {/* Column header */}
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-2 h-2 rounded-full" style={{ background: status.color }} />
@@ -168,7 +171,7 @@ export default function IdeasBoard() {
                 {/* Cards */}
                 <div className="space-y-2">
                   {(ideasByStatus[status.key] || []).map(idea => (
-                    <Card key={idea.id} className="border-border bg-card hover:border-primary/30 transition-colors group">
+                    <Card key={idea.id} className="border-border bg-card hover:border-primary/30 transition-colors group cursor-pointer" onClick={() => window.location.href = `/content/${idea.id}`}>
                       <CardContent className="p-3">
                         <div className="text-xs font-medium text-foreground leading-snug mb-2">{idea.title}</div>
                         {idea.pillarId && pillarMap[idea.pillarId] && (
@@ -177,51 +180,47 @@ export default function IdeasBoard() {
                         {idea.angle && <p className="text-[10px] text-muted-foreground mb-2 line-clamp-2">{idea.angle}</p>}
 
                         {/* Actions */}
-                        <div className="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1 mt-2">
                           {status.key === "proposed" && (
                             <>
-                              <Button size="icon" variant="ghost" className="h-6 w-6 text-green-400 hover:text-green-300" onClick={() => updateStatus.mutate({ id: idea.id, status: "approved" })}>
+                              <Button size="icon" variant="ghost" className="h-6 w-6 text-green-400 hover:text-green-300" onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: idea.id, status: "approved" }); }}>
                                 <CheckCircle size={12} />
                               </Button>
-                              <Button size="icon" variant="ghost" className="h-6 w-6 text-red-400 hover:text-red-300" onClick={() => updateStatus.mutate({ id: idea.id, status: "rejected" })}>
+                              <Button size="icon" variant="ghost" className="h-6 w-6 text-red-400 hover:text-red-300" onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: idea.id, status: "rejected" }); }}>
                                 <XCircle size={12} />
                               </Button>
                             </>
                           )}
                           {status.key === "in_review" && (
                             <>
-                              <Button size="icon" variant="ghost" className="h-6 w-6 text-green-400 hover:text-green-300" onClick={() => updateStatus.mutate({ id: idea.id, status: "approved" })}>
+                              <Button size="icon" variant="ghost" className="h-6 w-6 text-green-400 hover:text-green-300" onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: idea.id, status: "approved" }); }}>
                                 <CheckCircle size={12} />
                               </Button>
-                              <Button size="icon" variant="ghost" className="h-6 w-6 text-red-400 hover:text-red-300" onClick={() => updateStatus.mutate({ id: idea.id, status: "rejected" })}>
+                              <Button size="icon" variant="ghost" className="h-6 w-6 text-red-400 hover:text-red-300" onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: idea.id, status: "rejected" }); }}>
                                 <XCircle size={12} />
                               </Button>
                             </>
                           )}
                           {status.key === "approved" && (
-                            <Button size="sm" variant="ghost" className="h-6 text-[10px] text-primary hover:text-primary/80 px-2" onClick={() => handleGenerateContent(idea.id)} disabled={generatingContentFor === idea.id}>
+                            <Button size="sm" variant="ghost" className="h-6 text-[10px] text-primary hover:text-primary/80 px-2" onClick={(e) => { e.stopPropagation(); handleGenerateContent(idea.id); }} disabled={generatingContentFor === idea.id}>
                               {generatingContentFor === idea.id ? <RefreshCw size={10} className="mr-1 animate-spin" /> : <Sparkles size={10} className="mr-1" />}
                               Generate
                             </Button>
                           )}
                           {(status.key === "rejected" || status.key === "proposed") && (
-                            <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-muted-foreground/60" onClick={() => updateStatus.mutate({ id: idea.id, status: "archived" })}>
+                            <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-muted-foreground/60" onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: idea.id, status: "archived" }); }}>
                               <Archive size={12} />
                             </Button>
                           )}
-                          <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive ml-auto" onClick={() => deleteIdea.mutate({ id: idea.id, status: "archived" })}>
+                          <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive ml-auto" onClick={(e) => { e.stopPropagation(); deleteIdea.mutate({ id: idea.id, status: "archived" }); }}>
                             <Trash2 size={10} />
                           </Button>
                         </div>
 
-                        {/* View content link - navigate to content page for this idea */}
-                        {status.key === "approved" && (
-                          <Link href={`/content/idea-${idea.id}`}>
-                            <div className="flex items-center gap-1 mt-2 text-[10px] text-primary cursor-pointer hover:underline">
-                              <Zap size={10} /> View content <ChevronRight size={10} />
-                            </div>
-                          </Link>
-                        )}
+                        {/* View content link */}
+                        <div className="flex items-center gap-1 mt-2 text-[10px] text-primary/60">
+                          <ChevronRight size={10} /> Click to open
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
