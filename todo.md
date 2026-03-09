@@ -149,3 +149,10 @@
 - [x] Frontend: Ideas board — batch edit toolbar (select all, approve, gen package, reject, delete)
 - [x] Frontend: Ideas board — search + status + pillar filters
 - [x] Navigation: Content tab added to sidebar and mobile bottom bar
+
+## Bug Report Fixes (March 8 2026)
+- [x] CRITICAL Bug #1: Idea card click does not navigate to content detail page — fixed: use idea-{id} URL prefix
+- [x] CRITICAL Bug #2: Content detail page shows "No content found" — fixed: card now passes idea-{id} so ContentDetail queries by ideaId
+- [x] MAJOR Bug #3: Packages stuck in Generating — added resetStuckPackages mutation + amber banner with Fix button in Content tab
+- [x] MAJOR Bug #4: Generate button no feedback — now shows amber Generating... spinner + toast immediately on click
+- [x] MINOR Bug #5: Analytics pillar chart empty — fixed: getAnalyticsSummary now returns pillarBreakdown with pillar names; Analytics page uses it

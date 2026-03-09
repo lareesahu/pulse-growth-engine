@@ -79,6 +79,11 @@ export default function ContentPackages() {
     onSuccess: () => { refetch(); toast.success("Package approved for publishing"); },
     onError: (e) => toast.error(e.message),
   });
+  const resetStuck = trpc.content.resetStuckPackages.useMutation({
+    onSuccess: (r) => { refetch(); toast.success(r.count > 0 ? `Reset ${r.count} stuck package${r.count > 1 ? "s" : ""}` : "No stuck packages found"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const stuckCount = packages.filter(p => p.status === "generating" || p.status === "pending_generation").length;
 
   const filtered = activeTab === "all"
     ? packages.filter(p => p.status !== "archived")
@@ -111,6 +116,17 @@ export default function ContentPackages() {
             <RefreshCw size={14} />
           </Button>
         </div>
+
+        {/* Stuck packages banner */}
+        {stuckCount > 0 && (
+          <div className="flex items-center gap-3 mb-4 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10">
+            <AlertCircle size={15} className="text-amber-400 flex-shrink-0" />
+            <p className="text-xs text-amber-300 flex-1">{stuckCount} package{stuckCount > 1 ? "s" : ""} stuck in Generating state</p>
+            <Button size="sm" variant="ghost" className="h-7 text-xs text-amber-400 hover:bg-amber-500/20 px-2 flex-shrink-0" onClick={() => activeBrandId && resetStuck.mutate({ brandId: activeBrandId })} disabled={resetStuck.isPending}>
+              {resetStuck.isPending ? <RefreshCw size={11} className="animate-spin mr-1" /> : null}Fix
+            </Button>
+          </div>
+        )}
 
         {/* Status tabs */}
         <div className="flex gap-1 overflow-x-auto pb-2 mb-4 scrollbar-hide">
@@ -223,7 +239,7 @@ export default function ContentPackages() {
                         size="sm"
                         variant="ghost"
                         className="flex-1 h-8 text-xs text-muted-foreground hover:text-white hover:bg-secondary"
-                        onClick={() => navigate(`/content/${pkg.ideaId}`)}
+                        onClick={() => navigate(`/content/idea-${pkg.ideaId}`)}
                       >
                         <Eye size={13} className="mr-1.5" /> View
                       </Button>

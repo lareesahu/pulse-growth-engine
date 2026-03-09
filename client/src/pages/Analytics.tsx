@@ -46,7 +46,11 @@ export default function Analytics() {
     ? Object.entries(summary.ideaStatusBreakdown).map(([name, value]) => ({ name, value }))
     : [];
 
-  const pillarData: { name: string; value: number }[] = [];
+  const pillarData: { name: string; value: number }[] = summary?.pillarBreakdown
+    ? Object.entries(summary.pillarBreakdown)
+        .map(([name, value]) => ({ name, value: value as number }))
+        .sort((a, b) => b.value - a.value)
+    : [];
 
   const platformData = summary?.platformBreakdown
     ? Object.entries(summary.platformBreakdown).map(([name, value]) => ({ name, value }))

@@ -173,7 +173,7 @@ export default function IdeasBoard() {
                 {/* Cards */}
                 <div className="space-y-2">
                   {(ideasByStatus[status.key] || []).map(idea => (
-                    <Card key={idea.id} className="border-border bg-card hover:border-primary/30 transition-colors group cursor-pointer" onClick={() => window.location.href = `/content/${idea.id}`}>
+                    <Card key={idea.id} className="border-border bg-card hover:border-primary/30 transition-colors group cursor-pointer" onClick={() => window.location.href = `/content/idea-${idea.id}`}>
                       <CardContent className="p-3">
                         <div className="text-xs font-medium text-foreground leading-snug mb-2">{idea.title}</div>
                         {idea.pillarId && pillarMap[idea.pillarId] && (
@@ -204,9 +204,8 @@ export default function IdeasBoard() {
                             </>
                           )}
                           {status.key === "approved" && (
-                            <Button size="sm" variant="ghost" className="h-6 text-[10px] text-primary hover:text-primary/80 px-2" onClick={(e) => { e.stopPropagation(); handleGenerateContent(idea.id); }} disabled={generatingContentFor === idea.id}>
-                              {generatingContentFor === idea.id ? <RefreshCw size={10} className="mr-1 animate-spin" /> : <Sparkles size={10} className="mr-1" />}
-                              Generate
+                            <Button size="sm" variant="ghost" className={`h-6 text-[10px] px-2 transition-all ${generatingContentFor === idea.id ? "text-amber-400 hover:text-amber-300 bg-amber-500/10" : "text-primary hover:text-primary/80"}`} onClick={(e) => { e.stopPropagation(); if (generatingContentFor !== idea.id) { toast.info("Generating content package..."); handleGenerateContent(idea.id); } }} disabled={generatingContentFor === idea.id}>
+                              {generatingContentFor === idea.id ? <><RefreshCw size={10} className="mr-1 animate-spin" />Generating...</> : <><Sparkles size={10} className="mr-1" />Generate</>}
                             </Button>
                           )}
                           {(status.key === "rejected" || status.key === "proposed") && (

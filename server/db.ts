@@ -314,7 +314,17 @@ export async function getAnalyticsSummary(brandId: number) {
   const platformCounts: Record<string, number> = {};
   allJobs.filter(j => j.publishStatus === "published").forEach(j => { platformCounts[j.platform] = (platformCounts[j.platform] || 0) + 1; });
   const pillarCounts: Record<string, number> = {};
-  allIdeas.forEach(i => { if (i.pillarId) pillarCounts[String(i.pillarId)] = (pillarCounts[String(i.pillarId)] || 0) + 1; });
+  // Need pillar names — fetch them
+  const db2 = await getDb();
+  const pillarRows = db2 ? await db2.select().from(contentPillars).where(eq(contentPillars.brandId, brandId)) : [];
+  const pillarNameMap: Record<number, string> = {};
+  pillarRows.forEach(p => { pillarNameMap[p.id] = p.name; });
+  allIdeas.forEach(i => {
+    if (i.pillarId) {
+      const name = pillarNameMap[i.pillarId] || `Pillar ${i.pillarId}`;
+      pillarCounts[name] = (pillarCounts[name] || 0) + 1;
+    }
+  });
   return {
     totalIdeas: allIdeas.length,
     approvedIdeas: allIdeas.filter(i => i.status === "approved").length,
@@ -322,6 +332,7 @@ export async function getAnalyticsSummary(brandId: number) {
     publishedPackages: allPackages.filter(p => p.status === "approved_for_publish").length,
     totalPublished: allJobs.filter(j => j.publishStatus === "published").length,
     platformBreakdown: platformCounts,
+    pillarBreakdown: pillarCounts,
     ideaStatusBreakdown: {
       proposed: allIdeas.filter(i => i.status === "proposed").length,
       approved: allIdeas.filter(i => i.status === "approved").length,

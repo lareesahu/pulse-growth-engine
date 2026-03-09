@@ -331,6 +331,12 @@ const contentRouter = router({
     await updateContentPackage(input.id, { status: "archived" });
     return { success: true };
   }),
+  resetStuckPackages: protectedProcedure.input(z.object({ brandId: z.number() })).mutation(async ({ input }) => {
+    const pkgs = await getContentPackagesByBrand(input.brandId);
+    const stuck = pkgs.filter(p => p.status === "generating" || p.status === "pending_generation");
+    await Promise.all(stuck.map(p => updateContentPackage(p.id, { status: "needs_revision" })));
+    return { count: stuck.length };
+  }),
   approvePackage: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
     await updateContentPackage(input.id, { status: "approved_for_publish" });
     return { success: true };
