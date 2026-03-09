@@ -1,0 +1,31 @@
+{
+  "query": "\nSELECT pv.id, pv.platform, pv.title, LEFT(pv.body, 300) as body_preview, LENGTH(pv.body) as body_length\nFROM platform_variants pv\nJOIN content_packages cp ON cp.id = pv.contentPackageId\nJOIN ideas i ON i.id = cp.ideaId\nWHERE i.title LIKE '%Top Industry Trends%'\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute \nSELECT pv.id, pv.platform, pv.title, LEFT(pv.body, 300) as body_preview, LENGTH(pv.body) as body_length\nFROM platform_variants pv\nJOIN content_packages cp ON cp.id = pv.contentPackageId\nJOIN ideas i ON i.id = cp.ideaId\nWHERE i.title LIKE '%Top Industry Trends%'\nLIMIT 10;\n",
+  "rows": [
+    {
+      "id": "60007",
+      "platform": "linkedin",
+      "title": "Top Industry Trends Shaping Brand Strategy in [Year]",
+      "body_preview": "In [Year], the branding industry is evolving at a rapid pace. Several trends are emerging that can significantly impact brand strategies. First, consumer preferences are shifting towards sustainable and ethical brands. A recent study found that a large percentage of consumers are willing to pay more",
+      "body_length": "1114"
+    },
+    {
+      "id": "60008",
+      "platform": "webflow",
+      "title": "Top Industry Trends Shaping Brand Strategy in [Year]: How to Stay Competitive",
+      "body_preview": "In [Year], the branding industry is witnessing several significant trends that are reshaping brand strategies. One of the most prominent trends is the change in consumer preferences. Today's consumers are more conscious about the brands they support. They are looking for brands that not only offer q",
+      "body_length": "2525"
+    },
+    {
+      "id": "60009",
+      "platform": "quora",
+      "title": "Discover the top industry trends shaping brand strategy in [Year] and learn how to adapt for a competitive edge.",
+      "body_preview": "In [Year], several key trends are shaping brand strategy. Firstly, consumer preferences are changing. Consumers are now more conscious about the brands they support, preferring those with strong environmental and social responsibility. A study showed that many are willing to pay more for sustainable",
+      "body_length": "913"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tplatform\ttitle\tbody_preview\tbody_length\n60007\tlinkedin\tTop Industry Trends Shaping Brand Strategy in [Year]\tIn [Year], the branding industry is evolving at a rapid pace. Several trends are emerging that can significantly impact brand strategies. First, consumer preferences are shifting towards sustainable and ethical brands. A recent study found that a large percentage of consumers are willing to pay more\t1114\n60008\twebflow\tTop Industry Trends Shaping Brand Strategy in [Year]: How to Stay Competitive\tIn [Year], the branding industry is witnessing several significant trends that are reshaping brand strategies. One of the most prominent trends is the change in consumer preferences. Today's consumers are more conscious about the brands they support. They are looking for brands that not only offer q\t2525\n60009\tquora\tDiscover the top industry trends shaping brand strategy in [Year] and learn how to adapt for a competitive edge.\tIn [Year], several key trends are shaping brand strategy. Firstly, consumer preferences are changing. Consumers are now more conscious about the brands they support, preferring those with strong environmental and social responsibility. A study showed that many are willing to pay more for sustainable\t913\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Copy, RefreshCw, Sparkles, Rocket, Image, FileText, CheckCircle, Clock } from "lucide-react";
+import { ArrowLeft, Copy, RefreshCw, Sparkles, Rocket, Image, FileText, CheckCircle, Clock, ShieldCheck, AlertTriangle, XCircle } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "wouter";
 import { toast } from "sonner";
@@ -36,6 +36,12 @@ export default function ContentDetail() {
   // Fetch idea directly so we can show info even when package is empty/stuck
   const { data: idea } = trpc.idea.get.useQuery({ id: ideaId! }, { enabled: !!ideaId && isIdeaRef === true });
   const [retrying, setRetrying] = useState(false);
+
+  const { data: inspectionReports = [] } = trpc.inspector.getReports.useQuery(
+    { contentPackageId: pkg?.id ?? 0 },
+    { enabled: !!pkg?.id }
+  );
+  const latestReport = inspectionReports[inspectionReports.length - 1] as any;
 
   const generateVariants = trpc.content.generate.useMutation();
   const generateImages = trpc.content.generateImage.useMutation();
@@ -216,6 +222,7 @@ export default function ContentDetail() {
               <TabsTrigger value="blog" className="text-xs px-3"><FileText size={13} className="mr-1 hidden sm:inline" />Blog</TabsTrigger>
               <TabsTrigger value="variants" className="text-xs px-3"><Sparkles size={13} className="mr-1 hidden sm:inline" />Variants ({variants.length})</TabsTrigger>
               <TabsTrigger value="assets" className="text-xs px-3"><Image size={13} className="mr-1 hidden sm:inline" />Assets ({assets.length})</TabsTrigger>
+              <TabsTrigger value="inspector" className="text-xs px-3"><ShieldCheck size={13} className="mr-1 hidden sm:inline" />Inspector</TabsTrigger>
             </TabsList>
           </div>
 
@@ -336,6 +343,99 @@ export default function ContentDetail() {
                     </CardContent>
                   </Card>
                 ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Inspector Report */}
+          <TabsContent value="inspector" className="mt-4">
+            {!latestReport ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <ShieldCheck size={32} className="mx-auto mb-3 opacity-30" />
+                <p className="text-sm">No inspection report yet.</p>
+                <p className="text-xs mt-1">Run the pipeline with Inspector enabled to generate a quality report.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Score overview */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <Card className="border-border bg-card">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Overall Score</p>
+                      <p className="text-3xl font-bold" style={{ color: latestReport.overallScore >= 70 ? "#22c55e" : latestReport.overallScore >= 50 ? "#eab308" : "#ef4444" }}>{latestReport.overallScore ?? "—"}</p>
+                      <p className="text-[10px] text-muted-foreground">/100</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-border bg-card">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Vitality</p>
+                      <p className="text-3xl font-bold" style={{ color: "#3AC1EC" }}>{latestReport.vitalityScore ?? "—"}</p>
+                      <p className="text-[10px] text-muted-foreground">/100</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-border bg-card col-span-2">
+                    <CardContent className="p-4">
+                      <p className="text-xs text-muted-foreground mb-2">Quality Dimensions</p>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                        {[
+                          { label: "Humanisation", value: latestReport.humanisationScore },
+                          { label: "Authenticity", value: latestReport.authenticityScore },
+                          { label: "Accuracy", value: latestReport.accuracyScore },
+                          { label: "Platform Fit", value: latestReport.platformFitScore },
+                          { label: "Originality", value: latestReport.originalityScore },
+                        ].map(d => (
+                          <div key={d.label} className="flex items-center justify-between">
+                            <span className="text-[10px] text-muted-foreground">{d.label}</span>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-16 h-1.5 rounded-full bg-border overflow-hidden">
+                                <div className="h-full rounded-full" style={{ width: `${((d.value ?? 0) / 10) * 100}%`, background: (d.value ?? 0) >= 7 ? "#22c55e" : (d.value ?? 0) >= 5 ? "#eab308" : "#ef4444" }} />
+                              </div>
+                              <span className="text-[10px] font-medium text-foreground w-6 text-right">{d.value ?? "—"}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Status badge */}
+                <div className="flex items-center gap-2">
+                  {latestReport.passed ? (
+                    <Badge className="bg-green-500/10 text-green-400 border-green-500/20"><CheckCircle size={10} className="mr-1" /> Passed Inspection</Badge>
+                  ) : (
+                    <Badge className="bg-red-500/10 text-red-400 border-red-500/20"><XCircle size={10} className="mr-1" /> Failed Inspection</Badge>
+                  )}
+                  <span className="text-[10px] text-muted-foreground">Inspected {new Date(latestReport.createdAt).toLocaleString()}</span>
+                </div>
+
+                {/* Issues */}
+                {latestReport.issues && Array.isArray(latestReport.issues) && latestReport.issues.length > 0 && (
+                  <Card className="border-border bg-card">
+                    <CardHeader className="pb-2"><CardTitle className="text-sm">Issues Found</CardTitle></CardHeader>
+                    <CardContent className="space-y-2">
+                      {(latestReport.issues as any[]).map((issue: any, i: number) => (
+                        <div key={i} className={`flex items-start gap-2 p-2 rounded-lg border ${
+                          issue.severity === "error" ? "border-red-500/20 bg-red-500/5" :
+                          issue.severity === "warning" ? "border-amber-500/20 bg-amber-500/5" :
+                          "border-border bg-card/50"
+                        }`}>
+                          {issue.severity === "error" ? <XCircle size={12} className="text-red-400 mt-0.5 flex-shrink-0" /> :
+                           issue.severity === "warning" ? <AlertTriangle size={12} className="text-amber-400 mt-0.5 flex-shrink-0" /> :
+                           <ShieldCheck size={12} className="text-blue-400 mt-0.5 flex-shrink-0" />}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-foreground">{issue.rule || issue.description}</p>
+                            {issue.suggestion && <p className="text-[10px] text-muted-foreground mt-0.5">{issue.suggestion}</p>}
+                          </div>
+                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 flex-shrink-0 ${
+                            issue.severity === "error" ? "text-red-400 border-red-500/30" :
+                            issue.severity === "warning" ? "text-amber-400 border-amber-500/30" : ""
+                          }`}>{issue.severity}</Badge>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             )}
           </TabsContent>

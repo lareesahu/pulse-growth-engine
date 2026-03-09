@@ -206,3 +206,23 @@
 - [x] BUG: Inspector scores all 0 but Overall Quality 100/100 — fixed: improved prompt, clamped scores, stripped [platform]: prefix from auto-fix
 - [x] BUG: Some packages stuck in "generating" status — resetStuckPackages already exists, plus background pipeline prevents new stuck packages
 - [x] FEATURE: Batch actions on Content page — checkboxes, select all, bulk approve/reject/archive
+
+## CRITICAL Production Issues (March 9 2026 — Full Workflow Test)
+- [x] BUG: Inspector scores/report NOT shown in content detail view — FIXED: added Inspector tab with Overall Score, Vitality, 5 dimension bars, pass/fail badge
+- [ ] BUG: Approve/Reject buttons missing from content detail page — can only approve from list
+- [ ] BUG: Key Points section empty on all content detail pages — not populated by LLM
+- [x] BUG: Run Pipeline button disappears when pipeline is running — FIXED: latestRun useEffect now detects completed state and shows done UI with Run Again button
+- [ ] BUG: Webflow publishing — need to test actual end-to-end publish and verify content appears on Webflow site
+- [ ] BUG: Content detail page Blog tab — need to verify blog variant content is shown correctly
+- [ ] BUG: Vitality scores very low (30, 60) — verify scoring logic is calibrated correctly
+- [ ] BUG: Stuck package "Fix" button — need to verify it actually resets and retriggers generation
+- [ ] BUG: Pipeline shows "1 Packages" in Last Pipeline Run despite generating multiple — counter not updating
+
+## CONFIRMED BUGS from Full Workflow Test (March 9 2026)
+- [x] CRITICAL: Publishing Center — FIXED: added publishToWebflow mutation with real Webflow CMS API v2 call, confirmation dialog, error handling
+- [x] CRITICAL: Publishing Center — FIXED: getPublishJobs now JOINs contentPackages to show content title on every job card
+- [ ] CRITICAL: Review Queue — Preview shows idea description text instead of actual variant body content.
+- [x] MAJOR: Content detail page — FIXED: Inspector tab added with full score display; Approve/Reject buttons already exist in header
+- [x] MAJOR: Publishing Center — FIXED: "Push to Webflow" button added, calls Webflow CMS API v2 with field mapping
+- [ ] MINOR: First two Review Queue items have no inspector scores (no vitality/dimension scores shown).
+- [ ] MINOR: Assets tab shows image prompt placeholder but no generated image.

@@ -85,6 +85,7 @@ CRITICAL RULES:
 - Do NOT use markdown formatting (**, ##, *, em-dashes) in any content.
 - Write naturally as a human would. Avoid AI filler phrases.
 - Each platform variant must be tailored to that platform's style and audience.
+- NEVER use placeholder text like [Year], [Brand Name], [Company], [X%], [Number]. Use specific real values (e.g. "2026" not "[Year]").
 
 Return ONLY valid JSON with this structure:
 {
@@ -421,7 +422,9 @@ ${promptExamples}
 
 Return JSON: { "ideas": [{ "title": "...", "angle": "...", "pillar": "pillar name", "platforms": ["linkedin", "instagram", "webflow", "wechat", "blog"], "funnelStage": "awareness|consideration|conversion|retention", "summary": "2-sentence summary" }] }
 
-IMPORTANT: platforms must only use these exact values: linkedin, instagram, webflow, wechat, blog, tiktok, facebook, medium, xiaohongshu, reddit, quora. Never use any other platform name.` },
+CRITICAL RULES:
+- NEVER use placeholder text like [Year], [Brand Name], [Company], [X%], [Number] in titles or content. Use specific real values (e.g. "2026" not "[Year]", "${brand.name}" not "[Brand Name]").
+- platforms must only use these exact values: linkedin, instagram, webflow, wechat, blog, tiktok, facebook, medium, xiaohongshu, reddit, quora. Never use any other platform name.` },
       ],
       response_format: { type: "json_object" } as any,
     });

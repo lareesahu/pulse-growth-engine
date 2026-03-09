@@ -127,11 +127,27 @@ export default function Dashboard() {
     }
   }, [runStatus]);
 
-  // On mount, check if a pipeline is already running (e.g. user switched tabs and came back)
+  // On mount, check if a pipeline is already running or recently completed (e.g. user switched tabs and came back)
   useEffect(() => {
     if (!latestRun) return;
-    if ((latestRun as any).status === "running" && pipeline.status === "idle") {
+    const run = latestRun as any;
+    if (run.status === "running" && pipeline.status === "idle") {
+      // Pipeline is running on server — resume tracking
       setPipeline(p => ({ ...p, status: "running", currentStep: 0, stepLabel: "Resuming..." }));
+    } else if ((run.status === "completed" || run.status === "partial") && pipeline.status === "idle") {
+      // Pipeline finished while user was away — show completed state briefly, then reset to idle so they can run again
+      const completedRecently = run.completedAt && (Date.now() - new Date(run.completedAt).getTime()) < 5 * 60 * 1000; // 5 min
+      if (completedRecently) {
+        setPipeline({
+          status: "done",
+          currentStep: 5,
+          stepLabel: "Ready to Review",
+          ideasGenerated: run.ideasGenerated ?? 0,
+          packagesGenerated: run.packagesGenerated ?? 0,
+          variantsGenerated: run.packagesGenerated ?? 0,
+          readyForReview: run.packagesPassedInspection ?? 0,
+        });
+      }
     }
   }, [latestRun]);
 

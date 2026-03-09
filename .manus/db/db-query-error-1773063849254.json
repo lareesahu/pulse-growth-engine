@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT pv.id, pv.platform, pv.title, LEFT(pv.body, 300) as body_preview, LENGTH(pv.body) as body_length\nFROM platform_variants pv\nWHERE pv.id IN (\n  SELECT pv2.id FROM platform_variants pv2\n  JOIN content_packages cp ON cp.id = pv2.content_package_id\n  JOIN ideas i ON i.id = cp.idea_id\n  WHERE i.title LIKE '%Top Industry Trends%'\n  LIMIT 5\n)\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute \nSELECT pv.id, pv.platform, pv.title, LEFT(pv.body, 300) as body_preview, LENGTH(pv.body) as body_length\nFROM platform_variants pv\nWHERE pv.id IN (\n  SELECT pv2.id FROM platform_variants pv2\n  JOIN content_packages cp ON cp.id = pv2.content_package_id\n  JOIN ideas i ON i.id = cp.idea_id\n  WHERE i.title LIKE '%Top Industry Trends%'\n  LIMIT 5\n)\nLIMIT 10;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'pv2.content_package_id' in 'on clause'"
+  ]
+}

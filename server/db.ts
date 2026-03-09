@@ -278,7 +278,28 @@ export async function upsertIntegration(brandId: number, platform: string, data:
 // ─── Publish Jobs ─────────────────────────────────────────────────────────────
 export async function getPublishJobs(brandId: number) {
   const db = await getDb(); if (!db) return [];
-  return db.select().from(publishJobs).where(eq(publishJobs.brandId, brandId)).orderBy(desc(publishJobs.createdAt));
+  const jobs = await db.select().from(publishJobs).where(eq(publishJobs.brandId, brandId)).orderBy(desc(publishJobs.createdAt));
+  // Enrich with content title and variant body for display
+  const enriched = await Promise.all(jobs.map(async (job) => {
+    let contentTitle: string | null = null;
+    let variantBody: string | null = null;
+    if (job.contentPackageId) {
+      const pkgs = await db!.select({ masterHook: contentPackages.masterHook, ideaId: contentPackages.ideaId }).from(contentPackages).where(eq(contentPackages.id, job.contentPackageId)).limit(1);
+      if (pkgs[0]) {
+        contentTitle = pkgs[0].masterHook || null;
+        if (!contentTitle && pkgs[0].ideaId) {
+          const ideaRows = await db!.select({ title: ideas.title }).from(ideas).where(eq(ideas.id, pkgs[0].ideaId)).limit(1);
+          contentTitle = ideaRows[0]?.title || null;
+        }
+      }
+    }
+    if (job.variantId) {
+      const vars = await db!.select({ body: platformVariants.body, caption: platformVariants.caption }).from(platformVariants).where(eq(platformVariants.id, job.variantId)).limit(1);
+      if (vars[0]) variantBody = vars[0].body || vars[0].caption || null;
+    }
+    return { ...job, contentTitle, variantBody };
+  }));
+  return enriched;
 }
 export async function createPublishJob(data: InsertPublishJob) {
   const db = await getDb(); if (!db) throw new Error("DB not available");

@@ -513,9 +513,93 @@ const publishingRouter = router({
   }),
 
   retry: protectedProcedure.input(z.object({ jobId: z.number() })).mutation(async ({ input }) => {
-    const jobs = await getPublishJobs(0); // We'll get by id differently
     await updatePublishJob(input.jobId, { publishStatus: "queued", lastAttemptAt: new Date() });
     return { success: true };
+  }),
+
+  // Publish a queued job directly to Webflow CMS
+  publishToWebflow: protectedProcedure.input(z.object({
+    jobId: z.number(),
+    brandId: z.number(),
+  })).mutation(async ({ ctx, input }) => {
+    // Get the job details
+    const allJobs = await getPublishJobs(input.brandId);
+    const job = allJobs.find((j: any) => j.id === input.jobId);
+    if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "Publish job not found" });
+    if (job.platform !== "webflow") throw new TRPCError({ code: "BAD_REQUEST", message: "This job is not for Webflow" });
+
+    // Get Webflow integration credentials
+    const integrations = await getIntegrations(input.brandId);
+    const webflowIntegration = integrations.find((i: any) => i.platform === "webflow" && i.status === "connected");
+    if (!webflowIntegration?.apiKey) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Webflow not connected. Configure it in Settings → Integrations." });
+
+    // Get field mapping
+    const fieldMapping = await getWebflowFieldMapping(input.brandId);
+    if (!fieldMapping?.collectionId) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Webflow collection not mapped. Configure it in Settings → Integrations → Webflow." });
+
+    // Build the CMS item fields from the variant body
+    const fieldData: Record<string, any> = {};
+    const mapping = (fieldMapping.fieldMapping as Record<string, string>) || {};
+
+    // Map our content fields to Webflow field slugs
+    if (mapping.name && job.contentTitle) fieldData[mapping.name] = job.contentTitle;
+    if (mapping.body && job.variantBody) fieldData[mapping.body] = job.variantBody;
+    if (mapping.slug && job.contentTitle) {
+      fieldData[mapping.slug] = job.contentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 80);
+    }
+    // Always set a name/slug if not mapped
+    if (!fieldData.name && job.contentTitle) fieldData.name = job.contentTitle;
+    if (!fieldData.slug && job.contentTitle) {
+      fieldData.slug = job.contentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 80) + "-" + Date.now().toString(36);
+    }
+
+    // Mark as publishing
+    await updatePublishJob(input.jobId, { publishStatus: "publishing", lastAttemptAt: new Date() });
+
+    try {
+      // Create CMS item in Webflow
+      const response = await fetch(`https://api.webflow.com/v2/collections/${fieldMapping.collectionId}/items`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${webflowIntegration.apiKey}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ fieldData, isDraft: false }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        await updatePublishJob(input.jobId, { publishStatus: "failed", errorLog: `Webflow API error ${response.status}: ${errText.slice(0, 300)}` });
+        throw new TRPCError({ code: "BAD_REQUEST", message: `Webflow API error: ${response.status} — ${errText.slice(0, 200)}` });
+      }
+
+      const data = await response.json();
+      const webflowItemId = data.id || data.items?.[0]?.id || "created";
+
+      // Mark as published
+      await updatePublishJob(input.jobId, {
+        publishStatus: "published",
+        publishedAt: new Date(),
+        errorLog: null,
+      });
+      if (job.variantId) await updateVariant(job.variantId, { status: "published" });
+
+      await logAudit({
+        brandId: input.brandId,
+        actorUserId: ctx.user.id,
+        entityType: "publish_job",
+        entityId: input.jobId,
+        action: "published",
+        description: `Published to Webflow CMS: ${job.contentTitle || "item"} (ID: ${webflowItemId})`,
+      });
+
+      return { success: true, webflowItemId };
+    } catch (err: any) {
+      if (err instanceof TRPCError) throw err;
+      await updatePublishJob(input.jobId, { publishStatus: "failed", errorLog: err.message });
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: err.message });
+    }
   }),
 });
 

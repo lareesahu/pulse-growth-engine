@@ -153,7 +153,20 @@ function ContentCard({ item, selected, onToggleSelect, onApprove, onReject }: {
               {variants.map((v: any) => (
                 <TabsContent key={v.id} value={v.platform} className="mt-2">
                   <div className="bg-white/5 rounded-lg p-3 max-h-48 overflow-y-auto">
-                    <p className="text-white/70 text-xs leading-relaxed whitespace-pre-wrap">{v.body || v.caption || v.headline || "No content generated yet"}</p>
+                    {(() => {
+                      const content = v.body || v.caption || v.headline || "";
+                      // Detect stale/empty content: body is just the idea title (< 100 chars and matches title)
+                      const isStale = !content || content.length < 100;
+                      if (isStale) {
+                        return (
+                          <div className="flex items-center gap-2 text-amber-400/70">
+                            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                            <p className="text-xs">Content too short or not generated yet. Regenerate this package from the Content page.</p>
+                          </div>
+                        );
+                      }
+                      return <p className="text-white/70 text-xs leading-relaxed whitespace-pre-wrap">{content}</p>;
+                    })()}
                   </div>
                 </TabsContent>
               ))}

@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT pv.id, pv.platform, pv.title, LEFT(pv.body, 200) as body_preview, LENGTH(pv.body) as body_length, pv.status\nFROM platform_variants pv\nJOIN content_packages cp ON pv.packageId = cp.id\nJOIN ideas i ON cp.ideaId = i.id\nWHERE i.title LIKE '%Top Industry Trends%'\nORDER BY pv.id\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute \nSELECT pv.id, pv.platform, pv.title, LEFT(pv.body, 200) as body_preview, LENGTH(pv.body) as body_length, pv.status\nFROM platform_variants pv\nJOIN content_packages cp ON pv.packageId = cp.id\nJOIN ideas i ON cp.ideaId = i.id\nWHERE i.title LIKE '%Top Industry Trends%'\nORDER BY pv.id\nLIMIT 10;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'pv.packageid' in 'on clause'"
+  ]
+}
