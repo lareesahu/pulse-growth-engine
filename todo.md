@@ -156,3 +156,8 @@
 - [x] MAJOR Bug #3: Packages stuck in Generating — added resetStuckPackages mutation + amber banner with Fix button in Content tab
 - [x] MAJOR Bug #4: Generate button no feedback — now shows amber Generating... spinner + toast immediately on click
 - [x] MINOR Bug #5: Analytics pillar chart empty — fixed: getAnalyticsSummary now returns pillarBreakdown with pillar names; Analytics page uses it
+
+## Retest Report Fixes (March 9 2026)
+- [x] CRITICAL Bug #7: platform_variants SQL insertion error — fixed: pre-serialize hashtags JSON array in createVariant, also fixed keyPoints/failedDimensions/issues/fixedContent
+- [x] CRITICAL Bug #1 regression: Content Detail now fetches idea directly and shows title/angle + Generate button even when no package exists
+- [x] MAJOR: Reset 18 stuck packages to needs_revision via SQL; ContentDetail shows amber Regenerate banner for stuck packages

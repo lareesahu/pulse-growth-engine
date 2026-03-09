@@ -33,6 +33,10 @@ export default function ContentDetail() {
     ? trpc.content.getPackage.useQuery({ ideaId: ideaId! }, { enabled: !!ideaId })
     : trpc.content.getPackageById.useQuery({ id: packageId! }, { enabled: !!packageId });
 
+  // Fetch idea directly so we can show info even when package is empty/stuck
+  const { data: idea } = trpc.idea.get.useQuery({ id: ideaId! }, { enabled: !!ideaId && isIdeaRef === true });
+  const [retrying, setRetrying] = useState(false);
+
   const generateVariants = trpc.content.generate.useMutation();
   const generateImages = trpc.content.generateImage.useMutation();
   const approveVariant = trpc.content.updateVariant.useMutation({ onSuccess: () => refetch() });
@@ -97,18 +101,52 @@ export default function ContentDetail() {
   }
 
   if (!pkg) {
+    const handleRetryGenerate = async () => {
+      if (!ideaId) return;
+      setRetrying(true);
+      try {
+        await generateVariants.mutateAsync({ ideaId });
+        toast.success("Content generation started! Refresh in a moment.");
+        setTimeout(() => refetch(), 3000);
+      } catch (e: any) {
+        toast.error(e.message || "Failed to start generation");
+      } finally {
+        setRetrying(false);
+      }
+    };
     return (
       <AppLayout brandId={activeBrandId} onBrandChange={setActiveBrandId}>
-        <div className="p-6">
+        <div className="p-6 space-y-4">
           <Link href="/ideas">
             <Button variant="ghost" size="sm"><ArrowLeft size={14} className="mr-2" /> Back to Ideas</Button>
           </Link>
-          <div className="text-center py-12 text-muted-foreground">
-            <p className="mb-4">No content package found. Generate content from an approved idea first.</p>
-            <Button asChild style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
-              <Link href="/ideas">Go to Ideas Board</Link>
-            </Button>
-          </div>
+          {idea ? (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-border bg-card p-4 space-y-2">
+                <h2 className="text-base font-bold text-foreground">{idea.title}</h2>
+                {idea.angle && <p className="text-sm text-muted-foreground">{idea.angle}</p>}
+                <div className="flex gap-2 flex-wrap">
+                  <Badge variant="outline" className="text-xs">{idea.funnelStage}</Badge>
+                  <Badge variant="outline" className="text-xs">{idea.status}</Badge>
+                </div>
+              </div>
+              <div className="text-center py-8 text-muted-foreground space-y-3">
+                <Sparkles size={32} className="mx-auto opacity-30" />
+                <p className="text-sm">No content package yet. Click below to generate content for this idea.</p>
+                <Button onClick={handleRetryGenerate} disabled={retrying} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+                  {retrying ? <RefreshCw size={14} className="mr-2 animate-spin" /> : <Sparkles size={14} className="mr-2" />}
+                  {retrying ? "Generating..." : "Generate Content Package"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground space-y-3">
+              <p className="text-sm">No content package found for this idea.</p>
+              <Button asChild style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+                <Link href="/ideas">Go to Ideas Board</Link>
+              </Button>
+            </div>
+          )}
         </div>
       </AppLayout>
     );
@@ -116,10 +154,35 @@ export default function ContentDetail() {
 
   const variants = (pkg as any).variants || [];
   const assets = (pkg as any).assets || [];
+  const isStuck = (pkg.status === 'needs_revision' || pkg.status === 'generating') && variants.length === 0 && !pkg.masterHook;
+
+  const handleRetryFromPackage = async () => {
+    setRetrying(true);
+    try {
+      await generateVariants.mutateAsync({ ideaId: pkg.ideaId });
+      toast.success("Regenerating content package...");
+      setTimeout(() => refetch(), 4000);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to regenerate");
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   return (
     <AppLayout brandId={activeBrandId} onBrandChange={setActiveBrandId}>
       <div className="p-4 md:p-6 space-y-4 md:space-y-5">
+        {/* Stuck package banner */}
+        {isStuck && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 flex items-center justify-between gap-3">
+            <p className="text-xs text-amber-400">This package has no content yet (generation failed previously). Click Regenerate to retry.</p>
+            <Button size="sm" className="text-xs shrink-0" onClick={handleRetryFromPackage} disabled={retrying}
+              style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+              {retrying ? <RefreshCw size={12} className="mr-1 animate-spin" /> : <Sparkles size={12} className="mr-1" />}
+              {retrying ? "Regenerating..." : "Regenerate"}
+            </Button>
+          </div>
+        )}
         {/* Header */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">

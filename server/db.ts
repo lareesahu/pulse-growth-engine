@@ -218,7 +218,9 @@ export async function createContentPackage(data: InsertContentPackage) {
 }
 export async function updateContentPackage(id: number, data: Partial<InsertContentPackage>) {
   const db = await getDb(); if (!db) throw new Error("DB not available");
-  return db.update(contentPackages).set(data).where(eq(contentPackages.id, id));
+  const safeData = { ...data } as any;
+  if (safeData.keyPoints != null && typeof safeData.keyPoints !== 'string') safeData.keyPoints = JSON.stringify(safeData.keyPoints);
+  return db.update(contentPackages).set(safeData).where(eq(contentPackages.id, id));
 }
 
 // ─── Platform Variants ────────────────────────────────────────────────────────
@@ -233,7 +235,12 @@ export async function getVariantById(id: number) {
 }
 export async function createVariant(data: InsertPlatformVariant) {
   const db = await getDb(); if (!db) throw new Error("DB not available");
-  return db.insert(platformVariants).values(data);
+  // mysql2 driver cannot serialize JS arrays for JSON columns directly — must pre-stringify
+  const safeData = {
+    ...data,
+    hashtags: data.hashtags != null ? (typeof data.hashtags === 'string' ? data.hashtags : JSON.stringify(data.hashtags)) as any : null,
+  };
+  return db.insert(platformVariants).values(safeData);
 }
 export async function updateVariant(id: number, data: Partial<InsertPlatformVariant>) {
   const db = await getDb(); if (!db) throw new Error("DB not available");
@@ -380,7 +387,11 @@ export async function deleteInspectorRule(id: number) {
 export async function createInspectionReport(data: InsertInspectionReport) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const [result] = await db.insert(inspectionReports).values(data).$returningId();
+  const safeData = { ...data } as any;
+  if (safeData.failedDimensions != null && typeof safeData.failedDimensions !== 'string') safeData.failedDimensions = JSON.stringify(safeData.failedDimensions);
+  if (safeData.issues != null && typeof safeData.issues !== 'string') safeData.issues = JSON.stringify(safeData.issues);
+  if (safeData.fixedContent != null && typeof safeData.fixedContent !== 'string') safeData.fixedContent = JSON.stringify(safeData.fixedContent);
+  const [result] = await db.insert(inspectionReports).values(safeData).$returningId();
   return result;
 }
 

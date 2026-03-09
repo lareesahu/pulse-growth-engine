@@ -1,0 +1,34 @@
+{
+  "query": "SHOW COLUMNS FROM platform_variants WHERE Field IN ('platform', 'formatType', 'status');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SHOW COLUMNS FROM platform_variants WHERE Field IN ('platform', 'formatType', 'status');",
+  "rows": [
+    {
+      "Field": "platform",
+      "Type": "enum('instagram','facebook','linkedin','tiktok','webflow','medium','xiaohongshu','wechat','reddit','quora')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "formatType",
+      "Type": "enum('caption','article','carousel_copy','reel_script','short_post','long_post')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "short_post",
+      "Extra": ""
+    },
+    {
+      "Field": "status",
+      "Type": "enum('draft','generated','needs_revision','approved','queued','published','failed','archived')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "draft",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nplatform\tenum('instagram','facebook','linkedin','tiktok','webflow','medium','xiaohongshu','wechat','reddit','quora')\tNO\t\tNULL\t\nformatType\tenum('caption','article','carousel_copy','reel_script','short_post','long_post')\tYES\t\tshort_post\t\nstatus\tenum('draft','generated','needs_revision','approved','queued','published','failed','archived')\tNO\t\tdraft\t\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}
