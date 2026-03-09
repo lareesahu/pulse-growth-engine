@@ -63,13 +63,13 @@ const DIMENSIONS = [
     description: "Fresh angle — not repetitive vs. past content",
   },
   {
-    key: "vitality",
-    label: "Vitality Score",
+    key: "virality",
+    label: "Virality Score",
     icon: Zap,
     color: "text-amber-400",
     bg: "bg-amber-400/10",
     border: "border-amber-400/30",
-    description: "Composite prediction of engagement and reach potential based on all dimensions + historical performance",
+    description: "Likelihood of content going viral — composite prediction of engagement, reach, and shareability potential",
   },
 ];
 
@@ -184,7 +184,7 @@ export default function InspectorSettings() {
                           <div className="flex items-center justify-between gap-2 mb-1">
                             <div>
                               <span className="text-white font-medium text-sm">{dim.label}</span>
-                              {dim.key === "vitality" && (
+                              {dim.key === "virality" && (
                                 <Badge className="ml-2 text-[10px] bg-amber-400/20 text-amber-400 border-amber-400/30">Composite</Badge>
                               )}
                             </div>
@@ -213,9 +213,9 @@ export default function InspectorSettings() {
                             </div>
                           </div>
 
-                          {dim.key !== "vitality" && (
+                          {dim.key !== "virality" && (
                             <div className="mt-3 flex items-center gap-2">
-                              <span className="text-white/40 text-xs">Weight in Vitality:</span>
+                              <span className="text-white/40 text-xs">Weight in Virality:</span>
                               <div className="flex gap-1">
                                 {[1, 2, 3].map((w) => (
                                   <button key={w}
@@ -341,10 +341,10 @@ export default function InspectorSettings() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-white text-sm flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-amber-400" />
-                  Vitality Prediction Accuracy
+                  Virality Prediction Accuracy
                 </CardTitle>
                 <CardDescription className="text-white/50 text-xs">
-                  The learning engine compares Vitality Score predictions against actual post performance. 
+                  The learning engine compares Virality Score predictions against actual post performance. 
                   As more posts are published and performance data is logged, predictions become more accurate over time.
                 </CardDescription>
               </CardHeader>
@@ -380,7 +380,7 @@ export default function InspectorSettings() {
                   <p className="text-white/60 text-xs font-medium mb-2">How the Learning Engine Works</p>
                   <div className="space-y-2">
                     {[
-                      { icon: CheckCircle2, color: "text-emerald-400", text: "Every generated content package receives a Vitality Score prediction (1–100)" },
+                      { icon: CheckCircle2, color: "text-emerald-400", text: "Every generated content package receives a Virality Score prediction (1–100)" },
                       { icon: TrendingUp, color: "text-[#3AC1EC]", text: "When you log actual performance data (views, likes, shares) for published posts, the engine compares prediction vs. reality" },
                       { icon: Brain, color: "text-purple-400", text: "Weekly, the model recalibrates — patterns that consistently outperform get weighted higher in future predictions" },
                       { icon: AlertCircle, color: "text-amber-400", text: "The prediction accuracy score improves over time as more data is collected" },

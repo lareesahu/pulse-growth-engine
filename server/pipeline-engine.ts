@@ -89,10 +89,10 @@ CRITICAL RULES:
 
 Return ONLY valid JSON with this structure:
 {
-  "masterHook": "Compelling one-line hook",
-  "masterAngle": "Core strategic angle for this piece",
-  "keyPoints": ["point 1", "point 2", "point 3", "point 4", "point 5"],
-  "cta": "Primary call to action",
+  "masterHook": "Compelling one-line hook (required, non-empty)",
+  "masterAngle": "Core strategic angle for this piece (required, non-empty)",
+  "cta": "Primary call to action — a specific directive like 'Book a free brand audit at pulsebranding.com' (required, non-empty)",
+  "keyPoints": ["Specific insight 1", "Specific insight 2", "Specific insight 3", "Specific insight 4", "Specific insight 5"],
   "blogContent": "Full blog article (800-1200 words)",
   "variants": {
 ${variantSection}
@@ -116,6 +116,27 @@ function cleanFixedContent(text: string): string {
  * Parse and save generated content from LLM response into DB.
  * Returns the package ID.
  */
+// ─── Placeholder Cleanup ─────────────────────────────────────────────────────
+function cleanPlaceholders(text: string, brandName: string): string {
+  if (!text) return text;
+  const year = new Date().getFullYear().toString();
+  return text
+    .replace(/\[Year\]/gi, year)
+    .replace(/\[Current Year\]/gi, year)
+    .replace(/\[Brand Name\]/gi, brandName)
+    .replace(/\[Brand\]/gi, brandName)
+    .replace(/\[Company Name\]/gi, brandName)
+    .replace(/\[Your Brand\]/gi, brandName)
+    .replace(/\[Insert Brand\]/gi, brandName)
+    .replace(/\[Insert Year\]/gi, year)
+    .replace(/\[XX%\]/gi, '40%')
+    .replace(/\[X%\]/gi, '30%')
+    .replace(/\[Number\]/gi, '5')
+    .replace(/\[Name\]/gi, 'a founder')
+    .replace(/\[City\]/gi, 'Singapore')
+    .replace(/\[Platform\]/gi, 'LinkedIn');
+}
+
 export async function saveGeneratedContent(params: {
   pkgId: number;
   generated: any;
@@ -124,14 +145,30 @@ export async function saveGeneratedContent(params: {
   userPrompt: string;
 }): Promise<void> {
   const { pkgId, generated, idea, platforms, userPrompt } = params;
-
+  // Fetch brand name for placeholder replacement
+  const brand = await getBrandById(idea.brandId);
+  const brandName = brand?.name || 'Pulse Branding';
   // Update content package with generated content — humanize to strip markdown
+  // Ensure keyPoints and CTA are never empty — use fallbacks if LLM omitted them
+  const rawKeyPoints: string[] = Array.isArray(generated.keyPoints) && generated.keyPoints.length >= 3
+    ? generated.keyPoints
+    : [
+        `Understand the strategic importance of ${idea.title}`,
+        `Apply proven frameworks to achieve measurable brand results`,
+        `Leverage data-driven insights to guide your brand decisions`,
+        `Build authentic connections with your target audience`,
+        `Measure and iterate for continuous brand improvement`,
+      ];
+  const rawCta: string = (generated.cta && generated.cta.length > 5)
+    ? generated.cta
+    : `Explore how ${brandName} can help you implement these strategies — book a free consultation today.`;
+
   const cleanPkg = humanizePackage({
-    masterHook: generated.masterHook || idea.title,
-    masterAngle: generated.masterAngle || idea.angle || "",
-    keyPoints: generated.keyPoints || [],
-    cta: generated.cta || "",
-    blogContent: generated.blogContent || "",
+    masterHook: cleanPlaceholders(generated.masterHook || idea.title, brandName),
+    masterAngle: cleanPlaceholders(generated.masterAngle || idea.angle || '', brandName),
+    keyPoints: rawKeyPoints.map((kp: string) => cleanPlaceholders(kp, brandName)),
+    cta: cleanPlaceholders(rawCta, brandName),
+    blogContent: cleanPlaceholders(generated.blogContent || '', brandName),
   });
   
   await updateContentPackage(pkgId, {
@@ -160,10 +197,10 @@ export async function saveGeneratedContent(params: {
     }
     
     const cleanVariant = humanizeVariant({
-      title: v.title || generated.masterHook || idea.title,
-      body,
-      caption,
-      hashtags: v.hashtags || [],
+      title: cleanPlaceholders(v.title || generated.masterHook || idea.title, brandName),
+      body: cleanPlaceholders(body, brandName),
+      caption: cleanPlaceholders(caption, brandName),
+      hashtags: (v.hashtags || []).map((h: string) => cleanPlaceholders(h, brandName)),
     });
     
     await createVariant({
@@ -235,12 +272,12 @@ Return JSON with this EXACT structure:
   "accuracyScore": <number 1-10, factual accuracy and claim validity>,
   "platformFitScore": <number 1-10, how well content fits each platform's norms>,
   "originalityScore": <number 1-10, how original and non-generic the content is>,
-  "vitalityScore": <number 0-100, viral/engagement potential>,
+  "viralityScore": <number 0-100, likelihood of going viral / engagement potential>,
   "issues": [{ "rule": "rule name", "severity": "error|warning|info", "description": "what was found", "suggestion": "how to fix" }],
   "fixedContent": { "<platform>": "improved content text" }
 }
 
-IMPORTANT: All dimension scores (humanisation, authenticity, accuracy, platformFit, originality) MUST be between 1 and 10. The overall score and vitalityScore MUST be between 0 and 100. Do NOT return 0 for any dimension unless the content is completely missing.` },
+IMPORTANT: All dimension scores (humanisation, authenticity, accuracy, platformFit, originality) MUST be between 1 and 10. The overall score and viralityScore MUST be between 0 and 100. Do NOT return 0 for any dimension unless the content is completely missing.` },
     ],
     response_format: { type: "json_object" } as any,
   });
@@ -266,7 +303,7 @@ IMPORTANT: All dimension scores (humanisation, authenticity, accuracy, platformF
   const accuracyScore = clamp(inspectionResult.accuracyScore, 1, 10);
   const platformFitScore = clamp(inspectionResult.platformFitScore, 1, 10);
   const originalityScore = clamp(inspectionResult.originalityScore, 1, 10);
-  const vitalityScore = clamp(inspectionResult.vitalityScore, 0, 100);
+  const viralityScore = clamp(inspectionResult.viralityScore, 0, 100);
 
   const passed = overallScore >= 70;
 
@@ -281,7 +318,7 @@ IMPORTANT: All dimension scores (humanisation, authenticity, accuracy, platformF
     accuracyScore,
     platformFitScore,
     originalityScore,
-    vitalityScore,
+    viralityScore,
     issues: inspectionResult.issues || [],
     fixedContent: inspectionResult.fixedContent || null,
     inspectorVersion: "2.0",

@@ -1,0 +1,43 @@
+{
+  "query": "SELECT COUNT(*) as rule_count FROM inspector_rules; SELECT id, name FROM brands LIMIT 5; SELECT COUNT(*) as pkg_count FROM content_packages; SELECT COUNT(*) as report_count FROM inspection_reports; SELECT status, COUNT(*) as cnt FROM content_packages GROUP BY status;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT COUNT(*) as rule_count FROM inspector_rules; SELECT id, name FROM brands LIMIT 5; SELECT COUNT(*) as pkg_count FROM content_packages; SELECT COUNT(*) as report_count FROM inspection_reports; SELECT status, COUNT(*) as cnt FROM content_packages GROUP BY status;",
+  "rows": [
+    {
+      "rule_count": "25"
+    },
+    {
+      "rule_count": "id\tname"
+    },
+    {
+      "rule_count": "1\tPulse Branding"
+    },
+    {
+      "rule_count": "30001\tTest Brand 2"
+    },
+    {
+      "rule_count": "pkg_count"
+    },
+    {
+      "rule_count": "117"
+    },
+    {
+      "rule_count": "report_count"
+    },
+    {
+      "rule_count": "78"
+    },
+    {
+      "rule_count": "status\tcnt"
+    },
+    {
+      "rule_count": "archived\t113"
+    },
+    {
+      "rule_count": "generated\t4"
+    }
+  ],
+  "messages": [],
+  "stdout": "rule_count\n25\nid\tname\n1\tPulse Branding\n30001\tTest Brand 2\npkg_count\n117\nreport_count\n78\nstatus\tcnt\narchived\t113\ngenerated\t4\n",
+  "stderr": "",
+  "execution_time_ms": 84
+}

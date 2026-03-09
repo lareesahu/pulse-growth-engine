@@ -499,14 +499,14 @@ export async function seedDefaultThresholds(brandId: number) {
     { dimension: "accuracy", minScore: 8, weight: 3 },
     { dimension: "platformFit", minScore: 7, weight: 2 },
     { dimension: "originality", minScore: 7, weight: 2 },
-    { dimension: "vitality", minScore: 6, weight: 1 },
+    { dimension: "virality", minScore: 6, weight: 1 },
   ];
   for (const d of dimensions) {
     await upsertInspectorThreshold(brandId, d.dimension, { minScore: d.minScore, weight: d.weight });
   }
 }
 
-// ─── Vitality Predictions ─────────────────────────────────────────────────────
+// ─── Virality Predictions ─────────────────────────────────────────────────────
 export async function createVitalityPrediction(data: InsertVitalityPrediction) {
   const db = await getDb();
   if (!db) return;

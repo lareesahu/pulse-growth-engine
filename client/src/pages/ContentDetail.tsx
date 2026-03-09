@@ -49,6 +49,15 @@ export default function ContentDetail() {
   const schedulePublish = trpc.publishing.createJob.useMutation({
     onSuccess: () => { toast.success("Scheduled for publishing!"); utils.publishing.stats.invalidate(); }
   });
+  const approveForPublishing = trpc.pipeline.approveForPublishing.useMutation({
+    onSuccess: () => { toast.success("Approved and queued for publishing!"); refetch(); utils.publishing.stats.invalidate(); }
+  });
+  const rejectPackage = trpc.content.updatePackage.useMutation({
+    onSuccess: () => { toast.success("Package rejected."); refetch(); }
+  });
+  const inspectPackage = trpc.inspector.inspectPackage.useMutation({
+    onSuccess: () => { toast.success("Inspection complete!"); refetch(); utils.inspector.getReports.invalidate(); }
+  });
 
   const handleGenerateVariants = async () => {
     if (!pkg) return;
@@ -203,7 +212,7 @@ export default function ContentDetail() {
               </div>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button variant="outline" size="sm" className="flex-1 min-h-[44px] text-xs" onClick={handleGenerateVariants} disabled={generatingVariants}>
               {generatingVariants ? <RefreshCw size={13} className="mr-1.5 animate-spin" /> : <Sparkles size={13} className="mr-1.5" />}
               {generatingVariants ? "Generating..." : "Generate Variants"}
@@ -212,6 +221,22 @@ export default function ContentDetail() {
               {generatingImages ? <RefreshCw size={13} className="mr-1.5 animate-spin" /> : <Image size={13} className="mr-1.5" />}
               {generatingImages ? "Generating..." : "Images"}
             </Button>
+            {pkg.status !== 'approved_for_publish' && pkg.status !== 'needs_revision' && (
+              <Button size="sm" className="flex-1 min-h-[44px] text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={() => approveForPublishing.mutate({ contentPackageId: pkg.id })}
+                disabled={approveForPublishing.isPending}>
+                <CheckCircle size={13} className="mr-1.5" />
+                {approveForPublishing.isPending ? "Approving..." : "Approve"}
+              </Button>
+            )}
+            {pkg.status !== 'needs_revision' && (
+              <Button size="sm" variant="outline" className="flex-1 min-h-[44px] text-xs border-red-500/40 text-red-400 hover:bg-red-500/10"
+                onClick={() => rejectPackage.mutate({ id: pkg.id, status: 'needs_revision' })}
+                disabled={rejectPackage.isPending}>
+                <XCircle size={13} className="mr-1.5" />
+                {rejectPackage.isPending ? "Rejecting..." : "Reject"}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -350,10 +375,17 @@ export default function ContentDetail() {
           {/* Inspector Report */}
           <TabsContent value="inspector" className="mt-4">
             {!latestReport ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <ShieldCheck size={32} className="mx-auto mb-3 opacity-30" />
-                <p className="text-sm">No inspection report yet.</p>
-                <p className="text-xs mt-1">Run the pipeline with Inspector enabled to generate a quality report.</p>
+              <div className="text-center py-8 space-y-3">
+                <ShieldCheck size={32} className="mx-auto text-muted-foreground opacity-40" />
+                <p className="text-xs">Run the inspector to generate a quality score for this content package.</p>
+                <Button size="sm" variant="outline"
+                  onClick={() => inspectPackage.mutate({ contentPackageId: pkg.id, brandId: pkg.brandId })}
+                  disabled={inspectPackage.isPending}
+                  className="text-xs"
+                >
+                  {inspectPackage.isPending ? <RefreshCw size={13} className="mr-1.5 animate-spin" /> : <ShieldCheck size={13} className="mr-1.5" />}
+                  {inspectPackage.isPending ? "Inspecting..." : "Run Inspector"}
+                </Button>
               </div>
             ) : (
               <div className="space-y-4">
@@ -368,8 +400,8 @@ export default function ContentDetail() {
                   </Card>
                   <Card className="border-border bg-card">
                     <CardContent className="p-4 text-center">
-                      <p className="text-xs text-muted-foreground mb-1">Vitality</p>
-                      <p className="text-3xl font-bold" style={{ color: "#3AC1EC" }}>{latestReport.vitalityScore ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground mb-1">Virality</p>
+                      <p className="text-3xl font-bold" style={{ color: "#3AC1EC" }}>{latestReport.viralityScore ?? "—"}</p>
                       <p className="text-[10px] text-muted-foreground">/100</p>
                     </CardContent>
                   </Card>

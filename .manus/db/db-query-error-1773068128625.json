@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, title, description FROM ideas WHERE title LIKE '%[Year]%' OR description LIKE '%[Year]%' OR title LIKE '%[Brand%' OR description LIKE '%[Brand%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, title, description FROM ideas WHERE title LIKE '%[Year]%' OR description LIKE '%[Year]%' OR title LIKE '%[Brand%' OR description LIKE '%[Brand%';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'description' in 'where clause'"
+  ]
+}

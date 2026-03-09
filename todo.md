@@ -215,6 +215,7 @@
 - [ ] BUG: Webflow publishing — need to test actual end-to-end publish and verify content appears on Webflow site
 - [ ] BUG: Content detail page Blog tab — need to verify blog variant content is shown correctly
 - [ ] BUG: Vitality scores very low (30, 60) — verify scoring logic is calibrated correctly
+- [x] RENAME: "Vitality" → "Virality" throughout entire system (DB column renamed via SQL, schema updated, pipeline-engine.ts prompt updated, ContentDetail.tsx, InspectorSettings.tsx, ReviewQueue.tsx, ContentPackages.tsx all updated)
 - [ ] BUG: Stuck package "Fix" button — need to verify it actually resets and retriggers generation
 - [ ] BUG: Pipeline shows "1 Packages" in Last Pipeline Run despite generating multiple — counter not updating
 

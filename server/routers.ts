@@ -573,13 +573,15 @@ const publishingRouter = router({
     const webflowIntegration = integrations.find((i: any) => i.platform === "webflow" && i.status === "connected");
     if (!webflowIntegration?.apiKey) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Webflow not connected. Configure it in Settings → Integrations." });
 
-    // Get field mapping
+    // Get field mapping — check webflow_field_mappings first, then fall back to extraConfig.collectionId
     const fieldMapping = await getWebflowFieldMapping(input.brandId);
-    if (!fieldMapping?.collectionId) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Webflow collection not mapped. Configure it in Settings → Integrations → Webflow." });
+    const extraConfig = (webflowIntegration.extraConfig as Record<string, any>) || {};
+    const collectionId = fieldMapping?.collectionId || extraConfig.collectionId;
+    if (!collectionId) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Webflow collection not mapped. Enter your Blog Collection ID in Settings \u2192 Integrations \u2192 Webflow." });
 
     // Build the CMS item fields from the variant body
     const fieldData: Record<string, any> = {};
-    const mapping = (fieldMapping.fieldMapping as Record<string, string>) || {};
+    const mapping = (fieldMapping?.fieldMapping as Record<string, string>) || {};
 
     // Map our content fields to Webflow field slugs
     if (mapping.name && job.contentTitle) fieldData[mapping.name] = job.contentTitle;
@@ -598,7 +600,7 @@ const publishingRouter = router({
 
     try {
       // Create CMS item in Webflow
-      const response = await fetch(`https://api.webflow.com/v2/collections/${fieldMapping.collectionId}/items`, {
+      const response = await fetch(`https://api.webflow.com/v2/collections/${collectionId}/items`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${webflowIntegration.apiKey}`,
@@ -647,7 +649,9 @@ const publishingRouter = router({
     const webflowIntegration = integrations.find((i: any) => i.platform === "webflow" && i.status === "connected");
     if (!webflowIntegration?.apiKey) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Webflow not connected. Configure it in Settings → Integrations." });
     const fieldMapping = await getWebflowFieldMapping(input.brandId);
-    if (!fieldMapping?.collectionId) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Webflow collection not mapped. Configure it in Settings → Integrations → Webflow." });
+    const extraConfigAll = (webflowIntegration.extraConfig as Record<string, any>) || {};
+    const bulkCollectionId = fieldMapping?.collectionId || extraConfigAll.collectionId;
+    if (!bulkCollectionId) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Webflow collection not mapped. Enter your Blog Collection ID in Settings \u2192 Integrations \u2192 Webflow." });
     // Get all queued Webflow jobs
     const allJobs = await getPublishJobs(input.brandId);
     const webflowJobs = allJobs.filter((j: any) => j.platform === "webflow" && j.publishStatus === "queued");
@@ -655,7 +659,7 @@ const publishingRouter = router({
     let published = 0;
     let failed = 0;
     for (const job of webflowJobs) {
-      const mapping = (fieldMapping.fieldMapping as Record<string, string>) || {};
+      const mapping = (fieldMapping?.fieldMapping as Record<string, string>) || {};
       const fieldData: Record<string, any> = {};
       if (mapping.name && job.contentTitle) fieldData[mapping.name] = job.contentTitle;
       if (mapping.body && job.variantBody) fieldData[mapping.body] = job.variantBody;
@@ -664,7 +668,7 @@ const publishingRouter = router({
       if (!fieldData.slug && job.contentTitle) fieldData.slug = job.contentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 80) + "-" + Date.now().toString(36);
       await updatePublishJob(job.id, { publishStatus: "publishing", lastAttemptAt: new Date() });
       try {
-        const response = await fetch(`https://api.webflow.com/v2/collections/${fieldMapping.collectionId}/items`, {
+        const response = await fetch(`https://api.webflow.com/v2/collections/${bulkCollectionId}/items`, {
           method: "POST",
           headers: { Authorization: `Bearer ${webflowIntegration.apiKey}`, "Content-Type": "application/json", Accept: "application/json" },
           body: JSON.stringify({ fieldData, isDraft: false }),
@@ -873,6 +877,19 @@ const inspectorRouter = router({
   }),
 
   getReports: protectedProcedure.input(z.object({ contentPackageId: z.number() })).query(async ({ input }) => getInspectionReportsByPackage(input.contentPackageId)),
+  inspectPackage: protectedProcedure.input(z.object({
+    contentPackageId: z.number(),
+    brandId: z.number(),
+  })).mutation(async ({ input }) => {
+    const rules = await getAllInspectorRules(input.brandId);
+    if (!rules || rules.length === 0) throw new Error("No inspector rules configured for this brand");
+    const { passed, report } = await runInspector({
+      pkgId: input.contentPackageId,
+      brandId: input.brandId,
+      inspectorRules: rules,
+    });
+    return { passed, report };
+  }),
 });
 
 // ─── Pipeline Router ──────────────────────────────────────────────────────────

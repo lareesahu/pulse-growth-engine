@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, name FROM brands;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, name FROM brands;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Pulse Branding"
+    },
+    {
+      "id": "30001",
+      "name": "Test Brand 2"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n1\tPulse Branding\n30001\tTest Brand 2\n",
+  "stderr": "",
+  "execution_time_ms": 136
+}

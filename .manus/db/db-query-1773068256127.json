@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE platform_variants SET title = REPLACE(title, '[Brand Name]', 'Pulse Branding') WHERE title LIKE '%[Brand Name]%';\nUPDATE platform_variants SET body = REPLACE(body, '[Brand Name]', 'Pulse Branding') WHERE body LIKE '%[Brand Name]%';\nUPDATE platform_variants SET caption = REPLACE(caption, '[Brand Name]', 'Pulse Branding') WHERE caption LIKE '%[Brand Name]%';\nUPDATE content_packages SET masterHook = REPLACE(masterHook, '[Brand Name]', 'Pulse Branding') WHERE masterHook LIKE '%[Brand Name]%';\nUPDATE content_packages SET masterAngle = REPLACE(masterAngle, '[Brand Name]', 'Pulse Branding') WHERE masterAngle LIKE '%[Brand Name]%';\nUPDATE ideas SET title = REPLACE(title, '[Brand Name]', 'Pulse Branding') WHERE title LIKE '%[Brand Name]%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute UPDATE platform_variants SET title = REPLACE(title, '[Brand Name]', 'Pulse Branding') WHERE title LIKE '%[Brand Name]%';\nUPDATE platform_variants SET body = REPLACE(body, '[Brand Name]', 'Pulse Branding') WHERE body LIKE '%[Brand Name]%';\nUPDATE platform_variants SET caption = REPLACE(caption, '[Brand Name]', 'Pulse Branding') WHERE caption LIKE '%[Brand Name]%';\nUPDATE content_packages SET masterHook = REPLACE(masterHook, '[Brand Name]', 'Pulse Branding') WHERE masterHook LIKE '%[Brand Name]%';\nUPDATE content_packages SET masterAngle = REPLACE(masterAngle, '[Brand Name]', 'Pulse Branding') WHERE masterAngle LIKE '%[Brand Name]%';\nUPDATE ideas SET title = REPLACE(title, '[Brand Name]', 'Pulse Branding') WHERE title LIKE '%[Brand Name]%';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 118
+}

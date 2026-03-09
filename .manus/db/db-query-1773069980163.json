@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) as rule_count FROM inspector_rules",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT COUNT(*) as rule_count FROM inspector_rules",
+  "rows": [
+    {
+      "rule_count": "25"
+    }
+  ],
+  "messages": [],
+  "stdout": "rule_count\n25\n",
+  "stderr": "",
+  "execution_time_ms": 69
+}

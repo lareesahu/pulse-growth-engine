@@ -1,0 +1,80 @@
+{
+  "query": "SELECT id, brandId, status, stage, ideasGenerated, ideasApproved, packagesGenerated, packagesInspected, packagesPassedInspection, readyForReview, startedAt, completedAt FROM pipeline_runs ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, brandId, status, stage, ideasGenerated, ideasApproved, packagesGenerated, packagesInspected, packagesPassedInspection, readyForReview, startedAt, completedAt FROM pipeline_runs ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "120001",
+      "brandId": "1",
+      "status": "running",
+      "stage": "generating_content",
+      "ideasGenerated": "10",
+      "ideasApproved": "10",
+      "packagesGenerated": "1",
+      "packagesInspected": "0",
+      "packagesPassedInspection": "0",
+      "readyForReview": "0",
+      "startedAt": "2026-03-09 11:47:51",
+      "completedAt": "NULL"
+    },
+    {
+      "id": "90006",
+      "brandId": "1",
+      "status": "completed",
+      "stage": "NULL",
+      "ideasGenerated": "10",
+      "ideasApproved": "10",
+      "packagesGenerated": "10",
+      "packagesInspected": "10",
+      "packagesPassedInspection": "8",
+      "readyForReview": "0",
+      "startedAt": "2026-03-09 10:37:24",
+      "completedAt": "2026-03-09 10:46:16"
+    },
+    {
+      "id": "90005",
+      "brandId": "1",
+      "status": "completed",
+      "stage": "NULL",
+      "ideasGenerated": "10",
+      "ideasApproved": "10",
+      "packagesGenerated": "10",
+      "packagesInspected": "10",
+      "packagesPassedInspection": "8",
+      "readyForReview": "0",
+      "startedAt": "2026-03-09 10:35:28",
+      "completedAt": "2026-03-09 10:44:22"
+    },
+    {
+      "id": "90004",
+      "brandId": "1",
+      "status": "completed",
+      "stage": "NULL",
+      "ideasGenerated": "10",
+      "ideasApproved": "10",
+      "packagesGenerated": "10",
+      "packagesInspected": "10",
+      "packagesPassedInspection": "8",
+      "readyForReview": "0",
+      "startedAt": "2026-03-09 10:13:18",
+      "completedAt": "2026-03-09 10:23:36"
+    },
+    {
+      "id": "90003",
+      "brandId": "1",
+      "status": "completed",
+      "stage": "NULL",
+      "ideasGenerated": "10",
+      "ideasApproved": "10",
+      "packagesGenerated": "10",
+      "packagesInspected": "10",
+      "packagesPassedInspection": "9",
+      "readyForReview": "0",
+      "startedAt": "2026-03-09 09:54:17",
+      "completedAt": "2026-03-09 10:05:12"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tbrandId\tstatus\tstage\tideasGenerated\tideasApproved\tpackagesGenerated\tpackagesInspected\tpackagesPassedInspection\treadyForReview\tstartedAt\tcompletedAt\n120001\t1\trunning\tgenerating_content\t10\t10\t1\t0\t0\t0\t2026-03-09 11:47:51\tNULL\n90006\t1\tcompleted\tNULL\t10\t10\t10\t10\t8\t0\t2026-03-09 10:37:24\t2026-03-09 10:46:16\n90005\t1\tcompleted\tNULL\t10\t10\t10\t10\t8\t0\t2026-03-09 10:35:28\t2026-03-09 10:44:22\n90004\t1\tcompleted\tNULL\t10\t10\t10\t10\t8\t0\t2026-03-09 10:13:18\t2026-03-09 10:23:36\n90003\t1\tcompleted\tNULL\t10\t10\t10\t10\t9\t0\t2026-03-09 09:54:17\t2026-03-09 10:05:12\n",
+  "stderr": "",
+  "execution_time_ms": 84
+}

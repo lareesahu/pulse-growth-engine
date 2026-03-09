@@ -298,10 +298,10 @@ export type InsertInspectorRule = typeof inspectorRules.$inferInsert;
 export const inspectorThresholds = mysqlTable("inspector_thresholds", {
   id: int("id").autoincrement().primaryKey(),
   brandId: int("brandId").notNull(),
-  dimension: varchar("dimension", { length: 64 }).notNull(), // humanisation|authenticity|accuracy|platformFit|originality|vitality
+  dimension: varchar("dimension", { length: 64 }).notNull(), // humanisation|authenticity|accuracy|platformFit|originality|virality
   minScore: int("minScore").default(7).notNull(),            // 1-10, content below this is auto-rejected
   isActive: boolean("isActive").default(true).notNull(),
-  weight: int("weight").default(1).notNull(),                // relative weight in vitality calculation
+  weight: int("weight").default(1).notNull(),                // relative weight in virality calculation
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -319,7 +319,7 @@ export const inspectionReports = mysqlTable("inspection_reports", {
   accuracyScore: int("accuracyScore"),
   platformFitScore: int("platformFitScore"),
   originalityScore: int("originalityScore"),
-  vitalityScore: int("vitalityScore"),              // composite prediction score
+  viralityScore: int("viralityScore"),              // composite virality/viral potential score (0-100)
   overallScore: int("overallScore"),                // weighted average 0-100
   passed: boolean("passed").default(false).notNull(),
   failedDimensions: json("failedDimensions").$type<string[]>(),
@@ -354,13 +354,13 @@ export const pipelineRuns = mysqlTable("pipeline_runs", {
 export type PipelineRun = typeof pipelineRuns.$inferSelect;
 export type InsertPipelineRun = typeof pipelineRuns.$inferInsert;
 
-// ─── Vitality Predictions (Learning Engine) ───────────────────────────────────────
+// ─── Virality Predictions (Learning Engine) ───────────────────────────────────────
 export const vitalityPredictions = mysqlTable("vitality_predictions", {
   id: int("id").autoincrement().primaryKey(),
   contentPackageId: int("contentPackageId").notNull(),
   brandId: int("brandId").notNull(),
   platform: varchar("platform", { length: 64 }).notNull(),
-  predictedScore: int("predictedScore").notNull(),   // 1-100 predicted vitality
+  predictedScore: int("predictedScore").notNull(),   // 1-100 predicted virality
   actualEngagement: int("actualEngagement"),          // actual engagement score after publishing
   predictionError: int("predictionError"),            // |predicted - actual|
   modelVersion: varchar("modelVersion", { length: 32 }).default("1.0"),

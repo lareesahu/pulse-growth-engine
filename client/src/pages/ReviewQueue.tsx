@@ -42,13 +42,14 @@ function ScoreBar({ score, color }: { score: number; color: string }) {
   );
 }
 
-function VitalityBadge({ score }: { score: number }) {
+function ViralityBadge({ score }: { score: number }) {
   const tier = score >= 80 ? { label: "🔥 Viral", bg: "bg-red-500/20 text-red-400 border-red-500/30" }
     : score >= 65 ? { label: "⚡ High", bg: "bg-amber-500/20 text-amber-400 border-amber-500/30" }
     : score >= 50 ? { label: "✦ Good", bg: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" }
     : { label: "↗ Moderate", bg: "bg-white/10 text-white/50 border-white/10" };
   return <Badge className={`text-xs border ${tier.bg}`}>{tier.label} · {score}/100</Badge>;
 }
+
 
 function ContentCard({ item, selected, onToggleSelect, onApprove, onReject }: {
   item: any; selected: boolean; onToggleSelect: () => void;
@@ -84,7 +85,7 @@ function ContentCard({ item, selected, onToggleSelect, onApprove, onReject }: {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 flex-wrap">
               <h3 className="text-white font-semibold text-sm leading-tight">{item.title || "Untitled Content"}</h3>
-              {report?.vitalityScore ? <VitalityBadge score={report.vitalityScore} /> : null}
+              {report?.viralityScore ? <ViralityBadge score={report.viralityScore} /> : null}
             </div>
             {item.ideaAngle && <p className="text-white/40 text-xs mt-0.5 line-clamp-1">{item.ideaAngle}</p>}
             <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -349,9 +350,9 @@ export default function ReviewQueue() {
                   <p className="text-white/70 text-xs truncate">{item.title}</p>
                   <p className="text-white/30 text-[10px]">Queued for publishing</p>
                 </div>
-                {item.inspectionReports?.[0]?.vitalityScore && (
+                {item.inspectionReports?.[0]?.viralityScore && (
                   <span className="text-amber-400 text-xs font-bold flex-shrink-0">
-                    <Zap className="w-3 h-3 inline mr-0.5" />{item.inspectionReports[0].vitalityScore}
+                    <Zap className="w-3 h-3 inline mr-0.5" />{item.inspectionReports[0].viralityScore}
                   </span>
                 )}
               </div>

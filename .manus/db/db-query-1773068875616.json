@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, SUBSTRING(masterHook, 1, 50) as hook, SUBSTRING(cta, 1, 80) as cta, CAST(keyPoints AS CHAR) as kp FROM content_packages LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, SUBSTRING(masterHook, 1, 50) as hook, SUBSTRING(cta, 1, 80) as cta, CAST(keyPoints AS CHAR) as kp FROM content_packages LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "hook": "NULL",
+      "cta": "NULL",
+      "kp": "NULL"
+    },
+    {
+      "id": "2",
+      "hook": "NULL",
+      "cta": "NULL",
+      "kp": "NULL"
+    },
+    {
+      "id": "3",
+      "hook": "NULL",
+      "cta": "NULL",
+      "kp": "NULL"
+    },
+    {
+      "id": "4",
+      "hook": "NULL",
+      "cta": "NULL",
+      "kp": "NULL"
+    },
+    {
+      "id": "5",
+      "hook": "NULL",
+      "cta": "NULL",
+      "kp": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\thook\tcta\tkp\n1\tNULL\tNULL\tNULL\n2\tNULL\tNULL\tNULL\n3\tNULL\tNULL\tNULL\n4\tNULL\tNULL\tNULL\n5\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

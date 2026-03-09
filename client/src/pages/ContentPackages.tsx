@@ -355,7 +355,7 @@ export default function ContentPackages() {
                       </div>
                     </div>
 
-                    {/* Inspector scores row — dimension scores are 1-10, vitality is 0-100 */}
+                    {/* Inspector scores row — dimension scores are 1-10, virality is 0-100 */}
                     {report && (
                       <div className="px-4 pb-3">
                         <div className="grid grid-cols-6 gap-1 bg-secondary/30 rounded-lg p-2">
@@ -364,7 +364,7 @@ export default function ContentPackages() {
                           <DimScore val={report.accuracyScore} label="Acc" />
                           <DimScore val={report.platformFitScore} label="Fit" />
                           <DimScore val={report.originalityScore} label="Orig" />
-                          <DimScore val={report.vitalityScore} label="Vital" />
+                          <DimScore val={report.viralityScore} label="Viral" />
                         </div>
                       </div>
                     )}

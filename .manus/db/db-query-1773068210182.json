@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE platform_variants SET body = REPLACE(body, '[Year]', '2026') WHERE body LIKE '%[Year]%';\nUPDATE platform_variants SET caption = REPLACE(caption, '[Year]', '2026') WHERE caption LIKE '%[Year]%';\nUPDATE platform_variants SET title = REPLACE(title, '[Year]', '2026') WHERE title LIKE '%[Year]%';\nUPDATE content_packages SET masterHook = REPLACE(masterHook, '[Year]', '2026') WHERE masterHook LIKE '%[Year]%';\nUPDATE content_packages SET masterAngle = REPLACE(masterAngle, '[Year]', '2026') WHERE masterAngle LIKE '%[Year]%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute UPDATE platform_variants SET body = REPLACE(body, '[Year]', '2026') WHERE body LIKE '%[Year]%';\nUPDATE platform_variants SET caption = REPLACE(caption, '[Year]', '2026') WHERE caption LIKE '%[Year]%';\nUPDATE platform_variants SET title = REPLACE(title, '[Year]', '2026') WHERE title LIKE '%[Year]%';\nUPDATE content_packages SET masterHook = REPLACE(masterHook, '[Year]', '2026') WHERE masterHook LIKE '%[Year]%';\nUPDATE content_packages SET masterAngle = REPLACE(masterAngle, '[Year]', '2026') WHERE masterAngle LIKE '%[Year]%';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 123
+}

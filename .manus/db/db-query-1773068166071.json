@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE ideas SET title = REPLACE(title, '[Year]', '2026') WHERE title LIKE '%[Year]%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute UPDATE ideas SET title = REPLACE(title, '[Year]', '2026') WHERE title LIKE '%[Year]%';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 69
+}

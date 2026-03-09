@@ -1,0 +1,1 @@
+ALTER TABLE `inspection_reports` RENAME COLUMN `vitalityScore` TO `viralityScore`;
