@@ -114,7 +114,12 @@ export default function ContentPackages() {
     onError: (e) => toast.error(e.message),
   });
 
-  const batchLoading = batchApprove.isPending || batchArchive.isPending || batchReject.isPending;
+  const batchRegenerate = trpc.content.batchRegenerate.useMutation({
+    onSuccess: (r) => { refetch(); setSelectedIds(new Set()); toast.success(`${r.count} package${r.count !== 1 ? "s" : ""} queued for regeneration`); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const batchLoading = batchApprove.isPending || batchArchive.isPending || batchReject.isPending || batchRegenerate.isPending;
 
   const stuckCount = packages.filter(p => p.status === "generating" || p.status === "pending_generation").length;
 
@@ -214,6 +219,15 @@ export default function ContentPackages() {
             >
               {batchArchive.isPending ? <Loader2 size={11} className="animate-spin mr-1" /> : <Trash2 size={11} className="mr-1" />}
               Archive
+            </Button>
+            <Button
+              size="sm"
+              className="h-7 text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30 px-3"
+              onClick={() => batchRegenerate.mutate({ ids: Array.from(selectedIds) })}
+              disabled={batchLoading}
+            >
+              {batchRegenerate.isPending ? <Loader2 size={11} className="animate-spin mr-1" /> : <RefreshCw size={11} className="mr-1" />}
+              Regenerate
             </Button>
             <Button
               size="sm"

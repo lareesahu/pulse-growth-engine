@@ -163,6 +163,18 @@ export default function PublishingCenter() {
     },
   });
 
+  const publishAllWebflow = trpc.publishing.publishAllWebflow.useMutation({
+    onSuccess: (data) => {
+      refetch();
+      if (data.failed > 0) {
+        toast.warning(`Published ${data.published}, failed ${data.failed}. Check failed jobs for details.`);
+      } else {
+        toast.success(`Successfully published ${data.published} item${data.published !== 1 ? "s" : ""} to Webflow!`);
+      }
+    },
+    onError: (e) => toast.error(`Bulk publish failed: ${e.message}`),
+  });
+
   const handlePublishToWebflow = (job: any) => {
     if (!webflowIntegration) {
       toast.error("Webflow not connected. Configure it in Settings → Integrations.");
@@ -195,14 +207,31 @@ export default function PublishingCenter() {
             <h1 className="text-xl font-bold text-foreground">Publishing Center</h1>
             <p className="text-xs text-muted-foreground mt-0.5">{activeBrand?.name} · Publish jobs</p>
           </div>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-32 h-9 text-xs flex-shrink-0"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {["all", "queued", "scheduled", "publishing", "published", "failed"].map(s => (
-                <SelectItem key={s} value={s} className="capitalize">{s === "all" ? "All Status" : s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            {webflowIntegration && (
+              <Button
+                size="sm"
+                className="h-9 text-xs bg-[#4353FF]/20 text-[#4353FF] border border-[#4353FF]/30 hover:bg-[#4353FF]/30 px-3"
+                onClick={() => publishAllWebflow.mutate({ brandId: activeBrandId! })}
+                disabled={publishAllWebflow.isPending}
+              >
+                {publishAllWebflow.isPending ? (
+                  <RefreshCw size={12} className="animate-spin mr-1.5" />
+                ) : (
+                  <Rocket size={12} className="mr-1.5" />
+                )}
+                Publish All Webflow
+              </Button>
+            )}
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-32 h-9 text-xs flex-shrink-0"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {["all", "queued", "scheduled", "publishing", "published", "failed"].map(s => (
+                  <SelectItem key={s} value={s} className="capitalize">{s === "all" ? "All Status" : s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Webflow connection banner */}

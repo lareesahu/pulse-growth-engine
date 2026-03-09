@@ -249,6 +249,11 @@ export async function updateVariant(id: number, data: Partial<InsertPlatformVari
   return db.update(platformVariants).set(data).where(eq(platformVariants.id, id));
 }
 
+export async function deleteVariantsByPackageId(contentPackageId: number) {
+  const db = await getDb(); if (!db) throw new Error("DB not available");
+  return db.delete(platformVariants).where(eq(platformVariants.contentPackageId, contentPackageId));
+}
+
 // ─── Assets ───────────────────────────────────────────────────────────────────
 export async function getAssetsByPackageId(contentPackageId: number) {
   const db = await getDb(); if (!db) return [];

@@ -19,7 +19,7 @@ import {
   getCampaigns, createCampaign, updateCampaign,
   getIdeas, getIdeaById, createIdea, updateIdea, getIdeaStats,
   getContentPackagesByBrand, getContentPackageByIdeaId, getContentPackageById, createContentPackage, updateContentPackage,
-  getVariantsByPackageId, createVariant, updateVariant,
+  getVariantsByPackageId, createVariant, updateVariant, deleteVariantsByPackageId,
   getAssetsByPackageId, createAsset, updateAsset,
   getIntegrations, upsertIntegration,
   getPublishJobs, createPublishJob, updatePublishJob, getPublishStats,
@@ -369,7 +369,47 @@ const contentRouter = router({
     await Promise.all(input.ids.map(id => updateContentPackage(id, { status: "needs_revision" })));
     return { success: true, count: input.ids.length };
   }),
-
+  batchRegenerate: protectedProcedure.input(z.object({ ids: z.array(z.number()) })).mutation(async ({ ctx, input }) => {
+    let regenerated = 0;
+    for (const pkgId of input.ids) {
+      const pkg = await getContentPackageById(pkgId);
+      if (!pkg) continue;
+      const idea = await getIdeaById(pkg.ideaId);
+      if (!idea) continue;
+      const [brand, pillars, rules] = await Promise.all([
+        getBrandById(idea.brandId),
+        getContentPillars(idea.brandId),
+        getBrandRules(idea.brandId),
+      ]);
+      if (!brand) continue;
+      const pillarName = pillars.find((p: any) => p.id === idea.pillarId)?.name || "General";
+      const doSay = rules.filter((r: any) => r.ruleType === "do_say").map((r: any) => r.content).join("; ");
+      const dontSay = rules.filter((r: any) => r.ruleType === "dont_say").map((r: any) => r.content).join("; ");
+      const VALID_PLATFORMS = ["instagram","facebook","linkedin","tiktok","webflow","medium","xiaohongshu","wechat","reddit","quora","blog"];
+      const platforms = ((idea.targetPlatforms || brand.activePlatforms || ["linkedin", "instagram", "webflow"]) as string[]).filter((p: string) => VALID_PLATFORMS.includes(p));
+      // Reset package to generating and clear old variants
+      await updateContentPackage(pkgId, { status: "generating" });
+      await deleteVariantsByPackageId(pkgId);
+      // Re-generate
+      const { systemPrompt, userPrompt } = buildContentPrompt({ idea, pillarName, brand, doSay, dontSay, platforms });
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        response_format: { type: "json_object" } as any,
+      });
+      let generated: any = {};
+      try {
+        const raw = (response.choices?.[0]?.message?.content as string) || "{}";
+        generated = JSON.parse(raw);
+      } catch { generated = {}; }
+      await saveGeneratedContent({ pkgId, generated, idea, platforms, userPrompt });
+      await logAudit({ brandId: idea.brandId, actorUserId: ctx.user.id, entityType: "content_package", entityId: pkgId, action: "regenerated", description: `Content package regenerated for: "${idea.title}"` });
+      regenerated++;
+    }
+    return { success: true, count: regenerated };
+  }),
   generate: protectedProcedure.input(z.object({
     ideaId: z.number(),
     targetPlatforms: z.array(z.string()).optional(),
@@ -601,8 +641,54 @@ const publishingRouter = router({
       throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: err.message });
     }
   }),
+  publishAllWebflow: protectedProcedure.input(z.object({ brandId: z.number() })).mutation(async ({ ctx, input }) => {
+    // Get Webflow credentials and field mapping once
+    const integrations = await getIntegrations(input.brandId);
+    const webflowIntegration = integrations.find((i: any) => i.platform === "webflow" && i.status === "connected");
+    if (!webflowIntegration?.apiKey) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Webflow not connected. Configure it in Settings → Integrations." });
+    const fieldMapping = await getWebflowFieldMapping(input.brandId);
+    if (!fieldMapping?.collectionId) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Webflow collection not mapped. Configure it in Settings → Integrations → Webflow." });
+    // Get all queued Webflow jobs
+    const allJobs = await getPublishJobs(input.brandId);
+    const webflowJobs = allJobs.filter((j: any) => j.platform === "webflow" && j.publishStatus === "queued");
+    if (webflowJobs.length === 0) return { success: true, published: 0, failed: 0 };
+    let published = 0;
+    let failed = 0;
+    for (const job of webflowJobs) {
+      const mapping = (fieldMapping.fieldMapping as Record<string, string>) || {};
+      const fieldData: Record<string, any> = {};
+      if (mapping.name && job.contentTitle) fieldData[mapping.name] = job.contentTitle;
+      if (mapping.body && job.variantBody) fieldData[mapping.body] = job.variantBody;
+      if (mapping.slug && job.contentTitle) fieldData[mapping.slug] = job.contentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 80);
+      if (!fieldData.name && job.contentTitle) fieldData.name = job.contentTitle;
+      if (!fieldData.slug && job.contentTitle) fieldData.slug = job.contentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 80) + "-" + Date.now().toString(36);
+      await updatePublishJob(job.id, { publishStatus: "publishing", lastAttemptAt: new Date() });
+      try {
+        const response = await fetch(`https://api.webflow.com/v2/collections/${fieldMapping.collectionId}/items`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${webflowIntegration.apiKey}`, "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ fieldData, isDraft: false }),
+        });
+        if (!response.ok) {
+          const errText = await response.text();
+          await updatePublishJob(job.id, { publishStatus: "failed", errorLog: `Webflow API error ${response.status}: ${errText.slice(0, 300)}` });
+          failed++;
+        } else {
+          const data = await response.json();
+          const webflowItemId = data.id || data.items?.[0]?.id || "created";
+          await updatePublishJob(job.id, { publishStatus: "published", publishedAt: new Date(), errorLog: null });
+          if (job.variantId) await updateVariant(job.variantId, { status: "published" });
+          await logAudit({ brandId: input.brandId, actorUserId: ctx.user.id, entityType: "publish_job", entityId: job.id, action: "published", description: `Bulk published to Webflow: ${job.contentTitle || "item"} (ID: ${webflowItemId})` });
+          published++;
+        }
+      } catch (err: any) {
+        await updatePublishJob(job.id, { publishStatus: "failed", errorLog: err.message });
+        failed++;
+      }
+    }
+    return { success: true, published, failed };
+  }),
 });
-
 // ─── Integrations Router ──────────────────────────────────────────────────────
 const integrationsRouter = router({
   list: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => getIntegrations(input.brandId)),

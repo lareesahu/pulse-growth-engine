@@ -226,3 +226,8 @@
 - [x] MAJOR: Publishing Center — FIXED: "Push to Webflow" button added, calls Webflow CMS API v2 with field mapping
 - [ ] MINOR: First two Review Queue items have no inspector scores (no vitality/dimension scores shown).
 - [ ] MINOR: Assets tab shows image prompt placeholder but no generated image.
+
+## Features Before Publish (March 9 2026)
+- [x] FEATURE: Content page — "Regenerate Selected" batch action — DONE: batchRegenerate procedure + purple Regenerate button in batch toolbar
+- [x] FEATURE: Publishing Center — "Publish All Webflow" button — DONE: publishAllWebflow procedure + button in header (only shows when Webflow connected)
+- [x] VERIFY: Webflow end-to-end publish — DONE: API call confirmed, error handling confirmed, collection ID required in Settings → Integrations → Webflow
