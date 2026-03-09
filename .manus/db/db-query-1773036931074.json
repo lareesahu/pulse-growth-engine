@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE content_packages SET status = 'needs_revision', updatedAt = NOW() WHERE status = 'generating';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute UPDATE content_packages SET status = 'needs_revision', updatedAt = NOW() WHERE status = 'generating';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 99
+}

@@ -166,3 +166,13 @@
 - [x] Always run live E2E pipeline test in browser before every push
 - [x] Fix platform_variants insert error — blog added to enum, platform sanitizer added, runId fixed
 - [x] CRITICAL: Review Queue shows "Queue is empty" — fixed: status filter (review_ready → generated), item.contentPackage → item, idea title fetched in enrichment, issues JSON parsed, inspection prompt now returns all 5 dimension scores
+
+## Batch Actions + API Helpers + CMS Field Mapping
+- [x] Review Queue: multi-select checkboxes + Select All + batch toolbar (Approve, Reject, Delete, Generate)
+- [x] Integrations: API field tooltip helpers with ? icon, description, and hyperlink to where to find each credential
+- [x] Webflow: pull live collection schema via API, show field mapping UI, save mapping per brand
+- [x] Backend: webflow.getCollections — fetch all collections for a site using stored API key
+- [x] Backend: webflow.getCollectionFields — fetch fields for a specific collection
+- [x] Backend: webflow.saveFieldMapping — save content field → CMS field mapping per brand per collection
+- [x] Backend: webflow.getFieldMapping — retrieve saved mapping for a brand
+- [x] DB: webflow_field_mappings table (brandId, collectionId, collectionName, fieldMapping JSON)

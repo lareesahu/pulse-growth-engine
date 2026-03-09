@@ -7,16 +7,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, XCircle, Settings, Eye, EyeOff, Save, Trash2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CheckCircle, XCircle, Settings, Save, Trash2, HelpCircle, ExternalLink, RefreshCw, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+
+interface FieldConfig {
+  key: string;
+  label: string;
+  placeholder: string;
+  type?: string;
+  helpText?: string;
+  helpUrl?: string;
+}
 
 interface PlatformConfig {
   key: string;
   label: string;
   color: string;
   description: string;
-  fields: { key: string; label: string; placeholder: string; type?: string }[];
+  fields: FieldConfig[];
+  hasCmsMapping?: boolean;
 }
 
 const PLATFORMS: PlatformConfig[] = [
@@ -25,10 +37,23 @@ const PLATFORMS: PlatformConfig[] = [
     label: "Webflow",
     color: "#4353FF",
     description: "Publish blog articles directly to your Webflow CMS collection.",
+    hasCmsMapping: true,
     fields: [
-      { key: "apiToken", label: "API Token", placeholder: "Bearer token from Webflow dashboard" },
-      { key: "siteId", label: "Site ID", placeholder: "Your Webflow site ID" },
-      { key: "collectionId", label: "Blog Collection ID", placeholder: "CMS collection ID for blog posts" },
+      {
+        key: "apiToken", label: "API Token", placeholder: "Bearer token from Webflow dashboard",
+        helpText: "Generate a Site API Token in your Webflow site settings under Integrations → API Access. Use a v2 token with CMS read/write scope.",
+        helpUrl: "https://developers.webflow.com/v2.0.0/docs/getting-started-with-v2",
+      },
+      {
+        key: "siteId", label: "Site ID", placeholder: "Your Webflow site ID",
+        helpText: "Find your Site ID in Webflow → Site Settings → General. It's the alphanumeric ID listed under 'Site ID' in the General tab.",
+        helpUrl: "https://university.webflow.com/lesson/intro-to-the-webflow-api",
+      },
+      {
+        key: "collectionId", label: "Blog Collection ID", placeholder: "CMS collection ID for blog posts",
+        helpText: "Go to your Webflow CMS Collections list. Click on your blog collection and copy the ID from the URL. You can also use the Field Mapping section below to auto-detect collections.",
+        helpUrl: "https://developers.webflow.com/v2.0.0/reference/cms/collections/list",
+      },
     ],
   },
   {
@@ -37,9 +62,21 @@ const PLATFORMS: PlatformConfig[] = [
     color: "#0077B5",
     description: "Post updates and articles to your LinkedIn profile or company page.",
     fields: [
-      { key: "accessToken", label: "Access Token", placeholder: "OAuth access token" },
-      { key: "personUrn", label: "Person URN", placeholder: "urn:li:person:XXXXXXXX" },
-      { key: "organizationUrn", label: "Organization URN (optional)", placeholder: "urn:li:organization:XXXXXXXX" },
+      {
+        key: "accessToken", label: "Access Token", placeholder: "OAuth access token",
+        helpText: "Create a LinkedIn app at developer.linkedin.com. Under Auth, generate an access token with r_liteprofile and w_member_social permissions. Tokens expire after 60 days.",
+        helpUrl: "https://www.linkedin.com/developers/apps",
+      },
+      {
+        key: "personUrn", label: "Person URN", placeholder: "urn:li:person:XXXXXXXX",
+        helpText: "Call the LinkedIn /v2/me API with your access token and copy the 'id' field. Format: urn:li:person:{id}",
+        helpUrl: "https://docs.microsoft.com/en-us/linkedin/shared/references/v2/profile/basic-profile",
+      },
+      {
+        key: "organizationUrn", label: "Organization URN (optional)", placeholder: "urn:li:organization:XXXXXXXX",
+        helpText: "If posting as a Company Page, find your Organization ID in your LinkedIn Company Page URL (linkedin.com/company/{id}). Format: urn:li:organization:{id}",
+        helpUrl: "https://www.linkedin.com/company/",
+      },
     ],
   },
   {
@@ -48,8 +85,16 @@ const PLATFORMS: PlatformConfig[] = [
     color: "#E1306C",
     description: "Publish images and captions to your Instagram Business account via Meta API.",
     fields: [
-      { key: "accessToken", label: "Page Access Token", placeholder: "Meta page access token" },
-      { key: "igUserId", label: "Instagram User ID", placeholder: "Your IG Business account ID" },
+      {
+        key: "accessToken", label: "Page Access Token", placeholder: "Meta page access token",
+        helpText: "Create a Meta app at developers.facebook.com. Connect your Instagram Business account, then generate a Page Access Token under Graph API Explorer. Requires instagram_basic and instagram_content_publish permissions.",
+        helpUrl: "https://developers.facebook.com/docs/instagram-api/getting-started",
+      },
+      {
+        key: "igUserId", label: "Instagram User ID", placeholder: "Your IG Business account ID",
+        helpText: "Call the Meta Graph API: GET /me?fields=id,name with your access token. The 'id' field is your Instagram User ID. Your account must be a Business or Creator account linked to a Facebook Page.",
+        helpUrl: "https://developers.facebook.com/docs/instagram-api/reference/ig-user",
+      },
     ],
   },
   {
@@ -58,8 +103,16 @@ const PLATFORMS: PlatformConfig[] = [
     color: "#07C160",
     description: "Publish articles to your WeChat Official Account.",
     fields: [
-      { key: "appId", label: "App ID", placeholder: "WeChat Official Account App ID" },
-      { key: "appSecret", label: "App Secret", placeholder: "WeChat Official Account App Secret" },
+      {
+        key: "appId", label: "App ID", placeholder: "WeChat Official Account App ID",
+        helpText: "Log in to mp.weixin.qq.com (WeChat Official Accounts Platform). Go to Settings → Developer Settings to find your AppID. Requires a verified Official Account.",
+        helpUrl: "https://mp.weixin.qq.com/",
+      },
+      {
+        key: "appSecret", label: "App Secret", placeholder: "WeChat Official Account App Secret",
+        helpText: "Found in the same Developer Settings page as your AppID. Keep this secret — it's used to generate access tokens. Reset it immediately if compromised.",
+        helpUrl: "https://mp.weixin.qq.com/",
+      },
     ],
   },
   {
@@ -68,11 +121,218 @@ const PLATFORMS: PlatformConfig[] = [
     color: "#1877F2",
     description: "Post to your Facebook Page via the Graph API.",
     fields: [
-      { key: "pageAccessToken", label: "Page Access Token", placeholder: "Facebook page access token" },
-      { key: "pageId", label: "Page ID", placeholder: "Your Facebook Page ID" },
+      {
+        key: "pageAccessToken", label: "Page Access Token", placeholder: "Facebook page access token",
+        helpText: "In Meta Business Suite, go to Settings → Page Access Tokens, or use the Graph API Explorer at developers.facebook.com to generate a long-lived Page Access Token. Requires pages_manage_posts permission.",
+        helpUrl: "https://developers.facebook.com/docs/pages/access-tokens",
+      },
+      {
+        key: "pageId", label: "Page ID", placeholder: "Your Facebook Page ID",
+        helpText: "Open your Facebook Page, click About → Page Transparency. Your Page ID is listed there. Alternatively, visit your page URL and look for the numeric ID in the source.",
+        helpUrl: "https://www.facebook.com/help/1503421039731588",
+      },
     ],
   },
 ];
+
+// ─── CMS Field Mapping types ──────────────────────────────────────────────────
+const CONTENT_FIELDS = [
+  { key: "title", label: "Title", description: "The article title" },
+  { key: "body", label: "Body / Rich Text", description: "Main article content" },
+  { key: "caption", label: "Caption / Summary", description: "Short summary or meta description" },
+  { key: "hashtags", label: "Tags / Hashtags", description: "Content tags" },
+  { key: "imageUrl", label: "Featured Image URL", description: "Cover image" },
+  { key: "slug", label: "Slug", description: "URL slug (auto-generated from title if not mapped)" },
+];
+
+function FieldHelpTooltip({ helpText, helpUrl }: { helpText: string; helpUrl?: string }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="ml-1 text-muted-foreground hover:text-foreground transition-colors" type="button">
+          <HelpCircle size={12} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-3 text-xs" side="top">
+        <p className="text-foreground leading-relaxed">{helpText}</p>
+        {helpUrl && (
+          <a
+            href={helpUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 flex items-center gap-1 text-primary hover:underline font-medium"
+          >
+            View documentation <ExternalLink size={10} />
+          </a>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function WebflowFieldMapping({ brandId, apiToken, siteId }: { brandId: number; apiToken: string; siteId: string }) {
+  const [collections, setCollections] = useState<any[]>([]);
+  const [selectedCollection, setSelectedCollection] = useState<string>("");
+  const [collectionFields, setCollectionFields] = useState<any[]>([]);
+  const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [loadingFields, setLoadingFields] = useState(false);
+
+  const fetchCollections = trpc.integrations.getWebflowCollections.useMutation();
+  const fetchFields = trpc.integrations.getWebflowCollectionFields.useMutation();
+  const saveMapping = trpc.integrations.saveWebflowFieldMapping.useMutation();
+
+  const { data: savedMapping } = trpc.integrations.getWebflowFieldMapping.useQuery(
+    { brandId },
+    { enabled: !!brandId }
+  );
+
+  const handleFetchCollections = async () => {
+    if (!apiToken || !siteId) {
+      toast.error("Save your API Token and Site ID first, then use this mapping tool.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const result = await fetchCollections.mutateAsync({ brandId, apiToken, siteId });
+      setCollections(result);
+      toast.success(`Found ${result.length} collections`);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to fetch collections. Check your API Token and Site ID.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectCollection = async (collectionId: string) => {
+    setSelectedCollection(collectionId);
+    setLoadingFields(true);
+    try {
+      const result = await fetchFields.mutateAsync({ brandId, apiToken, siteId, collectionId });
+      setCollectionFields(result);
+      // Pre-fill from saved mapping
+      if (savedMapping?.fieldMapping) {
+        setFieldMapping(savedMapping.fieldMapping as Record<string, string>);
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Failed to fetch collection fields.");
+    } finally {
+      setLoadingFields(false);
+    }
+  };
+
+  const handleSaveMapping = async () => {
+    if (!selectedCollection) return;
+    try {
+      await saveMapping.mutateAsync({
+        brandId,
+        collectionId: selectedCollection,
+        fieldMapping,
+      });
+      toast.success("Field mapping saved!");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to save mapping");
+    }
+  };
+
+  return (
+    <div className="mt-4 border border-border/50 rounded-lg p-4 bg-muted/20">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h4 className="text-xs font-semibold text-foreground">CMS Field Mapping</h4>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Map your Webflow collection fields to Pulse content fields</p>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 text-xs"
+          onClick={handleFetchCollections}
+          disabled={loading}
+        >
+          <RefreshCw size={11} className={`mr-1.5 ${loading ? "animate-spin" : ""}`} />
+          {loading ? "Loading..." : collections.length > 0 ? "Refresh" : "Load Collections"}
+        </Button>
+      </div>
+
+      {savedMapping?.collectionId && collections.length === 0 && (
+        <div className="text-[11px] text-muted-foreground mb-3 flex items-center gap-1">
+          <CheckCircle size={11} className="text-green-400" />
+          Mapping saved for collection: <code className="font-mono text-[10px] bg-muted px-1 rounded">{savedMapping.collectionId}</code>
+          <button className="text-primary hover:underline ml-1" onClick={handleFetchCollections}>Edit</button>
+        </div>
+      )}
+
+      {collections.length > 0 && (
+        <div className="space-y-3">
+          <div>
+            <Label className="text-[11px] text-muted-foreground">Select Collection</Label>
+            <Select value={selectedCollection} onValueChange={handleSelectCollection}>
+              <SelectTrigger className="h-8 text-xs mt-1">
+                <SelectValue placeholder="Choose a CMS collection..." />
+              </SelectTrigger>
+              <SelectContent>
+                {collections.map((c: any) => (
+                  <SelectItem key={c.id} value={c.id} className="text-xs">
+                    {c.displayName || c.name} <span className="text-muted-foreground ml-1 font-mono text-[10px]">({c.id})</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {loadingFields && (
+            <p className="text-[11px] text-muted-foreground animate-pulse">Loading collection fields...</p>
+          )}
+
+          {collectionFields.length > 0 && (
+            <>
+              <div className="space-y-2">
+                <p className="text-[11px] text-muted-foreground font-medium">Map Pulse fields → Webflow fields</p>
+                {CONTENT_FIELDS.map(cf => (
+                  <div key={cf.key} className="flex items-center gap-2">
+                    <div className="w-32 flex-shrink-0">
+                      <span className="text-[11px] font-medium text-foreground">{cf.label}</span>
+                      <p className="text-[10px] text-muted-foreground">{cf.description}</p>
+                    </div>
+                    <ArrowRight size={12} className="text-muted-foreground flex-shrink-0" />
+                    <Select
+                      value={fieldMapping[cf.key] || ""}
+                      onValueChange={val => setFieldMapping(prev => ({ ...prev, [cf.key]: val }))}
+                    >
+                      <SelectTrigger className="h-7 text-[11px] flex-1">
+                        <SelectValue placeholder="Select Webflow field..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="" className="text-[11px] text-muted-foreground">— Not mapped —</SelectItem>
+                        {collectionFields.map((f: any) => (
+                          <SelectItem key={f.slug} value={f.slug} className="text-[11px]">
+                            {f.displayName} <span className="text-muted-foreground font-mono text-[10px]">({f.type})</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={handleSaveMapping}
+                  disabled={saveMapping.isPending}
+                  style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}
+                >
+                  <Save size={11} className="mr-1.5" />
+                  {saveMapping.isPending ? "Saving..." : "Save Mapping"}
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Integrations() {
   const { activeBrand, activeBrandId, setActiveBrandId } = useBrand();
@@ -105,13 +365,11 @@ export default function Integrations() {
     setSaving(platform.key);
     try {
       const credentials = formValues[platform.key] || {};
-      // Validate all required fields are filled
       const missing = platform.fields.filter(f => !f.label.includes("optional") && !credentials[f.key]?.trim());
       if (missing.length > 0) {
         toast.error(`Please fill in: ${missing.map(f => f.label).join(", ")}`);
         return;
       }
-      // Map form credentials to the correct flat fields
       await saveIntegration.mutateAsync({
         brandId: activeBrandId,
         platform: platform.key,
@@ -123,7 +381,6 @@ export default function Integrations() {
       });
       toast.success(`${platform.label} connected successfully!`);
       refetch();
-      // Clear form
       setFormValues(prev => ({ ...prev, [platform.key]: {} }));
     } catch (e: any) {
       toast.error(e.message || "Failed to save integration");
@@ -141,7 +398,6 @@ export default function Integrations() {
   return (
     <AppLayout brandId={activeBrandId} onBrandChange={setActiveBrandId}>
       <div className="p-4 md:p-6 space-y-4 md:space-y-5">
-        {/* Header */}
         <div>
           <h1 className="text-xl font-bold text-foreground">Integrations</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -149,7 +405,6 @@ export default function Integrations() {
           </p>
         </div>
 
-        {/* Platform cards */}
         <div className="space-y-4">
           {PLATFORMS.map(platform => {
             const integration = getIntegration(platform.key);
@@ -196,14 +451,19 @@ export default function Integrations() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {platform.fields.map(field => (
                           <div key={field.key}>
-                            <Label className="text-xs text-muted-foreground">{field.label}</Label>
+                            <div className="flex items-center">
+                              <Label className="text-xs text-muted-foreground">{field.label}</Label>
+                              {field.helpText && (
+                                <FieldHelpTooltip helpText={field.helpText} helpUrl={field.helpUrl} />
+                              )}
+                            </div>
                             <div className="relative mt-1">
                               <Input
                                 type={field.type === "password" || field.key.toLowerCase().includes("secret") || field.key.toLowerCase().includes("token") ? "password" : "text"}
                                 value={getFormValue(platform.key, field.key)}
                                 onChange={e => setFormValue(platform.key, field.key, e.target.value)}
                                 placeholder={field.placeholder}
-                                className="text-xs pr-8"
+                                className="text-xs"
                               />
                             </div>
                           </div>
@@ -220,6 +480,15 @@ export default function Integrations() {
                           {saving === platform.key ? "Saving..." : isConnected ? "Update Credentials" : "Connect"}
                         </Button>
                       </div>
+
+                      {/* Webflow CMS Field Mapping */}
+                      {platform.hasCmsMapping && activeBrandId && (
+                        <WebflowFieldMapping
+                          brandId={activeBrandId}
+                          apiToken={getFormValue(platform.key, "apiToken") || (integration?.extraConfig as any)?.apiToken || ""}
+                          siteId={getFormValue(platform.key, "siteId") || (integration?.extraConfig as any)?.siteId || ""}
+                        />
+                      )}
                     </CardContent>
                   </>
                 )}
@@ -228,7 +497,6 @@ export default function Integrations() {
           })}
         </div>
 
-        {/* Note */}
         <Card className="border-border bg-card border-primary/20">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">

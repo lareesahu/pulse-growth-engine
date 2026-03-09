@@ -61,6 +61,8 @@ vi.mock("./db", () => ({
   updateAsset: vi.fn().mockResolvedValue(undefined),
   getIntegrations: vi.fn().mockResolvedValue([]),
   upsertIntegration: vi.fn().mockResolvedValue(undefined),
+  getWebflowFieldMapping: vi.fn().mockResolvedValue(null),
+  upsertWebflowFieldMapping: vi.fn().mockResolvedValue(undefined),
   getPublishJobs: vi.fn().mockResolvedValue([]),
   createPublishJob: vi.fn().mockResolvedValue({ id: 1 }),
   updatePublishJob: vi.fn().mockResolvedValue(undefined),
@@ -220,5 +222,54 @@ describe("Auth Router", () => {
     const caller = appRouter.createCaller(ctx);
     const result = await caller.auth.logout();
     expect(result.success).toBe(true);
+  });
+});
+
+describe("Integrations Router - Webflow Field Mapping", () => {
+  it("returns null when no field mapping exists", async () => {
+    const caller = appRouter.createCaller(makeCtx());
+    const mapping = await caller.integrations.getWebflowFieldMapping({ brandId: 1 });
+    expect(mapping).toBeNull();
+  });
+
+  it("saves a Webflow field mapping", async () => {
+    const caller = appRouter.createCaller(makeCtx());
+    const result = await caller.integrations.saveWebflowFieldMapping({
+      brandId: 1,
+      collectionId: "abc123",
+      collectionName: "Blog Posts",
+      fieldMapping: { title: "name", body: "post-body", caption: "description" },
+    });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("Pipeline Router - Batch Actions", () => {
+  it("batch approves multiple packages", async () => {
+    const caller = appRouter.createCaller(makeCtx());
+    const result = await caller.pipeline.batchApproveForPublishing({
+      contentPackageIds: [1, 2],
+    });
+    expect(result.success).toBe(true);
+    expect(result.approved).toBe(2);
+  });
+
+  it("batch rejects multiple packages", async () => {
+    const caller = appRouter.createCaller(makeCtx());
+    const result = await caller.pipeline.batchRejectFromQueue({
+      contentPackageIds: [1, 2],
+      reason: "Not on brand",
+    });
+    expect(result.success).toBe(true);
+    expect(result.rejected).toBe(2);
+  });
+
+  it("batch deletes multiple packages", async () => {
+    const caller = appRouter.createCaller(makeCtx());
+    const result = await caller.pipeline.batchDeleteFromQueue({
+      contentPackageIds: [1, 2],
+    });
+    expect(result.success).toBe(true);
+    expect(result.deleted).toBe(2);
   });
 });

@@ -384,3 +384,16 @@ export const performanceRecords = mysqlTable("performance_records", {
 });
 export type PerformanceRecord = typeof performanceRecords.$inferSelect;
 export type InsertPerformanceRecord = typeof performanceRecords.$inferInsert;
+
+// ─── Webflow CMS Field Mappings ───────────────────────────────────────────────
+export const webflowFieldMappings = mysqlTable("webflow_field_mappings", {
+  id: int("id").autoincrement().primaryKey(),
+  brandId: int("brandId").notNull(),
+  collectionId: varchar("collectionId", { length: 255 }).notNull(),
+  collectionName: varchar("collectionName", { length: 255 }),
+  fieldMapping: json("fieldMapping").$type<Record<string, string>>().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type WebflowFieldMapping = typeof webflowFieldMappings.$inferSelect;
+export type InsertWebflowFieldMapping = typeof webflowFieldMappings.$inferInsert;

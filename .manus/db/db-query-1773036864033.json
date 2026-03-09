@@ -1,0 +1,28 @@
+{
+  "query": "SELECT cp.brandId, b.name, cp.status, COUNT(*) as count FROM content_packages cp LEFT JOIN brands b ON b.id = cp.brandId GROUP BY cp.brandId, b.name, cp.status ORDER BY cp.brandId;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT cp.brandId, b.name, cp.status, COUNT(*) as count FROM content_packages cp LEFT JOIN brands b ON b.id = cp.brandId GROUP BY cp.brandId, b.name, cp.status ORDER BY cp.brandId;",
+  "rows": [
+    {
+      "brandId": "1",
+      "name": "Pulse Branding",
+      "status": "approved_for_publish",
+      "count": "40"
+    },
+    {
+      "brandId": "1",
+      "name": "Pulse Branding",
+      "status": "needs_revision",
+      "count": "18"
+    },
+    {
+      "brandId": "1",
+      "name": "Pulse Branding",
+      "status": "generating",
+      "count": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "brandId\tname\tstatus\tcount\n1\tPulse Branding\tapproved_for_publish\t40\n1\tPulse Branding\tneeds_revision\t18\n1\tPulse Branding\tgenerating\t2\n",
+  "stderr": "",
+  "execution_time_ms": 101
+}

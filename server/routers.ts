@@ -8,26 +8,27 @@ import { invokeLLM } from "./_core/llm";
 import { callDataApi } from "./_core/dataApi";
 import {
   upsertUser, getUserByOpenId,
-  getBrandsByUserId, getBrandById, createBrand, updateBrand,
-  getBrandRules, createBrandRule, deleteBrandRule,
+  getBrandById, getBrandsByUserId, updateBrand, createBrand,
   getContentPillars, createContentPillar, updateContentPillar, deleteContentPillar,
+  getBrandRules, createBrandRule, deleteBrandRule,
   getAudienceProfiles, createAudienceProfile, updateAudienceProfile, deleteAudienceProfile,
   getPromptTemplates, createPromptTemplate, updatePromptTemplate, deletePromptTemplate,
   getPlatformPreferences, upsertPlatformPreference,
   getCampaigns, createCampaign, updateCampaign,
   getIdeas, getIdeaById, createIdea, updateIdea, getIdeaStats,
-  getContentPackageByIdeaId, getContentPackageById, getContentPackagesByBrand, createContentPackage, updateContentPackage,
-  getVariantsByPackageId, getVariantById, createVariant, updateVariant,
+  getContentPackagesByBrand, getContentPackageByIdeaId, getContentPackageById, createContentPackage, updateContentPackage,
+  getVariantsByPackageId, createVariant, updateVariant,
   getAssetsByPackageId, createAsset, updateAsset,
   getIntegrations, upsertIntegration,
   getPublishJobs, createPublishJob, updatePublishJob, getPublishStats,
-  logAudit, getAuditLog, getAnalyticsSummary,
-  getInspectorRules, getAllInspectorRules, createInspectorRule, updateInspectorRule, deleteInspectorRule,
-  createInspectionReport, getInspectionReportsByPackage,
-  createPipelineRun, updatePipelineRun, getLatestPipelineRun, getPipelineRuns,
-  getReviewQueue,
-  getInspectorThresholds, upsertInspectorThreshold, seedDefaultThresholds,
-  createVitalityPrediction, getVitalityPredictions, getVitalityModelAccuracy,
+  getAuditLog, logAudit,
+  getAnalyticsSummary,
+  getAllInspectorRules, createInspectorRule, updateInspectorRule, deleteInspectorRule,
+  getInspectionReportsByPackage, createInspectionReport,
+  getLatestPipelineRun, getPipelineRuns, createPipelineRun, updatePipelineRun,
+  getInspectorThresholds, upsertInspectorThreshold,
+  getVitalityModelAccuracy, getReviewQueue,
+  getWebflowFieldMapping, upsertWebflowFieldMapping,
 } from "./db";
 
 // ─── Brand Router ─────────────────────────────────────────────────────────────
@@ -586,6 +587,80 @@ const integrationsRouter = router({
     await upsertIntegration(input.brandId, input.platform, { status: "disconnected", apiKey: null, accessToken: null });
     return { success: true };
   }),
+
+  // ─── Webflow CMS Field Mapping ─────────────────────────────────────────────
+  getWebflowCollections: protectedProcedure.input(z.object({
+    brandId: z.number(),
+    apiToken: z.string(),
+    siteId: z.string(),
+  })).mutation(async ({ input }) => {
+    const response = await fetch(`https://api.webflow.com/v2/sites/${input.siteId}/collections`, {
+      headers: {
+        Authorization: `Bearer ${input.apiToken}`,
+        Accept: "application/json",
+      },
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      throw new TRPCError({ code: "BAD_REQUEST", message: `Webflow API error: ${response.status} — ${err.slice(0, 200)}` });
+    }
+    const data = await response.json();
+    return (data.collections || []).map((c: any) => ({
+      id: c.id,
+      displayName: c.displayName,
+      singularName: c.singularName,
+      slug: c.slug,
+    }));
+  }),
+
+  getWebflowCollectionFields: protectedProcedure.input(z.object({
+    brandId: z.number(),
+    apiToken: z.string(),
+    siteId: z.string(),
+    collectionId: z.string(),
+  })).mutation(async ({ input }) => {
+    const response = await fetch(`https://api.webflow.com/v2/collections/${input.collectionId}`, {
+      headers: {
+        Authorization: `Bearer ${input.apiToken}`,
+        Accept: "application/json",
+      },
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      throw new TRPCError({ code: "BAD_REQUEST", message: `Webflow API error: ${response.status} — ${err.slice(0, 200)}` });
+    }
+    const data = await response.json();
+    const fields = data.fields || [];
+    // Filter to writable, useful field types only
+    const WRITABLE_TYPES = ["PlainText", "RichText", "MultiReference", "Option", "Bool", "Number", "Link", "Email", "Image", "FileRef", "Color"];
+    return fields
+      .filter((f: any) => !f.isSystem && WRITABLE_TYPES.includes(f.type))
+      .map((f: any) => ({
+        id: f.id,
+        slug: f.slug,
+        displayName: f.displayName,
+        type: f.type,
+        isRequired: f.isRequired,
+      }));
+  }),
+
+  saveWebflowFieldMapping: protectedProcedure.input(z.object({
+    brandId: z.number(),
+    collectionId: z.string(),
+    collectionName: z.string().optional(),
+    fieldMapping: z.record(z.string(), z.string()),
+  })).mutation(async ({ input }) => {
+    await upsertWebflowFieldMapping(input.brandId, {
+      collectionId: input.collectionId,
+      collectionName: input.collectionName,
+      fieldMapping: input.fieldMapping,
+    });
+    return { success: true };
+  }),
+
+  getWebflowFieldMapping: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => {
+    return getWebflowFieldMapping(input.brandId);
+  }),
 });
 
 // ─── Analytics Router ─────────────────────────────────────────────────────────
@@ -719,6 +794,54 @@ const pipelineRouter = router({
     return { success: true, jobsCreated: targetVariants.length };
   }),
 
+  batchApproveForPublishing: protectedProcedure.input(z.object({
+    contentPackageIds: z.array(z.number()),
+  })).mutation(async ({ ctx, input }) => {
+    let totalJobs = 0;
+    for (const id of input.contentPackageIds) {
+      const pkg = await getContentPackageById(id);
+      if (!pkg) continue;
+      await updateContentPackage(id, { status: "approved_for_publish" });
+      const variants = await getVariantsByPackageId(id);
+      for (const variant of variants) {
+        await updateVariant(variant.id, { status: "queued" });
+        await createPublishJob({
+          contentPackageId: id,
+          variantId: variant.id,
+          brandId: pkg.brandId,
+          platform: variant.platform,
+          publishStatus: "queued",
+          actionType: "publish_now",
+        });
+        totalJobs++;
+      }
+      await logAudit({ brandId: pkg.brandId, actorUserId: ctx.user.id, entityType: "content_package", entityId: id, action: "approved_for_publish", description: `Batch approved for publishing` });
+    }
+    return { success: true, approved: input.contentPackageIds.length, jobsCreated: totalJobs };
+  }),
+  batchRejectFromQueue: protectedProcedure.input(z.object({
+    contentPackageIds: z.array(z.number()),
+    reason: z.string().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    for (const id of input.contentPackageIds) {
+      const pkg = await getContentPackageById(id);
+      if (!pkg) continue;
+      await updateContentPackage(id, { status: "needs_revision" });
+      await logAudit({ brandId: pkg.brandId, actorUserId: ctx.user.id, entityType: "content_package", entityId: id, action: "rejected", description: input.reason || "Batch rejected from review queue" });
+    }
+    return { success: true, rejected: input.contentPackageIds.length };
+  }),
+  batchDeleteFromQueue: protectedProcedure.input(z.object({
+    contentPackageIds: z.array(z.number()),
+  })).mutation(async ({ ctx, input }) => {
+    for (const id of input.contentPackageIds) {
+      const pkg = await getContentPackageById(id);
+      if (!pkg) continue;
+      await updateContentPackage(id, { status: "archived" });
+      await logAudit({ brandId: pkg.brandId, actorUserId: ctx.user.id, entityType: "content_package", entityId: id, action: "archived", description: "Batch deleted from review queue" });
+    }
+    return { success: true, deleted: input.contentPackageIds.length };
+  }),
   rejectFromQueue: protectedProcedure.input(z.object({
     contentPackageId: z.number(),
     reason: z.string().optional(),
@@ -816,7 +939,7 @@ IMPORTANT: platforms must only use these exact values: linkedin, instagram, webf
       await updatePipelineRun(runId, { ideasGenerated, ideasApproved });
 
       // STEP 3: Generate content packages for all approved ideas
-      const inspectorRulesList = input.runInspector ? await getInspectorRules(input.brandId) : [];
+      const inspectorRulesList = input.runInspector ? await getAllInspectorRules(input.brandId) : [];
 
       for (const ideaId of approvedIdeaIds) {
         try {
@@ -899,7 +1022,7 @@ IMPORTANT: platforms must only use these exact values: linkedin, instagram, webf
             const variants = await getVariantsByPackageId(pkgId);
             const allContent = variants.map(v => `[${v.platform}]: ${v.body || v.caption || ""}`).join("\n\n");
 
-            const rulesText = inspectorRulesList.map(r => `- ${r.ruleType} (severity: ${r.severity}): ${r.ruleValue}${r.autoFix ? " [AUTO-FIX ENABLED]" : ""}`).join("\n");
+            const rulesText = inspectorRulesList.map((r: any) => `- ${r.ruleType} (severity: ${r.severity}): ${r.ruleValue}${r.autoFix ? " [AUTO-FIX ENABLED]" : ""}`).join("\n");
 
             const inspectResponse = await invokeLLM({
               messages: [

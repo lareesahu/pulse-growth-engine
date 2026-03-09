@@ -5,12 +5,13 @@ import {
   platformPreferences, campaigns, ideas, contentPackages, platformVariants,
   assets, integrationAccounts, publishJobs, auditEvents, performanceRecords,
   inspectorRules, inspectionReports, pipelineRuns, inspectorThresholds, vitalityPredictions,
+  webflowFieldMappings,
   InsertUser, InsertBrand, InsertBrandRule, InsertContentPillar, InsertAudienceProfile,
   InsertPromptTemplate, InsertPlatformPreference, InsertCampaign, InsertIdea,
   InsertContentPackage, InsertPlatformVariant, InsertAsset, InsertIntegrationAccount,
   InsertPublishJob, InsertAuditEvent, InsertPerformanceRecord,
   InsertInspectorRule, InsertInspectionReport, InsertPipelineRun,
-  InsertInspectorThreshold, InsertVitalityPrediction,
+  InsertInspectorThreshold, InsertVitalityPrediction, InsertWebflowFieldMapping,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -440,11 +441,11 @@ export async function getPipelineRuns(brandId: number, limit = 10) {
 export async function getReviewQueue(brandId: number) {
   const db = await getDb();
   if (!db) return [];
-  // Packages that are fully generated and awaiting final approval
+  // Packages that need review: generated (awaiting decision), approved_for_publish (approved), needs_revision (rejected)
   return db.select().from(contentPackages)
     .where(and(
       eq(contentPackages.brandId, brandId),
-      eq(contentPackages.status, "generated")
+      inArray(contentPackages.status, ["generated", "approved_for_publish", "needs_revision"])
     ))
     .orderBy(desc(contentPackages.createdAt));
 }
@@ -511,4 +512,30 @@ export async function getVitalityModelAccuracy(brandId: number) {
     : 0;
   const accuracy = Math.max(0, Math.round(100 - avgError));
   return { totalPredictions: records.length, resolvedPredictions: resolved.length, avgError: Math.round(avgError), accuracy };
+}
+
+// ─── Webflow Field Mappings ───────────────────────────────────────────────────
+export async function getWebflowFieldMapping(brandId: number) {
+  const db = await getDb(); if (!db) return null;
+  const result = await db.select().from(webflowFieldMappings)
+    .where(eq(webflowFieldMappings.brandId, brandId))
+    .orderBy(desc(webflowFieldMappings.updatedAt))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function upsertWebflowFieldMapping(brandId: number, data: {
+  collectionId: string;
+  collectionName?: string;
+  fieldMapping: Record<string, string>;
+}) {
+  const db = await getDb(); if (!db) return;
+  const existing = await getWebflowFieldMapping(brandId);
+  if (existing) {
+    await db.update(webflowFieldMappings)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(webflowFieldMappings.id, existing.id));
+  } else {
+    await db.insert(webflowFieldMappings).values({ brandId, ...data });
+  }
 }

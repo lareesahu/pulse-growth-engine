@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `webflow_field_mappings` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `brandId` int NOT NULL,\n  `collectionId` varchar(255) NOT NULL,\n  `collectionName` varchar(255),\n  `fieldMapping` json NOT NULL,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `webflow_field_mappings_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute CREATE TABLE IF NOT EXISTS `webflow_field_mappings` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `brandId` int NOT NULL,\n  `collectionId` varchar(255) NOT NULL,\n  `collectionName` varchar(255),\n  `fieldMapping` json NOT NULL,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `webflow_field_mappings_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 267
+}
