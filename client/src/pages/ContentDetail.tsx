@@ -355,16 +355,30 @@ export default function ContentDetail() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {assets.map((a: any) => (
                   <Card key={a.id} className="border-border bg-card overflow-hidden">
-                    {a.url ? (
-                      <img src={a.url} alt={a.altText || "Asset"} className="w-full h-40 object-cover" />
+                    {a.outputUrl ? (
+                      <img src={a.outputUrl} alt={a.assetType || "Asset"} className="w-full h-48 object-cover" />
+                    ) : a.assetType === "image_prompt" ? (
+                      <div className="w-full h-48 bg-secondary/50 flex flex-col items-center justify-center gap-2 p-4">
+                        <Image size={28} className="text-muted-foreground opacity-40" />
+                        <p className="text-[10px] text-muted-foreground text-center line-clamp-4 leading-relaxed">{a.promptText || "Image prompt ready"}</p>
+                        <Button size="sm" variant="outline" className="text-xs h-7 mt-1" onClick={handleGenerateImages} disabled={generatingImages}>
+                          {generatingImages ? <RefreshCw size={11} className="mr-1 animate-spin" /> : <Image size={11} className="mr-1" />}
+                          {generatingImages ? "Generating..." : "Generate Image"}
+                        </Button>
+                      </div>
                     ) : (
-                      <div className="w-full h-40 bg-secondary flex items-center justify-center">
+                      <div className="w-full h-48 bg-secondary flex items-center justify-center">
                         <Image size={24} className="text-muted-foreground" />
                       </div>
                     )}
                     <CardContent className="p-3">
-                      <p className="text-xs text-muted-foreground">{a.assetType} · {a.platform || "all"}</p>
-                      {a.promptUsed && <p className="text-[10px] text-muted-foreground/60 mt-1 line-clamp-2">{a.promptUsed}</p>}
+                      <p className="text-xs font-medium text-foreground capitalize">{(a.assetType || "").replace(/_/g, " ")}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">{a.status}</p>
+                      {a.assetType === "image_output" && a.outputUrl && (
+                        <a href={a.outputUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary hover:underline mt-1 block">
+                          View full size ↗
+                        </a>
+                      )}
                     </CardContent>
                   </Card>
                 ))}

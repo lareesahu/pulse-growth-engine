@@ -6,6 +6,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { invokeLLM } from "./_core/llm";
 import { callDataApi } from "./_core/dataApi";
+import { humanize, humanizeVariant, humanizePackage } from "./humanizer";
 import {
   upsertUser, getUserByOpenId,
   getBrandById, getBrandsByUserId, updateBrand, createBrand,
@@ -422,37 +423,44 @@ Return ONLY valid JSON with this structure:
       generated = JSON.parse(raw);
     } catch { generated = {}; }
 
-    // Update content package with generated content
-    await updateContentPackage(pkgId, {
+    // Update content package with generated content — humanize to strip markdown
+    const cleanPkg = humanizePackage({
       masterHook: generated.masterHook || idea.title,
       masterAngle: generated.masterAngle || idea.angle || "",
       keyPoints: generated.keyPoints || [],
       cta: generated.cta || "",
       blogContent: generated.blogContent || "",
+    });
+    await updateContentPackage(pkgId, {
+      ...cleanPkg,
       status: "generated",
       generationModel: "gemini-2.5-flash",
       generationPrompt: userPrompt,
     });
-
-    // Create platform variants
+    // Create platform variants — humanize each variant
     const variantData = generated.variants || {};
     for (const platform of platforms) {
       const v = variantData[platform] || {};
+      const cleanVariant = humanizeVariant({
+        title: v.title || generated.masterHook || idea.title,
+        body: v.body || "",
+        caption: v.caption || "",
+        hashtags: v.hashtags || [],
+      });
       await createVariant({
         contentPackageId: pkgId,
         brandId: idea.brandId,
         platform: platform as any,
         formatType: platform === "webflow" ? "article" : platform === "linkedin" ? "long_post" : platform === "instagram" ? "caption" : "short_post",
-        title: v.title || generated.masterHook || idea.title,
-        body: v.body || "",
-        caption: v.caption || "",
-        hashtags: v.hashtags || [],
+        title: cleanVariant.title || "",
+        body: cleanVariant.body || "",
+        caption: cleanVariant.caption || "",
+        hashtags: cleanVariant.hashtags || [],
         status: "generated",
         version: 1,
       });
     }
-
-    // Create image prompt asset
+    // Create image prompt assett
     if (generated.imagePrompt) {
       await createAsset({
         contentPackageId: pkgId,
@@ -976,34 +984,41 @@ IMPORTANT: platforms must only use these exact values: linkedin, instagram, webf
             generated = JSON.parse(raw);
           } catch { generated = {}; }
 
-          await updateContentPackage(pkgId, {
+          const cleanPkgPipeline = humanizePackage({
             masterHook: generated.masterHook || idea.title,
             masterAngle: generated.masterAngle || idea.angle || "",
             keyPoints: generated.keyPoints || [],
             cta: generated.cta || "",
             blogContent: generated.blogContent || "",
+          });
+          await updateContentPackage(pkgId, {
+            ...cleanPkgPipeline,
             status: "generated",
             generationModel: "gemini-2.5-flash",
             generationPrompt: userPrompt,
           });
-
           const variantData = generated.variants || {};
           for (const platform of platforms) {
             const v = variantData[platform] || {};
+            const cleanV = humanizeVariant({
+              title: v.title || generated.masterHook || idea.title,
+              body: v.body || "",
+              caption: v.caption || "",
+              hashtags: v.hashtags || [],
+            });
             await createVariant({
               contentPackageId: pkgId,
               brandId: idea.brandId,
               platform: platform as any,
               formatType: platform === "webflow" ? "article" : platform === "linkedin" ? "long_post" : platform === "instagram" ? "caption" : "short_post",
-              title: v.title || generated.masterHook || idea.title,
-              body: v.body || "",
-              caption: v.caption || "",
-              hashtags: v.hashtags || [],
+              title: cleanV.title || "",
+              body: cleanV.body || "",
+              caption: cleanV.caption || "",
+              hashtags: cleanV.hashtags || [],
               status: "generated",
               version: 1,
             });
           }
-
           if (generated.imagePrompt) {
             await createAsset({
               contentPackageId: pkgId,

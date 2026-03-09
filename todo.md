@@ -176,3 +176,7 @@
 - [x] Backend: webflow.saveFieldMapping — save content field → CMS field mapping per brand per collection
 - [x] Backend: webflow.getFieldMapping — retrieve saved mapping for a brand
 - [x] DB: webflow_field_mappings table (brandId, collectionId, collectionName, fieldMapping JSON)
+
+## Bug Fixes (March 9 2026 — Round 2)
+- [x] BUG: Assets tab shows broken image placeholders — fixed: frontend was reading a.url but schema stores a.outputUrl; Assets tab now shows prompt text + Generate button for image_prompt assets, full image for image_output assets
+- [x] FEATURE: Content humanizer — server/humanizer.ts added; strips ##, **, *, em-dashes, bullet points, AI fillers from all generated variants and packages before saving; wired into both content.generate and pipeline.run procedures
