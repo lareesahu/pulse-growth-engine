@@ -60,11 +60,16 @@ function ContentCard({ item, onApprove, onReject }: { item: any; onApprove: () =
   const [activeTab, setActiveTab] = useState("linkedin");
   const [, navigate] = useLocation();
 
-  const report = item.inspectionReports?.[0];
-  const pkg = item.contentPackage;
+  const rawReport = item.inspectionReports?.[0];
+  const report = rawReport ? {
+    ...rawReport,
+    issues: typeof rawReport.issues === 'string' ? (() => { try { return JSON.parse(rawReport.issues); } catch { return []; } })() : (rawReport.issues || []),
+    failedDimensions: typeof rawReport.failedDimensions === 'string' ? (() => { try { return JSON.parse(rawReport.failedDimensions); } catch { return []; } })() : (rawReport.failedDimensions || []),
+  } : null;
+  const pkg = item; // item IS the content package
   const variants = item.variants || [];
 
-  const hasIssues = report?.issues?.length > 0;
+  const hasIssues = (report?.issues?.length ?? 0) > 0;
   const overallScore = report?.overallScore ?? 0;
 
   return (
@@ -192,7 +197,7 @@ function ContentCard({ item, onApprove, onReject }: { item: any; onApprove: () =
             Reject
           </Button>
           <Button
-            onClick={() => navigate(`/content/${pkg?.ideaId}`)}
+            onClick={() => navigate(`/content/idea-${pkg?.ideaId}`)}
             variant="ghost"
             className="text-white/40 hover:text-white text-xs h-9 w-9 p-0"
           >
@@ -222,8 +227,8 @@ export default function ReviewQueue() {
     onSuccess: () => { refetch(); toast.success("Content rejected"); },
   });
 
-  const pendingItems = queue.filter((item: any) => item.status === "review_ready");
-  const approvedItems = queue.filter((item: any) => item.status === "approved");
+  const pendingItems = queue.filter((item: any) => item.status === "generated" || item.status === "needs_revision");
+  const approvedItems = queue.filter((item: any) => item.status === "approved_for_publish" || item.status === "approved");
 
   return (
     <AppLayout>
@@ -293,7 +298,7 @@ export default function ReviewQueue() {
                 onClick={() => {
                   pendingItems.forEach((item: any) => {
                     if (item.id) {
-                      approveForPublish.mutate({ contentPackageId: item.contentPackage.id });
+                      approveForPublish.mutate({ contentPackageId: item.id });
                     }
                   });
                 }}
@@ -311,12 +316,12 @@ export default function ReviewQueue() {
                 item={item}
                 onApprove={() => {
                   if (item.id) {
-                    approveForPublish.mutate({ contentPackageId: item.contentPackage.id });
+                    approveForPublish.mutate({ contentPackageId: item.id });
                   }
                 }}
                 onReject={() => {
                   if (item.id) {
-                    updatePackage.mutate({ id: item.contentPackage.id, status: "archived" });
+                    updatePackage.mutate({ id: item.id, status: "archived" });
                   }
                 }}
               />

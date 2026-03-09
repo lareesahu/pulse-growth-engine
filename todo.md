@@ -164,4 +164,5 @@
 
 ## Process Improvement
 - [x] Always run live E2E pipeline test in browser before every push
-- [ ] Fix platform_variants insert error (same error still happening after previous fix)
+- [x] Fix platform_variants insert error — blog added to enum, platform sanitizer added, runId fixed
+- [x] CRITICAL: Review Queue shows "Queue is empty" — fixed: status filter (review_ready → generated), item.contentPackage → item, idea title fetched in enrichment, issues JSON parsed, inspection prompt now returns all 5 dimension scores

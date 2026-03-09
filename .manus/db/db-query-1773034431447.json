@@ -1,0 +1,22 @@
+{
+  "query": "SELECT status, COUNT(*) as count FROM content_packages GROUP BY status;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT status, COUNT(*) as count FROM content_packages GROUP BY status;",
+  "rows": [
+    {
+      "status": "generating",
+      "count": "2"
+    },
+    {
+      "status": "needs_revision",
+      "count": "18"
+    },
+    {
+      "status": "generated",
+      "count": "35"
+    }
+  ],
+  "messages": [],
+  "stdout": "status\tcount\ngenerating\t2\nneeds_revision\t18\ngenerated\t35\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

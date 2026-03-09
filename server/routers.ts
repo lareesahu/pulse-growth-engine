@@ -682,12 +682,13 @@ const pipelineRouter = router({
   getReviewQueue: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => {
     const packages = await getReviewQueue(input.brandId);
     const enriched = await Promise.all(packages.map(async (pkg) => {
-      const [variants, pkgAssets, reports] = await Promise.all([
+      const [variants, pkgAssets, reports, idea] = await Promise.all([
         getVariantsByPackageId(pkg.id),
         getAssetsByPackageId(pkg.id),
         getInspectionReportsByPackage(pkg.id),
+        pkg.ideaId ? getIdeaById(pkg.ideaId) : Promise.resolve(null),
       ]);
-      return { ...pkg, variants, assets: pkgAssets, inspectionReports: reports };
+      return { ...pkg, title: idea?.title ?? "Untitled Content", ideaAngle: idea?.angle ?? "", variants, assets: pkgAssets, inspectionReports: reports };
     }));
     return enriched;
   }),
@@ -903,7 +904,7 @@ IMPORTANT: platforms must only use these exact values: linkedin, instagram, webf
             const inspectResponse = await invokeLLM({
               messages: [
                 { role: "system", content: "You are a brand content quality inspector. Check content against rules and return ONLY valid JSON." },
-                { role: "user", content: `Inspect this content against the brand rules and return a quality report.\n\nCONTENT:\n${allContent}\n\nRULES:\n${rulesText}\n\nReturn JSON: { "score": 0-100, "passed": true/false, "issues": [{ "rule": "rule name", "severity": "error|warning|info", "description": "what was found", "suggestion": "how to fix", "autoFixed": false }], "fixedContent": { "linkedin": "...", "instagram": "...", "webflow": "...", "wechat": "..." } }` },
+                { role: "user", content: `Inspect this content against the brand rules and return a quality report.\n\nCONTENT:\n${allContent}\n\nRULES:\n${rulesText}\n\nReturn JSON: { "score": 0-100, "passed": true/false, "humanisationScore": 0-10, "authenticityScore": 0-10, "accuracyScore": 0-10, "platformFitScore": 0-10, "originalityScore": 0-10, "vitalityScore": 0-100, "issues": [{ "rule": "rule name", "severity": "error|warning|info", "description": "what was found", "suggestion": "how to fix", "autoFixed": false }], "fixedContent": { "linkedin": "...", "instagram": "...", "webflow": "...", "wechat": "..." } }\n\nFor humanisationScore: rate how human and conversational the writing feels (0-10).\nFor authenticityScore: rate how authentic and genuine the brand voice is (0-10).\nFor accuracyScore: rate factual accuracy and claim validity (0-10).\nFor platformFitScore: rate how well the content fits each platform's norms (0-10).\nFor originalityScore: rate how original and non-generic the content is (0-10).\nFor vitalityScore: rate overall viral/engagement potential (0-100).` },
               ],
               response_format: { type: "json_object" } as any,
             });
@@ -920,6 +921,12 @@ IMPORTANT: platforms must only use these exact values: linkedin, instagram, webf
               brandId: idea.brandId,
               overallScore: inspectionResult.score || 100,
               passed: inspectionResult.passed !== false,
+              humanisationScore: inspectionResult.humanisationScore ?? null,
+              authenticityScore: inspectionResult.authenticityScore ?? null,
+              accuracyScore: inspectionResult.accuracyScore ?? null,
+              platformFitScore: inspectionResult.platformFitScore ?? null,
+              originalityScore: inspectionResult.originalityScore ?? null,
+              vitalityScore: inspectionResult.vitalityScore ?? null,
               issues: inspectionResult.issues || [],
               fixedContent: inspectionResult.fixedContent || null,
               inspectorVersion: "1.0",
