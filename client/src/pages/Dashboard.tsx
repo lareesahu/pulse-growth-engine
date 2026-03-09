@@ -70,43 +70,70 @@ export default function Dashboard() {
     { enabled: !!activeBrandId }
   );
 
+  // Pipeline status polling for background job
+  const { data: runStatus, refetch: refetchRunStatus } = trpc.pipeline.getRunStatus.useQuery(
+    { brandId: activeBrandId! },
+    { enabled: !!activeBrandId && pipeline.status === "running", refetchInterval: 3000 }
+  );
+
   const runPipeline = trpc.pipeline.run.useMutation({
     onMutate: () => {
       setPipeline(p => ({ ...p, status: "running", currentStep: 0, stepLabel: "Generating Ideas..." }));
     },
-    onSuccess: (data: any) => {
-      setPipeline(p => ({
-        ...p,
-        status: "done",
-        currentStep: 5,
-        stepLabel: "Ready to Review",
-        ideasGenerated: data.ideasGenerated ?? 0,
-        packagesGenerated: data.packagesGenerated ?? 0,
-        variantsGenerated: data.variantsGenerated ?? data.packagesGenerated ?? 0,
-        readyForReview: data.readyForReview ?? data.packagesPassedInspection ?? 0,
-      }));
-      refetchSummary();
-      refetchRun();
-      const ready = data.readyForReview ?? data.packagesPassedInspection ?? 0;
-      toast.success(`Pipeline complete — ${ready} pieces ready for review`);
+    onSuccess: () => {
+      // Pipeline is now running in background — polling will track progress
+      toast.success("Pipeline started! Running in background — you can switch tabs safely.");
     },
     onError: (err: any) => {
       setPipeline(p => ({ ...p, status: "error", error: err.message }));
-      toast.error("Pipeline failed: " + err.message);
+      toast.error("Pipeline failed to start: " + err.message);
     },
   });
 
+  // Map stage to step index for progress display
+  const stageToStep: Record<string, number> = {
+    generating_ideas: 0, saving_ideas: 1, generating_content: 2,
+    inspecting: 4, completed: 5,
+  };
+
+  // Track background pipeline progress via polling
   useEffect(() => {
-    if (pipeline.status !== "running") return;
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < PIPELINE_STEPS.length - 2) {
-        i++;
-        setPipeline(p => ({ ...p, currentStep: i, stepLabel: PIPELINE_STEPS[i].label }));
-      }
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [pipeline.status]);
+    if (pipeline.status !== "running" || !runStatus) return;
+    const progress = (runStatus as any)?.progress;
+    const status = (runStatus as any)?.status;
+    if (!progress) return;
+
+    if (status === "completed" || status === "partial") {
+      setPipeline({
+        status: "done",
+        currentStep: 5,
+        stepLabel: "Ready to Review",
+        ideasGenerated: progress.ideasGenerated ?? 0,
+        packagesGenerated: progress.packagesGenerated ?? 0,
+        variantsGenerated: progress.packagesGenerated ?? 0,
+        readyForReview: progress.packagesPassedInspection ?? 0,
+      });
+      refetchSummary();
+      refetchRun();
+      toast.success(`Pipeline complete — ${progress.packagesPassedInspection ?? 0} pieces ready for review`);
+    } else if (status === "failed") {
+      setPipeline(p => ({ ...p, status: "error", error: progress.error || "Pipeline failed" }));
+      toast.error("Pipeline failed: " + (progress.error || "Unknown error"));
+    } else {
+      // Still running — update step indicator
+      const step = stageToStep[progress.stage] ?? 0;
+      const label = PIPELINE_STEPS[Math.min(step, PIPELINE_STEPS.length - 1)]?.label || progress.stage;
+      setPipeline(p => ({ ...p, currentStep: step, stepLabel: label }));
+    }
+  }, [runStatus]);
+
+  // On mount, check if a pipeline is already running (e.g. user switched tabs and came back)
+  useEffect(() => {
+    if (!latestRun) return;
+    if ((latestRun as any).status === "running" && pipeline.status === "idle") {
+      setPipeline(p => ({ ...p, status: "running", currentStep: 0, stepLabel: "Resuming..." }));
+    }
+  }, [latestRun]);
 
   const pendingReview = (reviewQueue as any[]).filter(
     item => item.status === "generated" || item.status === "needs_revision"

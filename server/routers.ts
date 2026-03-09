@@ -7,6 +7,7 @@ import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { invokeLLM } from "./_core/llm";
 import { callDataApi } from "./_core/dataApi";
 import { humanize, humanizeVariant, humanizePackage } from "./humanizer";
+import { runPipelineBackground, getPipelineStatus, buildContentPrompt, saveGeneratedContent, runInspector } from "./pipeline-engine";
 import {
   upsertUser, getUserByOpenId,
   getBrandById, getBrandsByUserId, updateBrand, createBrand,
@@ -355,6 +356,20 @@ const contentRouter = router({
     return { success: true };
   }),
 
+  // Batch operations
+  batchApprove: protectedProcedure.input(z.object({ ids: z.array(z.number()) })).mutation(async ({ input }) => {
+    await Promise.all(input.ids.map(id => updateContentPackage(id, { status: "approved_for_publish" })));
+    return { success: true, count: input.ids.length };
+  }),
+  batchArchive: protectedProcedure.input(z.object({ ids: z.array(z.number()) })).mutation(async ({ input }) => {
+    await Promise.all(input.ids.map(id => updateContentPackage(id, { status: "archived" })));
+    return { success: true, count: input.ids.length };
+  }),
+  batchReject: protectedProcedure.input(z.object({ ids: z.array(z.number()) })).mutation(async ({ input }) => {
+    await Promise.all(input.ids.map(id => updateContentPackage(id, { status: "needs_revision" })));
+    return { success: true, count: input.ids.length };
+  }),
+
   generate: protectedProcedure.input(z.object({
     ideaId: z.number(),
     targetPlatforms: z.array(z.string()).optional(),
@@ -373,7 +388,8 @@ const contentRouter = router({
     const pillarName = pillars.find(p => p.id === idea.pillarId)?.name || "General";
     const doSay = rules.filter(r => r.ruleType === "do_say").map(r => r.content).join("; ");
     const dontSay = rules.filter(r => r.ruleType === "dont_say").map(r => r.content).join("; ");
-    const platforms = input.targetPlatforms || idea.targetPlatforms || brand.activePlatforms || ["linkedin", "instagram", "webflow"];
+    const VALID_PLATFORMS = ["instagram","facebook","linkedin","tiktok","webflow","medium","xiaohongshu","wechat","reddit","quora","blog"];
+    const platforms = (input.targetPlatforms || idea.targetPlatforms || brand.activePlatforms || ["linkedin", "instagram", "webflow"]).filter((p: string) => VALID_PLATFORMS.includes(p));
 
     // Create package record
     const pkgResult = await createContentPackage({
@@ -382,43 +398,10 @@ const contentRouter = router({
       status: "generating",
       version: 1,
     });
-
     const pkgId = (pkgResult as any)?.id;
 
-    const systemPrompt = `You are Caelum Liu, Chief Growth Officer for ${brand.name}. You are a world-class brand content strategist. Generate high-quality, on-brand content packages. Always return ONLY valid JSON.`;
-
-    const userPrompt = `Generate a complete content package for this approved idea:
-
-Title: ${idea.title}
-Angle: ${idea.angle || ""}
-Summary: ${idea.summary || ""}
-Content Pillar: ${pillarName}
-Funnel Stage: ${idea.funnelStage || "awareness"}
-
-Brand: ${brand.name}
-Mission: ${brand.mission || ""}
-Positioning: ${brand.positioning || ""}
-Tone: ${brand.toneSummary || "authoritative, empathetic, forward-thinking"}
-${doSay ? `Do say: ${doSay}` : ""}
-${dontSay ? `Don't say: ${dontSay}` : ""}
-
-Target platforms: ${platforms.join(", ")}
-
-Return ONLY valid JSON with this structure:
-{
-  "masterHook": "Compelling one-line hook",
-  "masterAngle": "Core strategic angle for this piece",
-  "keyPoints": ["point 1", "point 2", "point 3", "point 4", "point 5"],
-  "cta": "Primary call to action",
-  "blogContent": "Full blog article (800-1200 words, markdown formatted with ## subheadings)",
-  "variants": {
-    "linkedin": { "title": "...", "body": "LinkedIn post (1200-1800 chars, thought leadership, ends with engagement question)", "hashtags": ["tag1", "tag2"] },
-    "instagram": { "caption": "Instagram caption (150-300 chars, strong hook, visual-first)", "hashtags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7", "tag8", "tag9", "tag10"] },
-    "webflow": { "title": "SEO article title", "body": "Full article for blog (same as blogContent but formatted for web)" },
-    "wechat": { "title": "WeChat title", "body": "WeChat article (Chinese-friendly tone, 400-600 chars, warm and insightful)" }
-  },
-  "imagePrompt": "Detailed image generation prompt: hyperrealistic, 16:9, cool teal/blue/violet neon tones, professional, no text or symbols, cinematic lighting"
-}`;
+    // Build dynamic prompt based on actual platforms
+    const { systemPrompt, userPrompt } = buildContentPrompt({ idea, pillarName, brand, doSay, dontSay, platforms });
 
     const response = await invokeLLM({
       messages: [
@@ -434,53 +417,7 @@ Return ONLY valid JSON with this structure:
       generated = JSON.parse(raw);
     } catch { generated = {}; }
 
-    // Update content package with generated content — humanize to strip markdown
-    const cleanPkg = humanizePackage({
-      masterHook: generated.masterHook || idea.title,
-      masterAngle: generated.masterAngle || idea.angle || "",
-      keyPoints: generated.keyPoints || [],
-      cta: generated.cta || "",
-      blogContent: generated.blogContent || "",
-    });
-    await updateContentPackage(pkgId, {
-      ...cleanPkg,
-      status: "generated",
-      generationModel: "gemini-2.5-flash",
-      generationPrompt: userPrompt,
-    });
-    // Create platform variants — humanize each variant
-    const variantData = generated.variants || {};
-    for (const platform of platforms) {
-      const v = variantData[platform] || {};
-      const cleanVariant = humanizeVariant({
-        title: v.title || generated.masterHook || idea.title,
-        body: v.body || "",
-        caption: v.caption || "",
-        hashtags: v.hashtags || [],
-      });
-      await createVariant({
-        contentPackageId: pkgId,
-        brandId: idea.brandId,
-        platform: platform as any,
-        formatType: platform === "webflow" ? "article" : platform === "linkedin" ? "long_post" : platform === "instagram" ? "caption" : "short_post",
-        title: cleanVariant.title || "",
-        body: cleanVariant.body || "",
-        caption: cleanVariant.caption || "",
-        hashtags: cleanVariant.hashtags || [],
-        status: "generated",
-        version: 1,
-      });
-    }
-    // Create image prompt assett
-    if (generated.imagePrompt) {
-      await createAsset({
-        contentPackageId: pkgId,
-        assetType: "image_prompt",
-        promptText: generated.imagePrompt,
-        status: "ready",
-        version: 1,
-      });
-    }
+    await saveGeneratedContent({ pkgId, generated, idea, platforms, userPrompt });
 
     await logAudit({ brandId: idea.brandId, actorUserId: ctx.user.id, entityType: "content_package", entityId: pkgId, action: "generated", description: `Content package generated for: "${idea.title}"` });
 
@@ -872,6 +809,7 @@ const pipelineRouter = router({
     return { success: true };
   }),
 
+  // Background pipeline — returns runId immediately, runs in background
   run: protectedProcedure.input(z.object({
     brandId: z.number(),
     ideaCount: z.number().min(1).max(30).default(10),
@@ -881,260 +819,36 @@ const pipelineRouter = router({
     const brand = await getBrandById(input.brandId);
     if (!brand) throw new Error("Brand not found");
 
-    // Create pipeline run record
-    const runResult = await createPipelineRun({
+    // Launch background pipeline — returns immediately
+    const runId = await runPipelineBackground({
       brandId: input.brandId,
-      triggeredByUserId: ctx.user.id,
-      status: "running",
-      ideasGenerated: 0,
-      ideasApproved: 0,
-      packagesGenerated: 0,
-      packagesInspected: 0,
-      packagesPassedInspection: 0,
-      startedAt: new Date(),
+      userId: ctx.user.id,
+      ideaCount: input.ideaCount,
+      autoApproveIdeas: input.autoApproveIdeas,
+      runInspector: input.runInspector,
     });
-    const runId = (runResult as any).id ?? (runResult as any)[0]?.insertId ?? (runResult as any).insertId;
 
-    let ideasGenerated = 0;
-    let ideasApproved = 0;
-    let packagesGenerated = 0;
-    let packagesInspected = 0;
-    let packagesPassedInspection = 0;
-    const errors: string[] = [];
+    return { success: true, runId, backgroundJob: true };
+  }),
 
-    try {
-      // STEP 1: Generate ideas
-      const [pillars, rules, prompts, audiences] = await Promise.all([
-        getContentPillars(input.brandId),
-        getBrandRules(input.brandId),
-        getPromptTemplates(input.brandId),
-        getAudienceProfiles(input.brandId),
-      ]);
-
-      const pillarNames = pillars.map(p => p.name).join(", ");
-      const doSay = rules.filter(r => r.ruleType === "do_say").map(r => r.content).join("; ");
-      const dontSay = rules.filter(r => r.ruleType === "dont_say").map(r => r.content).join("; ");
-      const audienceSummary = audiences.map(a => a.segment).join(", ");
-      const promptExamples = prompts.slice(0, 3).map(p => p.promptText).join("\n");
-
-      const ideaResponse = await invokeLLM({
-        messages: [
-          { role: "system", content: `You are Caelum Liu, CGO for ${brand.name}. Generate fresh, strategic content ideas. Return ONLY valid JSON.` },
-          { role: "user", content: `Generate ${input.ideaCount} content ideas for ${brand.name}.\n\nMission: ${brand.mission || ""}\nPositioning: ${brand.positioning || ""}\nContent pillars: ${pillarNames}\nTarget audience: ${audienceSummary}\nTone: ${brand.toneSummary || "authoritative, empathetic"}\n${doSay ? `Do say: ${doSay}` : ""}\n${dontSay ? `Don't say: ${dontSay}` : ""}\n\nPrompt style examples:\n${promptExamples}\n\nReturn JSON: { "ideas": [{ "title": "...", "angle": "...", "pillar": "pillar name", "platforms": ["linkedin", "instagram", "webflow", "wechat", "blog"], "funnelStage": "awareness|consideration|conversion|retention", "summary": "2-sentence summary" }] }
-
-IMPORTANT: platforms must only use these exact values: linkedin, instagram, webflow, wechat, blog, tiktok, facebook, medium, xiaohongshu, reddit, quora. Never use any other platform name.` },
-        ],
-        response_format: { type: "json_object" } as any,
-      });
-
-      let generatedIdeas: any[] = [];
-      try {
-        const raw = (ideaResponse.choices?.[0]?.message?.content as string) || "{}";
-        generatedIdeas = JSON.parse(raw).ideas || [];
-      } catch { generatedIdeas = []; }
-
-      // STEP 2: Save ideas and auto-approve
-      const approvedIdeaIds: number[] = [];
-      for (const idea of generatedIdeas.slice(0, input.ideaCount)) {
-        const pillar = pillars.find(p => p.name.toLowerCase() === (idea.pillar || "").toLowerCase());
-        const ideaResult = await createIdea({
-          brandId: input.brandId,
-          title: idea.title || "Untitled",
-          angle: idea.angle || "",
-          summary: idea.summary || "",
-          targetPlatforms: (idea.platforms || ["linkedin", "instagram"]).map((p: string) => p.toLowerCase().replace(/\s+/g, "")).map((p: string) => p === "wechat" ? "wechat" : p === "xiaohongshu" ? "xiaohongshu" : p === "douyin" ? "tiktok" : p === "sinaweibo" ? "xiaohongshu" : p).filter((p: string) => ["instagram","facebook","linkedin","tiktok","webflow","medium","xiaohongshu","wechat","reddit","quora","blog"].includes(p)),
-          funnelStage: (["awareness", "consideration", "conversion", "retention", "decision"].includes(idea.funnelStage) ? idea.funnelStage : "awareness") as "awareness" | "consideration" | "conversion" | "retention" | "decision",
-          pillarId: pillar?.id ?? null,
-          status: input.autoApproveIdeas ? "approved" : "proposed",
-          sourceType: "batch",
-        });
-        ideasGenerated++;
-        if (input.autoApproveIdeas) {
-          approvedIdeaIds.push((ideaResult as any)?.id);
-          ideasApproved++;
-        }
-      }
-
-      await updatePipelineRun(runId, { ideasGenerated, ideasApproved });
-
-      // STEP 3: Generate content packages for all approved ideas
-      const inspectorRulesList = input.runInspector ? await getAllInspectorRules(input.brandId) : [];
-
-      for (const ideaId of approvedIdeaIds) {
-        try {
-          const idea = await getIdeaById(ideaId);
-          if (!idea) continue;
-
-          const pillarName = pillars.find(p => p.id === idea.pillarId)?.name || "General";
-          const VALID_PLATFORMS = ["instagram","facebook","linkedin","tiktok","webflow","medium","xiaohongshu","wechat","reddit","quora","blog"];
-          const rawPlatforms = idea.targetPlatforms || brand.activePlatforms || ["linkedin", "instagram", "webflow"];
-          const platforms = rawPlatforms.filter((p: string) => VALID_PLATFORMS.includes(p));
-
-          const pkgResult = await createContentPackage({
-            ideaId: idea.id,
-            brandId: idea.brandId,
-            status: "generating",
-            version: 1,
-          });
-          const pkgId = (pkgResult as any)?.id;
-
-          const systemPrompt = `You are Caelum Liu, Chief Growth Officer for ${brand.name}. Generate high-quality, on-brand content packages. Always return ONLY valid JSON.`;
-          const userPrompt = `Generate a complete content package for:\n\nTitle: ${idea.title}\nAngle: ${idea.angle || ""}\nContent Pillar: ${pillarName}\nFunnel Stage: ${idea.funnelStage || "awareness"}\n\nBrand: ${brand.name}\nMission: ${brand.mission || ""}\nPositioning: ${brand.positioning || ""}\nTone: ${brand.toneSummary || "authoritative, empathetic, forward-thinking"}\n${doSay ? `Do say: ${doSay}` : ""}\n${dontSay ? `Don't say: ${dontSay}` : ""}\n\nTarget platforms: ${platforms.join(", ")}\n\nReturn ONLY valid JSON:\n{\n  "masterHook": "Compelling one-line hook",\n  "masterAngle": "Core strategic angle",\n  "keyPoints": ["point 1", "point 2", "point 3"],\n  "cta": "Primary call to action",\n  "blogContent": "Full blog article (800-1200 words, markdown formatted)",\n  "variants": {\n    "linkedin": { "title": "...", "body": "LinkedIn post (1200-1800 chars, no ** markdown, no em-dashes, thought leadership, ends with question)", "hashtags": ["tag1", "tag2"] },\n    "instagram": { "caption": "Instagram caption (150-300 chars, strong hook)", "hashtags": ["tag1", "tag2", "tag3"] },\n    "webflow": { "title": "SEO title", "body": "Full article" },\n    "wechat": { "title": "WeChat title", "body": "WeChat article (400-600 chars, warm tone)" }\n  },\n  "imagePrompt": "Hyperrealistic, 16:9, teal/blue/violet tones, professional, no text, cinematic lighting"\n}`;
-
-          const contentResponse = await invokeLLM({
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userPrompt },
-            ],
-            response_format: { type: "json_object" } as any,
-          });
-
-          let generated: any = {};
-          try {
-            const raw = (contentResponse.choices?.[0]?.message?.content as string) || "{}";
-            generated = JSON.parse(raw);
-          } catch { generated = {}; }
-
-          const cleanPkgPipeline = humanizePackage({
-            masterHook: generated.masterHook || idea.title,
-            masterAngle: generated.masterAngle || idea.angle || "",
-            keyPoints: generated.keyPoints || [],
-            cta: generated.cta || "",
-            blogContent: generated.blogContent || "",
-          });
-          await updateContentPackage(pkgId, {
-            ...cleanPkgPipeline,
-            status: "generated",
-            generationModel: "gemini-2.5-flash",
-            generationPrompt: userPrompt,
-          });
-          const variantData = generated.variants || {};
-          for (const platform of platforms) {
-            const v = variantData[platform] || {};
-            const cleanV = humanizeVariant({
-              title: v.title || generated.masterHook || idea.title,
-              body: v.body || "",
-              caption: v.caption || "",
-              hashtags: v.hashtags || [],
-            });
-            await createVariant({
-              contentPackageId: pkgId,
-              brandId: idea.brandId,
-              platform: platform as any,
-              formatType: platform === "webflow" ? "article" : platform === "linkedin" ? "long_post" : platform === "instagram" ? "caption" : "short_post",
-              title: cleanV.title || "",
-              body: cleanV.body || "",
-              caption: cleanV.caption || "",
-              hashtags: cleanV.hashtags || [],
-              status: "generated",
-              version: 1,
-            });
-          }
-          if (generated.imagePrompt) {
-            await createAsset({
-              contentPackageId: pkgId,
-              assetType: "image_prompt",
-              promptText: generated.imagePrompt,
-              status: "ready",
-              version: 1,
-            });
-          }
-
-          packagesGenerated++;
-
-          // STEP 4: Run AI Inspector
-          if (input.runInspector && inspectorRulesList.length > 0) {
-            packagesInspected++;
-            const variants = await getVariantsByPackageId(pkgId);
-            const allContent = variants.map(v => `[${v.platform}]: ${v.body || v.caption || ""}`).join("\n\n");
-
-            const rulesText = inspectorRulesList.map((r: any) => `- ${r.ruleType} (severity: ${r.severity}): ${r.ruleValue}${r.autoFix ? " [AUTO-FIX ENABLED]" : ""}`).join("\n");
-
-            const inspectResponse = await invokeLLM({
-              messages: [
-                { role: "system", content: "You are a brand content quality inspector. Check content against rules and return ONLY valid JSON." },
-                { role: "user", content: `Inspect this content against the brand rules and return a quality report.\n\nCONTENT:\n${allContent}\n\nRULES:\n${rulesText}\n\nReturn JSON: { "score": 0-100, "passed": true/false, "humanisationScore": 0-10, "authenticityScore": 0-10, "accuracyScore": 0-10, "platformFitScore": 0-10, "originalityScore": 0-10, "vitalityScore": 0-100, "issues": [{ "rule": "rule name", "severity": "error|warning|info", "description": "what was found", "suggestion": "how to fix", "autoFixed": false }], "fixedContent": { "linkedin": "...", "instagram": "...", "webflow": "...", "wechat": "..." } }\n\nFor humanisationScore: rate how human and conversational the writing feels (0-10).\nFor authenticityScore: rate how authentic and genuine the brand voice is (0-10).\nFor accuracyScore: rate factual accuracy and claim validity (0-10).\nFor platformFitScore: rate how well the content fits each platform's norms (0-10).\nFor originalityScore: rate how original and non-generic the content is (0-10).\nFor vitalityScore: rate overall viral/engagement potential (0-100).` },
-              ],
-              response_format: { type: "json_object" } as any,
-            });
-
-            let inspectionResult: any = { score: 100, passed: true, issues: [] };
-            try {
-              const raw = (inspectResponse.choices?.[0]?.message?.content as string) || "{}";
-              inspectionResult = JSON.parse(raw);
-            } catch { inspectionResult = { score: 100, passed: true, issues: [] }; }
-
-            // Save inspection report
-            await createInspectionReport({
-              contentPackageId: pkgId,
-              brandId: idea.brandId,
-              overallScore: inspectionResult.score || 100,
-              passed: inspectionResult.passed !== false,
-              humanisationScore: inspectionResult.humanisationScore ?? null,
-              authenticityScore: inspectionResult.authenticityScore ?? null,
-              accuracyScore: inspectionResult.accuracyScore ?? null,
-              platformFitScore: inspectionResult.platformFitScore ?? null,
-              originalityScore: inspectionResult.originalityScore ?? null,
-              vitalityScore: inspectionResult.vitalityScore ?? null,
-              issues: inspectionResult.issues || [],
-              fixedContent: inspectionResult.fixedContent || null,
-              inspectorVersion: "1.0",
-            });
-
-            // Apply auto-fixes if available
-            if (inspectionResult.fixedContent) {
-              for (const variant of variants) {
-                const fixed = inspectionResult.fixedContent[variant.platform];
-                if (fixed) {
-                  await updateVariant(variant.id, {
-                    body: variant.platform !== "instagram" ? fixed : variant.body,
-                    caption: variant.platform === "instagram" ? fixed : variant.caption,
-                    status: "generated",
-                  });
-                }
-              }
-            }
-
-            if (inspectionResult.passed !== false) {
-              packagesPassedInspection++;
-            }
-          } else {
-            packagesPassedInspection++;
-          }
-
-          await logAudit({ brandId: input.brandId, actorUserId: ctx.user.id, entityType: "content_package", entityId: pkgId, action: "pipeline_generated", description: `Pipeline: content package generated for "${idea.title}"` });
-        } catch (err: any) {
-          errors.push(`Failed for idea ${ideaId}: ${err.message}`);
-        }
-      }
-
-      await updatePipelineRun(runId, {
-        status: errors.length === 0 ? "completed" : "partial",
-        ideasGenerated,
-        ideasApproved,
-        packagesGenerated,
-        packagesInspected,
-        packagesPassedInspection,
-        errorLog: errors.length > 0 ? errors.join("\n") : null,
-        completedAt: new Date(),
-      });
-
-      await logAudit({ brandId: input.brandId, actorUserId: ctx.user.id, entityType: "pipeline", action: "completed", description: `Pipeline completed: ${ideasGenerated} ideas, ${packagesGenerated} packages, ${packagesPassedInspection} passed inspection` });
-
-      return {
-        success: true,
-        runId,
-        ideasGenerated,
-        ideasApproved,
-        packagesGenerated,
-        packagesInspected,
-        packagesPassedInspection,
-        errors,
-      };
-    } catch (err: any) {
-      await updatePipelineRun(runId, { status: "failed", errorLog: err.message, completedAt: new Date() });
-      throw err;
-    }
+  // Poll pipeline status (for background job tracking)
+  getRunStatus: protectedProcedure.input(z.object({
+    brandId: z.number(),
+  })).query(async ({ input }) => {
+    // Check in-memory first for real-time progress
+    const memStatus = getPipelineStatus(input.brandId);
+    if (memStatus) return memStatus;
+    // Fallback to DB
+    const latest = await getLatestPipelineRun(input.brandId);
+    if (!latest) return null;
+    return { runId: latest.id, status: latest.status, progress: {
+      stage: latest.stage || (latest.status === "completed" ? "completed" : "unknown"),
+      ideasGenerated: latest.ideasGenerated,
+      ideasApproved: latest.ideasApproved,
+      packagesGenerated: latest.packagesGenerated,
+      packagesInspected: latest.packagesInspected,
+      packagesPassedInspection: latest.packagesPassedInspection,
+    }};
   }),
 });
 

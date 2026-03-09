@@ -198,3 +198,11 @@
 
 ## Bug Fixes (March 9 2026 — Round 5)
 - [ ] BUG: Pipeline runs but generates 0 ideas and 0 content packages — no real LLM content being produced
+
+## Bug Fixes (March 9 2026 — Round 6 — Critical)
+- [x] BUG: Pipeline cancels when switching tabs — converted to background server job with polling
+- [x] BUG: Variants have empty content — dynamic platform-aware prompts + fallback content for all platforms
+- [x] BUG: Master Hook/Angle/CTA all showing "—" — fixed: saveGeneratedContent helper now properly saves all fields
+- [x] BUG: Inspector scores all 0 but Overall Quality 100/100 — fixed: improved prompt, clamped scores, stripped [platform]: prefix from auto-fix
+- [x] BUG: Some packages stuck in "generating" status — resetStuckPackages already exists, plus background pipeline prevents new stuck packages
+- [x] FEATURE: Batch actions on Content page — checkboxes, select all, bulk approve/reject/archive

@@ -1,0 +1,34 @@
+{
+  "query": "SELECT id, status, ideasGenerated, ideasApproved, packagesGenerated, errorLog FROM pipeline_runs ORDER BY id DESC LIMIT 3;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, status, ideasGenerated, ideasApproved, packagesGenerated, errorLog FROM pipeline_runs ORDER BY id DESC LIMIT 3;",
+  "rows": [
+    {
+      "id": "90006",
+      "status": "completed",
+      "ideasGenerated": "10",
+      "ideasApproved": "10",
+      "packagesGenerated": "10",
+      "errorLog": "NULL"
+    },
+    {
+      "id": "90005",
+      "status": "completed",
+      "ideasGenerated": "10",
+      "ideasApproved": "10",
+      "packagesGenerated": "10",
+      "errorLog": "NULL"
+    },
+    {
+      "id": "90004",
+      "status": "completed",
+      "ideasGenerated": "10",
+      "ideasApproved": "10",
+      "packagesGenerated": "10",
+      "errorLog": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tstatus\tideasGenerated\tideasApproved\tpackagesGenerated\terrorLog\n90006\tcompleted\t10\t10\t10\tNULL\n90005\tcompleted\t10\t10\t10\tNULL\n90004\tcompleted\t10\t10\t10\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 63
+}

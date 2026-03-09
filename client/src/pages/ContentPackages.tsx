@@ -7,9 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   FileText, CheckCircle2, Clock, Archive, Rocket, AlertCircle,
-  ChevronRight, Eye, Trash2, BarChart2, Linkedin, Instagram, Globe, MessageSquare, RefreshCw
+  ChevronRight, Eye, Trash2, BarChart2, Linkedin, Instagram, Globe, MessageSquare, RefreshCw,
+  CheckSquare, Square, XCircle, Loader2
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
 
@@ -60,10 +61,25 @@ function ScoreRing({ score, size = 36 }: { score: number | null; size?: number }
   );
 }
 
+/** Display dimension score (1-10 scale) with color coding */
+function DimScore({ val, label }: { val: number | null; label: string }) {
+  const display = val !== null && val !== undefined && val !== 0 ? val : null;
+  const color = display === null ? "text-muted-foreground" :
+    display >= 8 ? "text-emerald-400" :
+    display >= 6 ? "text-amber-400" : "text-red-400";
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <span className={`text-[11px] font-bold ${color}`}>{display ?? "—"}</span>
+      <span className="text-[9px] text-muted-foreground/60">{label}</span>
+    </div>
+  );
+}
+
 export default function ContentPackages() {
   const { activeBrandId } = useBrand();
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("all");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const utils = trpc.useUtils();
 
   const { data: packages = [], isLoading, refetch } = trpc.content.listPackagesWithDetails.useQuery(
@@ -83,6 +99,23 @@ export default function ContentPackages() {
     onSuccess: (r) => { refetch(); toast.success(r.count > 0 ? `Reset ${r.count} stuck package${r.count > 1 ? "s" : ""}` : "No stuck packages found"); },
     onError: (e) => toast.error(e.message),
   });
+
+  // Batch mutations
+  const batchApprove = trpc.content.batchApprove.useMutation({
+    onSuccess: (r) => { refetch(); setSelectedIds(new Set()); toast.success(`${r.count} packages approved`); },
+    onError: (e) => toast.error(e.message),
+  });
+  const batchArchive = trpc.content.batchArchive.useMutation({
+    onSuccess: (r) => { refetch(); setSelectedIds(new Set()); toast.success(`${r.count} packages archived`); },
+    onError: (e) => toast.error(e.message),
+  });
+  const batchReject = trpc.content.batchReject.useMutation({
+    onSuccess: (r) => { refetch(); setSelectedIds(new Set()); toast.success(`${r.count} packages marked for revision`); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const batchLoading = batchApprove.isPending || batchArchive.isPending || batchReject.isPending;
+
   const stuckCount = packages.filter(p => p.status === "generating" || p.status === "pending_generation").length;
 
   const filtered = activeTab === "all"
@@ -95,6 +128,27 @@ export default function ContentPackages() {
       : packages.filter(p => p.status === t.key).length;
     return acc;
   }, {} as Record<string, number>);
+
+  // Selection helpers
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const selectAll = () => {
+    const ids = filtered.map(p => p.id);
+    setSelectedIds(new Set(ids));
+  };
+  const deselectAll = () => setSelectedIds(new Set());
+  const allSelected = filtered.length > 0 && filtered.every(p => selectedIds.has(p.id));
+
+  // Clear selection when tab changes
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setSelectedIds(new Set());
+  };
 
   return (
     <AppLayout>
@@ -128,12 +182,56 @@ export default function ContentPackages() {
           </div>
         )}
 
+        {/* Batch action bar */}
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-2 mb-4 p-3 rounded-xl border border-[#3AC1EC]/30 bg-[#3AC1EC]/5 animate-in fade-in slide-in-from-top-2 duration-200">
+            <span className="text-xs text-[#3AC1EC] font-medium flex-1">
+              {selectedIds.size} selected
+            </span>
+            <Button
+              size="sm"
+              className="h-7 text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 px-3"
+              onClick={() => batchApprove.mutate({ ids: Array.from(selectedIds) })}
+              disabled={batchLoading}
+            >
+              {batchApprove.isPending ? <Loader2 size={11} className="animate-spin mr-1" /> : <CheckCircle2 size={11} className="mr-1" />}
+              Approve
+            </Button>
+            <Button
+              size="sm"
+              className="h-7 text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30 px-3"
+              onClick={() => batchReject.mutate({ ids: Array.from(selectedIds) })}
+              disabled={batchLoading}
+            >
+              {batchReject.isPending ? <Loader2 size={11} className="animate-spin mr-1" /> : <XCircle size={11} className="mr-1" />}
+              Reject
+            </Button>
+            <Button
+              size="sm"
+              className="h-7 text-xs bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 px-3"
+              onClick={() => batchArchive.mutate({ ids: Array.from(selectedIds) })}
+              disabled={batchLoading}
+            >
+              {batchArchive.isPending ? <Loader2 size={11} className="animate-spin mr-1" /> : <Trash2 size={11} className="mr-1" />}
+              Archive
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs text-muted-foreground hover:text-white px-2"
+              onClick={deselectAll}
+            >
+              Clear
+            </Button>
+          </div>
+        )}
+
         {/* Status tabs */}
         <div className="flex gap-1 overflow-x-auto pb-2 mb-4 scrollbar-hide">
           {STATUS_TABS.map(tab => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => handleTabChange(tab.key)}
               className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
                 activeTab === tab.key
                   ? "bg-primary/20 border-primary/40 text-primary"
@@ -151,6 +249,22 @@ export default function ContentPackages() {
             </button>
           ))}
         </div>
+
+        {/* Select all toggle */}
+        {filtered.length > 0 && (
+          <div className="flex items-center gap-2 mb-3">
+            <button
+              onClick={allSelected ? deselectAll : selectAll}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-white transition-colors"
+            >
+              {allSelected ? <CheckSquare size={14} className="text-[#3AC1EC]" /> : <Square size={14} />}
+              {allSelected ? "Deselect all" : "Select all"}
+            </button>
+            <span className="text-[10px] text-muted-foreground/40">
+              {filtered.length} package{filtered.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+        )}
 
         {/* Package list */}
         {isLoading ? (
@@ -173,11 +287,30 @@ export default function ContentPackages() {
               const overall = report?.overallScore ?? null;
               const platforms = (pkg.variants as any[]).map(v => v.platform);
               const uniquePlatforms = Array.from(new Set(platforms));
+              const isSelected = selectedIds.has(pkg.id);
               return (
-                <Card key={pkg.id} className="border-border bg-card/50 overflow-hidden">
+                <Card
+                  key={pkg.id}
+                  className={`border overflow-hidden transition-all cursor-pointer ${
+                    isSelected
+                      ? "border-[#3AC1EC]/50 bg-[#3AC1EC]/5"
+                      : "border-border bg-card/50 hover:border-border/80"
+                  }`}
+                  onClick={() => toggleSelect(pkg.id)}
+                >
                   <CardContent className="p-0">
                     {/* Top row */}
                     <div className="flex items-start gap-3 p-4 pb-3">
+                      {/* Checkbox */}
+                      <button
+                        className="flex-shrink-0 mt-1"
+                        onClick={(e) => { e.stopPropagation(); toggleSelect(pkg.id); }}
+                      >
+                        {isSelected
+                          ? <CheckSquare size={16} className="text-[#3AC1EC]" />
+                          : <Square size={16} className="text-muted-foreground/40 hover:text-muted-foreground" />
+                        }
+                      </button>
                       {/* Score ring */}
                       <div className="flex-shrink-0 mt-0.5">
                         <ScoreRing score={overall} size={40} />
@@ -208,33 +341,22 @@ export default function ContentPackages() {
                       </div>
                     </div>
 
-                    {/* Inspector scores row */}
+                    {/* Inspector scores row — dimension scores are 1-10, vitality is 0-100 */}
                     {report && (
                       <div className="px-4 pb-3">
                         <div className="grid grid-cols-6 gap-1 bg-secondary/30 rounded-lg p-2">
-                          {[
-                            { label: "Human", val: report.humanisationScore },
-                            { label: "Auth",  val: report.authenticityScore },
-                            { label: "Acc",   val: report.accuracyScore },
-                            { label: "Fit",   val: report.platformFitScore },
-                            { label: "Orig",  val: report.originalityScore },
-                            { label: "Vital", val: report.vitalityScore },
-                          ].map(({ label, val }) => (
-                            <div key={label} className="flex flex-col items-center gap-0.5">
-                              <span className={`text-[11px] font-bold ${
-                                val === null ? "text-muted-foreground" :
-                                val >= 75 ? "text-emerald-400" :
-                                val >= 55 ? "text-amber-400" : "text-red-400"
-                              }`}>{val ?? "—"}</span>
-                              <span className="text-[9px] text-muted-foreground/60">{label}</span>
-                            </div>
-                          ))}
+                          <DimScore val={report.humanisationScore} label="Human" />
+                          <DimScore val={report.authenticityScore} label="Auth" />
+                          <DimScore val={report.accuracyScore} label="Acc" />
+                          <DimScore val={report.platformFitScore} label="Fit" />
+                          <DimScore val={report.originalityScore} label="Orig" />
+                          <DimScore val={report.vitalityScore} label="Vital" />
                         </div>
                       </div>
                     )}
 
                     {/* Action row */}
-                    <div className="flex items-center gap-2 px-4 pb-3 border-t border-border/50 pt-3">
+                    <div className="flex items-center gap-2 px-4 pb-3 border-t border-border/50 pt-3" onClick={(e) => e.stopPropagation()}>
                       <Button
                         size="sm"
                         variant="ghost"
