@@ -1,0 +1,1 @@
+ALTER TABLE `platform_variants` MODIFY COLUMN `platform` enum('instagram','facebook','linkedin','tiktok','webflow','medium','xiaohongshu','wechat','reddit','quora','blog') NOT NULL;

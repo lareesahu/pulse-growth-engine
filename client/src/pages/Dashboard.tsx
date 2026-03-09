@@ -82,12 +82,13 @@ export default function Dashboard() {
         stepLabel: "Ready to Review",
         ideasGenerated: data.ideasGenerated ?? 0,
         packagesGenerated: data.packagesGenerated ?? 0,
-        variantsGenerated: data.variantsGenerated ?? 0,
-        readyForReview: data.readyForReview ?? 0,
+        variantsGenerated: data.variantsGenerated ?? data.packagesGenerated ?? 0,
+        readyForReview: data.readyForReview ?? data.packagesPassedInspection ?? 0,
       }));
       refetchSummary();
       refetchRun();
-      toast.success(`Pipeline complete — ${data.readyForReview ?? 0} pieces ready for review`);
+      const ready = data.readyForReview ?? data.packagesPassedInspection ?? 0;
+      toast.success(`Pipeline complete — ${ready} pieces ready for review`);
     },
     onError: (err: any) => {
       setPipeline(p => ({ ...p, status: "error", error: err.message }));

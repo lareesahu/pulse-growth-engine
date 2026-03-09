@@ -370,7 +370,7 @@ const contentRouter = router({
       version: 1,
     });
 
-    const pkgId = (pkgResult as any).insertId;
+    const pkgId = (pkgResult as any)[0]?.insertId ?? (pkgResult as any).insertId;
 
     const systemPrompt = `You are Caelum Liu, Chief Growth Officer for ${brand.name}. You are a world-class brand content strategist. Generate high-quality, on-brand content packages. Always return ONLY valid JSON.`;
 
@@ -750,7 +750,7 @@ const pipelineRouter = router({
       packagesPassedInspection: 0,
       startedAt: new Date(),
     });
-    const runId = (runResult as any).insertId;
+    const runId = (runResult as any).id ?? (runResult as any)[0]?.insertId ?? (runResult as any).insertId;
 
     let ideasGenerated = 0;
     let ideasApproved = 0;
@@ -777,7 +777,9 @@ const pipelineRouter = router({
       const ideaResponse = await invokeLLM({
         messages: [
           { role: "system", content: `You are Caelum Liu, CGO for ${brand.name}. Generate fresh, strategic content ideas. Return ONLY valid JSON.` },
-          { role: "user", content: `Generate ${input.ideaCount} content ideas for ${brand.name}.\n\nMission: ${brand.mission || ""}\nPositioning: ${brand.positioning || ""}\nContent pillars: ${pillarNames}\nTarget audience: ${audienceSummary}\nTone: ${brand.toneSummary || "authoritative, empathetic"}\n${doSay ? `Do say: ${doSay}` : ""}\n${dontSay ? `Don't say: ${dontSay}` : ""}\n\nPrompt style examples:\n${promptExamples}\n\nReturn JSON: { "ideas": [{ "title": "...", "angle": "...", "pillar": "pillar name", "platforms": ["linkedin", "instagram"], "funnelStage": "awareness|consideration|conversion|retention", "summary": "2-sentence summary" }] }` },
+          { role: "user", content: `Generate ${input.ideaCount} content ideas for ${brand.name}.\n\nMission: ${brand.mission || ""}\nPositioning: ${brand.positioning || ""}\nContent pillars: ${pillarNames}\nTarget audience: ${audienceSummary}\nTone: ${brand.toneSummary || "authoritative, empathetic"}\n${doSay ? `Do say: ${doSay}` : ""}\n${dontSay ? `Don't say: ${dontSay}` : ""}\n\nPrompt style examples:\n${promptExamples}\n\nReturn JSON: { "ideas": [{ "title": "...", "angle": "...", "pillar": "pillar name", "platforms": ["linkedin", "instagram", "webflow", "wechat", "blog"], "funnelStage": "awareness|consideration|conversion|retention", "summary": "2-sentence summary" }] }
+
+IMPORTANT: platforms must only use these exact values: linkedin, instagram, webflow, wechat, blog, tiktok, facebook, medium, xiaohongshu, reddit, quora. Never use any other platform name.` },
         ],
         response_format: { type: "json_object" } as any,
       });
@@ -797,7 +799,7 @@ const pipelineRouter = router({
           title: idea.title || "Untitled",
           angle: idea.angle || "",
           summary: idea.summary || "",
-          targetPlatforms: idea.platforms || ["linkedin", "instagram"],
+          targetPlatforms: (idea.platforms || ["linkedin", "instagram"]).filter((p: string) => ["instagram","facebook","linkedin","tiktok","webflow","medium","xiaohongshu","wechat","reddit","quora","blog"].includes(p)),
           funnelStage: (["awareness", "consideration", "conversion", "retention", "decision"].includes(idea.funnelStage) ? idea.funnelStage : "awareness") as "awareness" | "consideration" | "conversion" | "retention" | "decision",
           pillarId: pillar?.id ?? null,
           status: input.autoApproveIdeas ? "approved" : "proposed",
@@ -805,7 +807,7 @@ const pipelineRouter = router({
         });
         ideasGenerated++;
         if (input.autoApproveIdeas) {
-          approvedIdeaIds.push((ideaResult as any).insertId);
+          approvedIdeaIds.push((ideaResult as any)[0]?.insertId ?? (ideaResult as any).insertId);
           ideasApproved++;
         }
       }
@@ -821,7 +823,9 @@ const pipelineRouter = router({
           if (!idea) continue;
 
           const pillarName = pillars.find(p => p.id === idea.pillarId)?.name || "General";
-          const platforms = idea.targetPlatforms || brand.activePlatforms || ["linkedin", "instagram", "webflow"];
+          const VALID_PLATFORMS = ["instagram","facebook","linkedin","tiktok","webflow","medium","xiaohongshu","wechat","reddit","quora","blog"];
+          const rawPlatforms = idea.targetPlatforms || brand.activePlatforms || ["linkedin", "instagram", "webflow"];
+          const platforms = rawPlatforms.filter((p: string) => VALID_PLATFORMS.includes(p));
 
           const pkgResult = await createContentPackage({
             ideaId: idea.id,
@@ -829,7 +833,7 @@ const pipelineRouter = router({
             status: "generating",
             version: 1,
           });
-          const pkgId = (pkgResult as any).insertId;
+          const pkgId = (pkgResult as any)[0]?.insertId ?? (pkgResult as any).insertId;
 
           const systemPrompt = `You are Caelum Liu, Chief Growth Officer for ${brand.name}. Generate high-quality, on-brand content packages. Always return ONLY valid JSON.`;
           const userPrompt = `Generate a complete content package for:\n\nTitle: ${idea.title}\nAngle: ${idea.angle || ""}\nContent Pillar: ${pillarName}\nFunnel Stage: ${idea.funnelStage || "awareness"}\n\nBrand: ${brand.name}\nMission: ${brand.mission || ""}\nPositioning: ${brand.positioning || ""}\nTone: ${brand.toneSummary || "authoritative, empathetic, forward-thinking"}\n${doSay ? `Do say: ${doSay}` : ""}\n${dontSay ? `Don't say: ${dontSay}` : ""}\n\nTarget platforms: ${platforms.join(", ")}\n\nReturn ONLY valid JSON:\n{\n  "masterHook": "Compelling one-line hook",\n  "masterAngle": "Core strategic angle",\n  "keyPoints": ["point 1", "point 2", "point 3"],\n  "cta": "Primary call to action",\n  "blogContent": "Full blog article (800-1200 words, markdown formatted)",\n  "variants": {\n    "linkedin": { "title": "...", "body": "LinkedIn post (1200-1800 chars, no ** markdown, no em-dashes, thought leadership, ends with question)", "hashtags": ["tag1", "tag2"] },\n    "instagram": { "caption": "Instagram caption (150-300 chars, strong hook)", "hashtags": ["tag1", "tag2", "tag3"] },\n    "webflow": { "title": "SEO title", "body": "Full article" },\n    "wechat": { "title": "WeChat title", "body": "WeChat article (400-600 chars, warm tone)" }\n  },\n  "imagePrompt": "Hyperrealistic, 16:9, teal/blue/violet tones, professional, no text, cinematic lighting"\n}`;

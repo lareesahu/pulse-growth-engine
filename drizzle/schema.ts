@@ -179,7 +179,7 @@ export const platformVariants = mysqlTable("platform_variants", {
   id: int("id").autoincrement().primaryKey(),
   contentPackageId: int("contentPackageId").notNull(),
   brandId: int("brandId").notNull(),
-  platform: mysqlEnum("platform", ["instagram", "facebook", "linkedin", "tiktok", "webflow", "medium", "xiaohongshu", "wechat", "reddit", "quora"]).notNull(),
+  platform: mysqlEnum("platform", ["instagram", "facebook", "linkedin", "tiktok", "webflow", "medium", "xiaohongshu", "wechat", "reddit", "quora", "blog"]).notNull(),
   formatType: mysqlEnum("formatType", ["caption", "article", "carousel_copy", "reel_script", "short_post", "long_post"]).default("short_post"),
   title: text("title"),
   body: text("body"),

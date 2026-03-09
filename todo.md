@@ -161,3 +161,7 @@
 - [x] CRITICAL Bug #7: platform_variants SQL insertion error — fixed: pre-serialize hashtags JSON array in createVariant, also fixed keyPoints/failedDimensions/issues/fixedContent
 - [x] CRITICAL Bug #1 regression: Content Detail now fetches idea directly and shows title/angle + Generate button even when no package exists
 - [x] MAJOR: Reset 18 stuck packages to needs_revision via SQL; ContentDetail shows amber Regenerate banner for stuck packages
+
+## Process Improvement
+- [x] Always run live E2E pipeline test in browser before every push
+- [ ] Fix platform_variants insert error (same error still happening after previous fix)

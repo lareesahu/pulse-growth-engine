@@ -1,0 +1,82 @@
+{
+  "query": "SELECT id, ideaId, status, createdAt FROM content_packages ORDER BY createdAt DESC LIMIT 10;\nSELECT id, contentPackageId, platform, status, createdAt FROM platform_variants ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, ideaId, status, createdAt FROM content_packages ORDER BY createdAt DESC LIMIT 10;\nSELECT id, contentPackageId, platform, status, createdAt FROM platform_variants ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "60013",
+      "ideaId": "90032",
+      "status": "generated",
+      "createdAt": "2026-03-09 05:00:34"
+    },
+    {
+      "id": "60012",
+      "ideaId": "90031",
+      "status": "generated",
+      "createdAt": "2026-03-09 05:00:14"
+    },
+    {
+      "id": "60011",
+      "ideaId": "90030",
+      "status": "generated",
+      "createdAt": "2026-03-09 04:59:46"
+    },
+    {
+      "id": "60010",
+      "ideaId": "90029",
+      "status": "generated",
+      "createdAt": "2026-03-09 04:59:31"
+    },
+    {
+      "id": "60009",
+      "ideaId": "90028",
+      "status": "generated",
+      "createdAt": "2026-03-09 04:59:08"
+    },
+    {
+      "id": "60008",
+      "ideaId": "90027",
+      "status": "generated",
+      "createdAt": "2026-03-09 04:58:49"
+    },
+    {
+      "id": "60007",
+      "ideaId": "90026",
+      "status": "generated",
+      "createdAt": "2026-03-09 04:58:29"
+    },
+    {
+      "id": "60006",
+      "ideaId": "90025",
+      "status": "generated",
+      "createdAt": "2026-03-09 04:58:09"
+    },
+    {
+      "id": "60005",
+      "ideaId": "90024",
+      "status": "generated",
+      "createdAt": "2026-03-09 04:57:38"
+    },
+    {
+      "id": "60004",
+      "ideaId": "90023",
+      "status": "generated",
+      "createdAt": "2026-03-09 04:57:22"
+    }
+  ],
+  "messages": [
+    "id\tcontentPackageId\tplatform\tstatus\tcreatedAt",
+    "17\t60012\tlinkedin\tgenerated\t2026-03-09 05:00:34",
+    "16\t60011\tlinkedin\tgenerated\t2026-03-09 05:00:11",
+    "15\t60011\tinstagram\tgenerated\t2026-03-09 05:00:11",
+    "14\t60010\tlinkedin\tgenerated\t2026-03-09 04:59:46",
+    "12\t60009\tinstagram\tgenerated\t2026-03-09 04:59:26",
+    "13\t60009\tlinkedin\tgenerated\t2026-03-09 04:59:26",
+    "11\t60008\tlinkedin\tgenerated\t2026-03-09 04:59:08",
+    "9\t60005\tlinkedin\tgenerated\t2026-03-09 04:58:03",
+    "10\t60005\tinstagram\tgenerated\t2026-03-09 04:58:03",
+    "8\t60004\tlinkedin\tgenerated\t2026-03-09 04:57:38"
+  ],
+  "stdout": "id\tideaId\tstatus\tcreatedAt\n60013\t90032\tgenerated\t2026-03-09 05:00:34\n60012\t90031\tgenerated\t2026-03-09 05:00:14\n60011\t90030\tgenerated\t2026-03-09 04:59:46\n60010\t90029\tgenerated\t2026-03-09 04:59:31\n60009\t90028\tgenerated\t2026-03-09 04:59:08\n60008\t90027\tgenerated\t2026-03-09 04:58:49\n60007\t90026\tgenerated\t2026-03-09 04:58:29\n60006\t90025\tgenerated\t2026-03-09 04:58:09\n60005\t90024\tgenerated\t2026-03-09 04:57:38\n60004\t90023\tgenerated\t2026-03-09 04:57:22\nid\tcontentPackageId\tplatform\tstatus\tcreatedAt\n17\t60012\tlinkedin\tgenerated\t2026-03-09 05:00:34\n16\t60011\tlinkedin\tgenerated\t2026-03-09 05:00:11\n15\t60011\tinstagram\tgenerated\t2026-03-09 05:00:11\n14\t60010\tlinkedin\tgenerated\t2026-03-09 04:59:46\n12\t60009\tinstagram\tgenerated\t2026-03-09 04:59:26\n13\t60009\tlinkedin\tgenerated\t2026-03-09 04:59:26\n11\t60008\tlinkedin\tgenerated\t2026-03-09 04:59:08\n9\t60005\tlinkedin\tgenerated\t2026-03-09 04:58:03\n10\t60005\tinstagram\tgenerated\t2026-03-09 04:58:03\n8\t60004\tlinkedin\tgenerated\t2026-03-09 04:57:38\n",
+  "stderr": "",
+  "execution_time_ms": 94
+}
