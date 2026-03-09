@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, status, ideasGenerated, packagesGenerated, errorLog, startedAt FROM pipeline_runs ORDER BY startedAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, status, ideasGenerated, packagesGenerated, errorLog, startedAt FROM pipeline_runs ORDER BY startedAt DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "90004",
+      "status": "running",
+      "ideasGenerated": "10",
+      "packagesGenerated": "0",
+      "errorLog": "NULL",
+      "startedAt": "2026-03-09 10:13:18"
+    },
+    {
+      "id": "90003",
+      "status": "completed",
+      "ideasGenerated": "10",
+      "packagesGenerated": "10",
+      "errorLog": "NULL",
+      "startedAt": "2026-03-09 09:54:17"
+    },
+    {
+      "id": "90002",
+      "status": "completed",
+      "ideasGenerated": "10",
+      "packagesGenerated": "10",
+      "errorLog": "NULL",
+      "startedAt": "2026-03-09 09:53:16"
+    },
+    {
+      "id": "90001",
+      "status": "failed",
+      "ideasGenerated": "0",
+      "packagesGenerated": "0",
+      "errorLog": "LLM invoke failed: 400 Bad Request – {\"error\":{\"code\":\"InvalidParameter\",\"message\":\"The parameter `max_tokens` specified in the request are not valid: integer above maximum value, expected a value \\u003c= 16384, but got 32768 instead. Request id: 021773049250872adf9cf358287f6cc42850c99069fc23ecb0d0c\",\"param\":\"max_tokens\",\"type\":\"BadRequest\"}}",
+      "startedAt": "2026-03-09 09:40:50"
+    },
+    {
+      "id": "60011",
+      "status": "failed",
+      "ideasGenerated": "0",
+      "packagesGenerated": "0",
+      "errorLog": "LLM invoke failed: 412 Precondition Failed – {\"code\":9,\"message\":\"your account has hit a usage exhausted\"}",
+      "startedAt": "2026-03-09 08:41:28"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tstatus\tideasGenerated\tpackagesGenerated\terrorLog\tstartedAt\n90004\trunning\t10\t0\tNULL\t2026-03-09 10:13:18\n90003\tcompleted\t10\t10\tNULL\t2026-03-09 09:54:17\n90002\tcompleted\t10\t10\tNULL\t2026-03-09 09:53:16\n90001\tfailed\t0\t0\tLLM invoke failed: 400 Bad Request – {\"error\":{\"code\":\"InvalidParameter\",\"message\":\"The parameter `max_tokens` specified in the request are not valid: integer above maximum value, expected a value \\u003c= 16384, but got 32768 instead. Request id: 021773049250872adf9cf358287f6cc42850c99069fc23ecb0d0c\",\"param\":\"max_tokens\",\"type\":\"BadRequest\"}}\t2026-03-09 09:40:50\n60011\tfailed\t0\t0\tLLM invoke failed: 412 Precondition Failed – {\"code\":9,\"message\":\"your account has hit a usage exhausted\"}\t2026-03-09 08:41:28\n",
+  "stderr": "",
+  "execution_time_ms": 68
+}

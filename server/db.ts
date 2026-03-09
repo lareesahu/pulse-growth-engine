@@ -178,7 +178,7 @@ export async function getIdeaById(id: number) {
 }
 export async function createIdea(data: InsertIdea) {
   const db = await getDb(); if (!db) throw new Error("DB not available");
-  const result = await db.insert(ideas).values(data);
+  const [result] = await db.insert(ideas).values(data).$returningId();
   return result;
 }
 export async function updateIdea(id: number, data: Partial<InsertIdea>) {
@@ -215,7 +215,8 @@ export async function getContentPackagesByBrand(brandId: number) {
 }
 export async function createContentPackage(data: InsertContentPackage) {
   const db = await getDb(); if (!db) throw new Error("DB not available");
-  return db.insert(contentPackages).values(data);
+  const [result] = await db.insert(contentPackages).values(data).$returningId();
+  return result;
 }
 export async function updateContentPackage(id: number, data: Partial<InsertContentPackage>) {
   const db = await getDb(); if (!db) throw new Error("DB not available");

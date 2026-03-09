@@ -1,0 +1,67 @@
+{
+  "query": "SELECT column_name FROM information_schema.columns WHERE table_name = 'pipeline_runs' ORDER BY ordinal_position;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT column_name FROM information_schema.columns WHERE table_name = 'pipeline_runs' ORDER BY ordinal_position;",
+  "rows": [
+    {
+      "column_name": "id"
+    },
+    {
+      "column_name": "brandId"
+    },
+    {
+      "column_name": "triggeredByUserId"
+    },
+    {
+      "column_name": "status"
+    },
+    {
+      "column_name": "stage"
+    },
+    {
+      "column_name": "ideasGenerated"
+    },
+    {
+      "column_name": "packagesGenerated"
+    },
+    {
+      "column_name": "variantsGenerated"
+    },
+    {
+      "column_name": "inspectionsPassed"
+    },
+    {
+      "column_name": "inspectionsFailed"
+    },
+    {
+      "column_name": "readyForReview"
+    },
+    {
+      "column_name": "errorLog"
+    },
+    {
+      "column_name": "startedAt"
+    },
+    {
+      "column_name": "completedAt"
+    },
+    {
+      "column_name": "ideasApproved"
+    },
+    {
+      "column_name": "packagesInspected"
+    },
+    {
+      "column_name": "packagesPassedInspection"
+    },
+    {
+      "column_name": "packagesFailedInspection"
+    },
+    {
+      "column_name": "packagesRegenerated"
+    }
+  ],
+  "messages": [],
+  "stdout": "column_name\nid\nbrandId\ntriggeredByUserId\nstatus\nstage\nideasGenerated\npackagesGenerated\nvariantsGenerated\ninspectionsPassed\ninspectionsFailed\nreadyForReview\nerrorLog\nstartedAt\ncompletedAt\nideasApproved\npackagesInspected\npackagesPassedInspection\npackagesFailedInspection\npackagesRegenerated\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

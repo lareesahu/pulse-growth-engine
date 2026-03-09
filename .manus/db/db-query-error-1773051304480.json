@@ -1,0 +1,28 @@
+{
+  "query": "SHOW COLUMNS FROM pipeline_runs; SELECT id, status, error_log, started_at FROM pipeline_runs ORDER BY started_at DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SHOW COLUMNS FROM pipeline_runs; SELECT id, status, error_log, started_at FROM pipeline_runs ORDER BY started_at DESC LIMIT 5;",
+  "returncode": 1,
+  "logs": [
+    "Field\tType\tNull\tKey\tDefault\tExtra",
+    "id\tint\tNO\tPRI\tNULL\tauto_increment",
+    "brandId\tint\tNO\t\tNULL\t",
+    "triggeredByUserId\tint\tYES\t\tNULL\t",
+    "status\tenum('running','completed','failed','partial')\tNO\t\trunning\t",
+    "stage\tvarchar(128)\tYES\t\tNULL\t",
+    "ideasGenerated\tint\tNO\t\t0\t",
+    "packagesGenerated\tint\tNO\t\t0\t",
+    "variantsGenerated\tint\tNO\t\t0\t",
+    "inspectionsPassed\tint\tNO\t\t0\t",
+    "inspectionsFailed\tint\tNO\t\t0\t",
+    "readyForReview\tint\tNO\t\t0\t",
+    "errorLog\ttext\tYES\t\tNULL\t",
+    "startedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t",
+    "completedAt\ttimestamp\tYES\t\tNULL\t",
+    "ideasApproved\tint\tYES\t\t0\t",
+    "packagesInspected\tint\tYES\t\t0\t",
+    "packagesPassedInspection\tint\tYES\t\t0\t",
+    "packagesFailedInspection\tint\tYES\t\t0\t",
+    "packagesRegenerated\tint\tYES\t\t0",
+    "ERROR 1054 (42S22) at line 1: Unknown column 'error_log' in 'field list'"
+  ]
+}

@@ -383,7 +383,7 @@ const contentRouter = router({
       version: 1,
     });
 
-    const pkgId = (pkgResult as any)[0]?.insertId ?? (pkgResult as any).insertId;
+    const pkgId = (pkgResult as any)?.id;
 
     const systemPrompt = `You are Caelum Liu, Chief Growth Officer for ${brand.name}. You are a world-class brand content strategist. Generate high-quality, on-brand content packages. Always return ONLY valid JSON.`;
 
@@ -942,7 +942,7 @@ IMPORTANT: platforms must only use these exact values: linkedin, instagram, webf
           title: idea.title || "Untitled",
           angle: idea.angle || "",
           summary: idea.summary || "",
-          targetPlatforms: (idea.platforms || ["linkedin", "instagram"]).filter((p: string) => ["instagram","facebook","linkedin","tiktok","webflow","medium","xiaohongshu","wechat","reddit","quora","blog"].includes(p)),
+          targetPlatforms: (idea.platforms || ["linkedin", "instagram"]).map((p: string) => p.toLowerCase().replace(/\s+/g, "")).map((p: string) => p === "wechat" ? "wechat" : p === "xiaohongshu" ? "xiaohongshu" : p === "douyin" ? "tiktok" : p === "sinaweibo" ? "xiaohongshu" : p).filter((p: string) => ["instagram","facebook","linkedin","tiktok","webflow","medium","xiaohongshu","wechat","reddit","quora","blog"].includes(p)),
           funnelStage: (["awareness", "consideration", "conversion", "retention", "decision"].includes(idea.funnelStage) ? idea.funnelStage : "awareness") as "awareness" | "consideration" | "conversion" | "retention" | "decision",
           pillarId: pillar?.id ?? null,
           status: input.autoApproveIdeas ? "approved" : "proposed",
@@ -950,7 +950,7 @@ IMPORTANT: platforms must only use these exact values: linkedin, instagram, webf
         });
         ideasGenerated++;
         if (input.autoApproveIdeas) {
-          approvedIdeaIds.push((ideaResult as any)[0]?.insertId ?? (ideaResult as any).insertId);
+          approvedIdeaIds.push((ideaResult as any)?.id);
           ideasApproved++;
         }
       }
@@ -976,7 +976,7 @@ IMPORTANT: platforms must only use these exact values: linkedin, instagram, webf
             status: "generating",
             version: 1,
           });
-          const pkgId = (pkgResult as any)[0]?.insertId ?? (pkgResult as any).insertId;
+          const pkgId = (pkgResult as any)?.id;
 
           const systemPrompt = `You are Caelum Liu, Chief Growth Officer for ${brand.name}. Generate high-quality, on-brand content packages. Always return ONLY valid JSON.`;
           const userPrompt = `Generate a complete content package for:\n\nTitle: ${idea.title}\nAngle: ${idea.angle || ""}\nContent Pillar: ${pillarName}\nFunnel Stage: ${idea.funnelStage || "awareness"}\n\nBrand: ${brand.name}\nMission: ${brand.mission || ""}\nPositioning: ${brand.positioning || ""}\nTone: ${brand.toneSummary || "authoritative, empathetic, forward-thinking"}\n${doSay ? `Do say: ${doSay}` : ""}\n${dontSay ? `Don't say: ${dontSay}` : ""}\n\nTarget platforms: ${platforms.join(", ")}\n\nReturn ONLY valid JSON:\n{\n  "masterHook": "Compelling one-line hook",\n  "masterAngle": "Core strategic angle",\n  "keyPoints": ["point 1", "point 2", "point 3"],\n  "cta": "Primary call to action",\n  "blogContent": "Full blog article (800-1200 words, markdown formatted)",\n  "variants": {\n    "linkedin": { "title": "...", "body": "LinkedIn post (1200-1800 chars, no ** markdown, no em-dashes, thought leadership, ends with question)", "hashtags": ["tag1", "tag2"] },\n    "instagram": { "caption": "Instagram caption (150-300 chars, strong hook)", "hashtags": ["tag1", "tag2", "tag3"] },\n    "webflow": { "title": "SEO title", "body": "Full article" },\n    "wechat": { "title": "WeChat title", "body": "WeChat article (400-600 chars, warm tone)" }\n  },\n  "imagePrompt": "Hyperrealistic, 16:9, teal/blue/violet tones, professional, no text, cinematic lighting"\n}`;
