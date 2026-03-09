@@ -266,7 +266,7 @@ Return ONLY valid JSON: { "ideas": [{ "title": "...", "angle": "...", "summary":
         summary: idea.summary,
         pillarId: matchedPillar?.id,
         campaignId: input.campaignId,
-        funnelStage: idea.funnelStage || "awareness",
+        funnelStage: (["awareness", "consideration", "conversion", "retention"].includes(idea.funnelStage) ? idea.funnelStage : "awareness") as "awareness" | "consideration" | "conversion" | "retention",
         targetPlatforms: input.targetPlatforms || brand.activePlatforms || ["linkedin", "instagram"],
         createdByUserId: ctx.user.id,
         status: "proposed",
@@ -733,7 +733,7 @@ const pipelineRouter = router({
       const ideaResponse = await invokeLLM({
         messages: [
           { role: "system", content: `You are Caelum Liu, CGO for ${brand.name}. Generate fresh, strategic content ideas. Return ONLY valid JSON.` },
-          { role: "user", content: `Generate ${input.ideaCount} content ideas for ${brand.name}.\n\nMission: ${brand.mission || ""}\nPositioning: ${brand.positioning || ""}\nContent pillars: ${pillarNames}\nTarget audience: ${audienceSummary}\nTone: ${brand.toneSummary || "authoritative, empathetic"}\n${doSay ? `Do say: ${doSay}` : ""}\n${dontSay ? `Don't say: ${dontSay}` : ""}\n\nPrompt style examples:\n${promptExamples}\n\nReturn JSON: { "ideas": [{ "title": "...", "angle": "...", "pillar": "pillar name", "platforms": ["linkedin", "instagram"], "funnelStage": "awareness|consideration|decision", "summary": "2-sentence summary" }] }` },
+          { role: "user", content: `Generate ${input.ideaCount} content ideas for ${brand.name}.\n\nMission: ${brand.mission || ""}\nPositioning: ${brand.positioning || ""}\nContent pillars: ${pillarNames}\nTarget audience: ${audienceSummary}\nTone: ${brand.toneSummary || "authoritative, empathetic"}\n${doSay ? `Do say: ${doSay}` : ""}\n${dontSay ? `Don't say: ${dontSay}` : ""}\n\nPrompt style examples:\n${promptExamples}\n\nReturn JSON: { "ideas": [{ "title": "...", "angle": "...", "pillar": "pillar name", "platforms": ["linkedin", "instagram"], "funnelStage": "awareness|consideration|conversion|retention", "summary": "2-sentence summary" }] }` },
         ],
         response_format: { type: "json_object" } as any,
       });
@@ -754,7 +754,7 @@ const pipelineRouter = router({
           angle: idea.angle || "",
           summary: idea.summary || "",
           targetPlatforms: idea.platforms || ["linkedin", "instagram"],
-          funnelStage: idea.funnelStage || "awareness",
+          funnelStage: (["awareness", "consideration", "conversion", "retention"].includes(idea.funnelStage) ? idea.funnelStage : "awareness") as "awareness" | "consideration" | "conversion" | "retention",
           pillarId: pillar?.id ?? null,
           status: input.autoApproveIdeas ? "approved" : "proposed",
           sourceType: "batch",
