@@ -483,13 +483,64 @@ const contentRouter = router({
     status: z.enum(["draft", "generated", "needs_revision", "approved", "queued", "published", "failed", "archived"]).optional(),
   })).mutation(async ({ input }) => { const { id, ...data } = input; await updateVariant(id, data); return { success: true }; }),
 
+  generateBlog: protectedProcedure.input(z.object({
+    contentPackageId: z.number(),
+  })).mutation(async ({ ctx, input }) => {
+    const pkg = await getContentPackageById(input.contentPackageId);
+    if (!pkg) throw new Error("Package not found");
+    const idea = await getIdeaById(pkg.ideaId);
+    if (!idea) throw new Error("Idea not found");
+    const brand = await getBrandById(idea.brandId);
+    if (!brand) throw new Error("Brand not found");
+
+    const systemPrompt = `You are an expert content writer for ${brand.name}. Write a professional, engaging blog article.`;
+    const userPrompt = `Write a full blog article (800-1200 words) for this topic:
+
+Title: ${pkg.masterHook || idea.title}
+Angle: ${pkg.masterAngle || idea.angle || ''}
+Key Points: ${(pkg.keyPoints as string[] || []).join(', ')}
+
+IMPORTANT:
+- Write naturally as a human would. No markdown formatting (no **, ##, *, em-dashes).
+- Use specific real values. No placeholders like [Year] or [Brand Name].
+- Write for ${brand.name}'s audience.
+- Return ONLY the blog article text, no JSON wrapper.`;
+
+    const response = await invokeLLM({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    });
+    const blogContent = (response.choices?.[0]?.message?.content as string) || '';
+    if (!blogContent) throw new Error("Failed to generate blog content");
+
+    await updateContentPackage(input.contentPackageId, { blogContent });
+    await logAudit({ brandId: idea.brandId, actorUserId: ctx.user.id, entityType: "content_package", entityId: input.contentPackageId, action: "blog_generated", description: `Blog article generated for: "${idea.title}"` });
+    return { success: true };
+  }),
+
   generateImage: protectedProcedure.input(z.object({
     contentPackageId: z.number(),
     assetId: z.number().optional(),
   })).mutation(async ({ ctx, input }) => {
     const { generateImage } = await import("./_core/imageGeneration");
     const pkgAssets = await getAssetsByPackageId(input.contentPackageId);
-    const promptAsset = pkgAssets.find(a => a.assetType === "image_prompt" && a.status === "ready");
+    let promptAsset = pkgAssets.find(a => a.assetType === "image_prompt" && a.status === "ready");
+
+    // Auto-create image prompt if missing
+    if (!promptAsset?.promptText) {
+      const pkg = await getContentPackageById(input.contentPackageId);
+      const fallbackPrompt = `Hyperrealistic professional brand photography: ${pkg?.masterHook || 'modern branding concept'}. Cool teal/blue/violet neon tones, cinematic lighting, 16:9, no text or symbols, ultra-sharp, editorial quality.`;
+      const created = await createAsset({
+        contentPackageId: input.contentPackageId,
+        assetType: "image_prompt",
+        promptText: fallbackPrompt,
+        status: "ready",
+        version: 1,
+      });
+      promptAsset = { ...created, promptText: fallbackPrompt, status: "ready" } as any;
+    }
     if (!promptAsset?.promptText) throw new Error("No image prompt found");
 
     await updateAsset(promptAsset.id, { status: "generating" });

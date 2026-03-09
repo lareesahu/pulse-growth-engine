@@ -43,8 +43,9 @@ export default function ContentDetail() {
   );
   const latestReport = inspectionReports[inspectionReports.length - 1] as any;
 
-  const generateVariants = trpc.content.generate.useMutation();
+  const generateVariants = trpc.content.batchRegenerate.useMutation();
   const generateImages = trpc.content.generateImage.useMutation();
+  const generateBlog = trpc.content.generateBlog.useMutation();
   const approveVariant = trpc.content.updateVariant.useMutation({ onSuccess: () => refetch() });
   const schedulePublish = trpc.publishing.createJob.useMutation({
     onSuccess: () => { toast.success("Scheduled for publishing!"); utils.publishing.stats.invalidate(); }
@@ -61,14 +62,27 @@ export default function ContentDetail() {
 
   const handleGenerateVariants = async () => {
     if (!pkg) return;
-    // generate uses ideaId, so we need the ideaId from the package
     setGeneratingVariants(true);
     try {
-      await generateVariants.mutateAsync({ ideaId: pkg.ideaId });
-      toast.success("Platform variants generated!");
+      await generateVariants.mutateAsync({ ids: [pkg.id] });
+      toast.success("Content regenerated successfully!");
       refetch();
     } catch (e: any) {
-      toast.error(e.message || "Failed to generate variants");
+      toast.error(e.message || "Failed to regenerate content");
+    } finally {
+      setGeneratingVariants(false);
+    }
+  };
+
+  const handleGenerateBlog = async () => {
+    if (!pkg) return;
+    setGeneratingVariants(true);
+    try {
+      await generateBlog.mutateAsync({ contentPackageId: pkg.id });
+      toast.success("Blog article generated!");
+      refetch();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate blog");
     } finally {
       setGeneratingVariants(false);
     }
@@ -116,11 +130,12 @@ export default function ContentDetail() {
   }
 
   if (!pkg) {
+    const generateFromIdea = trpc.content.generate.useMutation();
     const handleRetryGenerate = async () => {
       if (!ideaId) return;
       setRetrying(true);
       try {
-        await generateVariants.mutateAsync({ ideaId });
+        await generateFromIdea.mutateAsync({ ideaId });
         toast.success("Content generation started! Refresh in a moment.");
         setTimeout(() => refetch(), 3000);
       } catch (e: any) {
@@ -174,7 +189,7 @@ export default function ContentDetail() {
   const handleRetryFromPackage = async () => {
     setRetrying(true);
     try {
-      await generateVariants.mutateAsync({ ideaId: pkg.ideaId });
+      await generateVariants.mutateAsync({ ids: [pkg.id] });
       toast.success("Regenerating content package...");
       setTimeout(() => refetch(), 4000);
     } catch (e: any) {
@@ -294,22 +309,41 @@ export default function ContentDetail() {
             <Card className="border-border bg-card">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm">Blog Article</CardTitle>
-                  {pkg.blogContent && (
-                    <Button variant="ghost" size="sm" onClick={() => copyToClipboard(pkg.blogContent || "")}>
-                      <Copy size={14} className="mr-1.5" /> Copy
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <FileText size={14} className="text-muted-foreground" />
+                    Blog Article
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    {pkg.blogContent && (
+                      <Button variant="ghost" size="sm" className="text-xs" onClick={() => copyToClipboard(pkg.blogContent || "")}>
+                        <Copy size={13} className="mr-1.5" /> Copy
+                      </Button>
+                    )}
+                    <Button variant="outline" size="sm" className="text-xs" onClick={handleGenerateBlog} disabled={generatingVariants}>
+                      {generatingVariants ? <RefreshCw size={13} className="mr-1.5 animate-spin" /> : <Sparkles size={13} className="mr-1.5" />}
+                      {pkg.blogContent ? "Regenerate" : "Generate Blog"}
                     </Button>
-                  )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
                 {pkg.blogContent ? (
-                  <Textarea value={pkg.blogContent} readOnly rows={20} className="font-mono text-xs resize-none bg-background/50" />
+                  <div className="space-y-3">
+                    <div className="prose prose-sm max-w-none text-foreground">
+                      <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90 bg-background/50 rounded-lg p-4 border border-border/50 max-h-[500px] overflow-y-auto">
+                        {pkg.blogContent}
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{pkg.blogContent.length.toLocaleString()} characters · ~{Math.ceil(pkg.blogContent.split(' ').length / 200)} min read</p>
+                  </div>
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p className="text-sm mb-3">No blog content yet.</p>
-                    <Button onClick={handleGenerateVariants} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
-                      <Sparkles size={14} className="mr-2" /> Generate Content
+                  <div className="text-center py-12 text-muted-foreground">
+                    <FileText size={32} className="mx-auto mb-3 opacity-30" />
+                    <p className="text-sm font-medium mb-1">No blog article yet</p>
+                    <p className="text-xs mb-4 opacity-60">Generate a full 800–1200 word article based on this content package</p>
+                    <Button onClick={handleGenerateBlog} disabled={generatingVariants} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+                      {generatingVariants ? <RefreshCw size={14} className="mr-2 animate-spin" /> : <Sparkles size={14} className="mr-2" />}
+                      {generatingVariants ? "Generating..." : "Generate Blog Article"}
                     </Button>
                   </div>
                 )}

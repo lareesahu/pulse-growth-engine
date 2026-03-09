@@ -232,3 +232,8 @@
 - [x] FEATURE: Content page — "Regenerate Selected" batch action — DONE: batchRegenerate procedure + purple Regenerate button in batch toolbar
 - [x] FEATURE: Publishing Center — "Publish All Webflow" button — DONE: publishAllWebflow procedure + button in header (only shows when Webflow connected)
 - [x] VERIFY: Webflow end-to-end publish — DONE: API call confirmed, error handling confirmed, collection ID required in Settings → Integrations → Webflow
+
+## Bug Fixes (March 9 2026 — Round 7 — User Report)
+- [x] BUG: Blog tab is empty — FIXED: added generateBlog procedure (800-1200 word article via LLM), Blog tab now shows empty state with "Generate Blog Article" button + Regenerate button; displays article with char count + read time
+- [x] BUG: "No image prompt found" error toast — FIXED: generateImage now auto-creates fallback image_prompt asset from masterHook if none exists in DB
+- [x] BUG: "Generating..." button stuck on content detail page — FIXED: handleGenerateVariants now calls batchRegenerate({ids:[pkg.id]}) instead of content.generate({ideaId}) which required idea.status==approved
