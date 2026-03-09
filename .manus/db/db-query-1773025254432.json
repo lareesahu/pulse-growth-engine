@@ -1,0 +1,18 @@
+{
+  "query": "SHOW COLUMNS FROM ideas LIKE 'funnelStage';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SHOW COLUMNS FROM ideas LIKE 'funnelStage';",
+  "rows": [
+    {
+      "Field": "funnelStage",
+      "Type": "enum('awareness','consideration','conversion','retention','decision')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "awareness",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nfunnelStage\tenum('awareness','consideration','conversion','retention','decision')\tYES\t\tawareness\t\n",
+  "stderr": "",
+  "execution_time_ms": 104
+}

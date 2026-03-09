@@ -210,6 +210,23 @@ const ideaRouter = router({
     targetPlatforms: z.array(z.string()).optional(),
   })).mutation(async ({ input }) => { const { id, ...data } = input; await updateIdea(id, data); return { success: true }; }),
 
+  batchUpdateStatus: protectedProcedure.input(z.object({
+    ids: z.array(z.number()),
+    status: z.enum(["proposed", "in_review", "approved", "rejected", "archived"]),
+  })).mutation(async ({ ctx, input }) => {
+    for (const id of input.ids) {
+      await updateIdea(id, { status: input.status });
+    }
+    return { success: true, count: input.ids.length };
+  }),
+  batchDelete: protectedProcedure.input(z.object({
+    ids: z.array(z.number()),
+  })).mutation(async ({ ctx, input }) => {
+    for (const id of input.ids) {
+      await updateIdea(id, { status: "archived" });
+    }
+    return { success: true, count: input.ids.length };
+  }),
   updateStatus: protectedProcedure.input(z.object({
     id: z.number(),
     status: z.enum(["proposed", "in_review", "approved", "rejected", "archived"]),
@@ -266,7 +283,7 @@ Return ONLY valid JSON: { "ideas": [{ "title": "...", "angle": "...", "summary":
         summary: idea.summary,
         pillarId: matchedPillar?.id,
         campaignId: input.campaignId,
-        funnelStage: (["awareness", "consideration", "conversion", "retention"].includes(idea.funnelStage) ? idea.funnelStage : "awareness") as "awareness" | "consideration" | "conversion" | "retention",
+        funnelStage: (["awareness", "consideration", "conversion", "retention", "decision"].includes(idea.funnelStage) ? idea.funnelStage : "awareness") as "awareness" | "consideration" | "conversion" | "retention" | "decision",
         targetPlatforms: input.targetPlatforms || brand.activePlatforms || ["linkedin", "instagram"],
         createdByUserId: ctx.user.id,
         status: "proposed",
@@ -297,6 +314,27 @@ const contentRouter = router({
   }),
 
   listPackages: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => getContentPackagesByBrand(input.brandId)),
+  listPackagesWithDetails: protectedProcedure.input(z.object({ brandId: z.number(), status: z.string().optional() })).query(async ({ input }) => {
+    const pkgs = await getContentPackagesByBrand(input.brandId);
+    const filtered = input.status ? pkgs.filter(p => p.status === input.status) : pkgs;
+    return Promise.all(filtered.map(async pkg => {
+      const [idea, variants, reports] = await Promise.all([
+        getIdeaById(pkg.ideaId),
+        getVariantsByPackageId(pkg.id),
+        getInspectionReportsByPackage(pkg.id),
+      ]);
+      const latestReport = reports[reports.length - 1] ?? null;
+      return { ...pkg, idea, variants, inspectionReport: latestReport };
+    }));
+  }),
+  archivePackage: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+    await updateContentPackage(input.id, { status: "archived" });
+    return { success: true };
+  }),
+  approvePackage: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+    await updateContentPackage(input.id, { status: "approved_for_publish" });
+    return { success: true };
+  }),
 
   generate: protectedProcedure.input(z.object({
     ideaId: z.number(),
@@ -754,7 +792,7 @@ const pipelineRouter = router({
           angle: idea.angle || "",
           summary: idea.summary || "",
           targetPlatforms: idea.platforms || ["linkedin", "instagram"],
-          funnelStage: (["awareness", "consideration", "conversion", "retention"].includes(idea.funnelStage) ? idea.funnelStage : "awareness") as "awareness" | "consideration" | "conversion" | "retention",
+          funnelStage: (["awareness", "consideration", "conversion", "retention", "decision"].includes(idea.funnelStage) ? idea.funnelStage : "awareness") as "awareness" | "consideration" | "conversion" | "retention" | "decision",
           pillarId: pillar?.id ?? null,
           status: input.autoApproveIdeas ? "approved" : "proposed",
           sourceType: "batch",

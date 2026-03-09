@@ -137,3 +137,15 @@
 - [ ] "Refresh Opportunities" button to re-scan for new threads
 - [ ] Mark opportunity as "Used" or "Skip" to track what's been actioned
 - [ ] Register /forums route in App.tsx and add to sidebar nav
+
+## Session: Content Tab + Ideas Board Upgrade
+- [x] Bug fix: funnelStage enum — added 'decision' to DB enum (ALTER TABLE) and schema
+- [x] Backend: content.listPackagesWithDetails — joins packages with ideas, variants, inspection reports
+- [x] Backend: content.archivePackage and content.approvePackage mutations
+- [x] Backend: idea.batchUpdateStatus — bulk approve/reject/archive
+- [x] Backend: idea.batchDelete — bulk archive
+- [x] Frontend: Content tab (/content) — status filter tabs, inspector score rings, per-dimension scores, approve/archive actions
+- [x] Frontend: Ideas board — chart/kanban toggle view (status bars, funnel stage, pillar breakdown)
+- [x] Frontend: Ideas board — batch edit toolbar (select all, approve, gen package, reject, delete)
+- [x] Frontend: Ideas board — search + status + pillar filters
+- [x] Navigation: Content tab added to sidebar and mobile bottom bar

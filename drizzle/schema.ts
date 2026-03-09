@@ -141,7 +141,7 @@ export const ideas = mysqlTable("ideas", {
   title: varchar("title", { length: 500 }).notNull(),
   angle: text("angle"),
   summary: text("summary"),
-  funnelStage: mysqlEnum("funnelStage", ["awareness", "consideration", "conversion", "retention"]).default("awareness"),
+  funnelStage: mysqlEnum("funnelStage", ["awareness", "consideration", "conversion", "retention", "decision"]).default("awareness"),
   targetPlatforms: json("targetPlatforms").$type<string[]>(),
   sourceType: mysqlEnum("sourceType", ["manual", "scheduled_generation", "campaign_generation", "batch"]).default("manual"),
   status: mysqlEnum("status", ["proposed", "in_review", "approved", "rejected", "archived"]).default("proposed").notNull(),

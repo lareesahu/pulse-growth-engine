@@ -1,0 +1,1 @@
+ALTER TABLE `ideas` MODIFY COLUMN `funnelStage` enum('awareness','consideration','conversion','retention','decision') DEFAULT 'awareness';

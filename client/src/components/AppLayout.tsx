@@ -3,7 +3,7 @@ import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import {
   BarChart3, BookOpen, Brain, CheckCheck, ChevronDown, ChevronRight,
-  Globe, LayoutDashboard, LogOut, Menu, Plus, Rocket, Settings,
+  FileText, Globe, LayoutDashboard, LogOut, Menu, Plus, Rocket, Settings,
   Shield, Sparkles, TrendingUp, X, Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -26,6 +26,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard",       href: "/dashboard",    icon: <LayoutDashboard size={16} />, mobileIcon: <LayoutDashboard size={20} /> },
   { label: "Brand",           href: "/workspace",    icon: <BookOpen size={16} />,        mobileIcon: <BookOpen size={20} /> },
   { label: "Ideas",           href: "/ideas",        icon: <Brain size={16} />,           mobileIcon: <Brain size={20} /> },
+  { label: "Content",         href: "/content",      icon: <FileText size={16} />,        mobileIcon: <FileText size={20} /> },
   { label: "Publishing",      href: "/publishing",   icon: <Rocket size={16} />,          mobileIcon: <Rocket size={20} /> },
   { label: "Analytics",       href: "/analytics",    icon: <BarChart3 size={16} />,       mobileIcon: <BarChart3 size={20} /> },
   { label: "Review",          href: "/review",       icon: <CheckCheck size={16} />,      mobileIcon: <CheckCheck size={20} /> },

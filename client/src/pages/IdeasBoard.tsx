@@ -10,10 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Brain, Plus, RefreshCw, Sparkles, ChevronRight, Trash2, CheckCircle, XCircle, Archive, Zap } from "lucide-react";
-import { useState } from "react";
+import {
+  Brain, Plus, RefreshCw, Sparkles, Trash2, CheckCircle,
+  XCircle, BarChart2, List, CheckSquare, CheckCheck, X
+} from "lucide-react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { Link } from "wouter";
 
 const STATUSES = [
   { key: "proposed",  label: "Proposed",  color: "#3AC1EC" },
@@ -209,7 +211,6 @@ export default function IdeasBoard() {
                           )}
                           {(status.key === "rejected" || status.key === "proposed") && (
                             <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-muted-foreground/60" onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: idea.id, status: "archived" }); }}>
-                              <Archive size={12} />
                             </Button>
                           )}
                           <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive ml-auto" onClick={(e) => { e.stopPropagation(); deleteIdea.mutate({ id: idea.id, status: "archived" }); }}>
@@ -219,7 +220,6 @@ export default function IdeasBoard() {
 
                         {/* View content link */}
                         <div className="flex items-center gap-1 mt-2 text-[10px] text-primary/60">
-                          <ChevronRight size={10} /> Click to open
                         </div>
                       </CardContent>
                     </Card>

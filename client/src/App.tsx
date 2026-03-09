@@ -15,6 +15,7 @@ import Integrations from "./pages/Integrations";
 import ReviewQueue from "./pages/ReviewQueue";
 import InspectorSettings from "./pages/InspectorSettings";
 import ForumOpportunities from "./pages/ForumOpportunities";
+import ContentPackages from "./pages/ContentPackages";
 
 function Router() {
   return (
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/review" component={ReviewQueue} />
       <Route path="/inspector" component={InspectorSettings} />
       <Route path="/forums" component={ForumOpportunities} />
+      <Route path="/content" component={ContentPackages} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
