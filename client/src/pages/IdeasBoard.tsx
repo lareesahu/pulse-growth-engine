@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Brain, Plus, RefreshCw, Sparkles, Trash2, CheckCircle,
-  XCircle, BarChart2, List, CheckSquare, CheckCheck, X
+  XCircle, BarChart2, List, CheckSquare, CheckCheck, X, AlertTriangle
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -34,6 +34,8 @@ export default function IdeasBoard() {
   const [newIdea, setNewIdea] = useState({ title: "", pillar: "", platform: "linkedin", angle: "" });
   const [showNewIdea, setShowNewIdea] = useState(false);
   const [generatingContentFor, setGeneratingContentFor] = useState<number | null>(null);
+  const [showDeleteAll, setShowDeleteAll] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
 
   const { data: ideas = [], isLoading, refetch } = trpc.idea.list.useQuery(
     { brandId: activeBrandId! },
@@ -45,6 +47,7 @@ export default function IdeasBoard() {
   const createIdea = trpc.idea.create.useMutation({ onSuccess: () => { refetch(); setShowNewIdea(false); toast.success("Idea added"); } });
   const updateStatus = trpc.idea.updateStatus.useMutation({ onSuccess: () => refetch() });
   const deleteIdea = trpc.idea.updateStatus.useMutation({ onSuccess: () => refetch() });
+  const deleteAllMutation = trpc.idea.deleteAll.useMutation();
   const generateContent = trpc.content.generate.useMutation();
 
   const handleBatchGenerate = async () => {
@@ -59,6 +62,21 @@ export default function IdeasBoard() {
       toast.error(e.message || "Generation failed");
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!activeBrandId) return;
+    setDeletingAll(true);
+    try {
+      const result = await deleteAllMutation.mutateAsync({ brandId: activeBrandId, hardDelete: true });
+      toast.success(`Deleted ${result.count} ideas`);
+      refetch();
+      setShowDeleteAll(false);
+    } catch (e: any) {
+      toast.error(e.message || "Delete failed");
+    } finally {
+      setDeletingAll(false);
     }
   };
 
@@ -120,6 +138,7 @@ export default function IdeasBoard() {
               </Button>
             </div>
 
+            {/* Add new idea */}
             <Dialog open={showNewIdea} onOpenChange={setShowNewIdea}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="h-9 flex-shrink-0"><Plus size={14} className="mr-1" /> Add</Button>
@@ -151,8 +170,59 @@ export default function IdeasBoard() {
                 </div>
               </DialogContent>
             </Dialog>
+
+            {/* Clear All button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 flex-shrink-0 border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/60"
+              onClick={() => setShowDeleteAll(true)}
+              disabled={ideas.length === 0}
+            >
+              <Trash2 size={12} className="mr-1.5" /> Clear All
+            </Button>
           </div>
         </div>
+
+        {/* Delete All confirmation dialog */}
+        <Dialog open={showDeleteAll} onOpenChange={setShowDeleteAll}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-400">
+                <AlertTriangle size={16} /> Delete All Ideas?
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-2 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                This will permanently delete all{" "}
+                <strong className="text-foreground">{ideas.length} ideas</strong> for{" "}
+                <strong className="text-foreground">{activeBrand?.name}</strong>. This cannot be undone.
+              </p>
+              <div className="flex gap-2 pt-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setShowDeleteAll(false)}
+                  disabled={deletingAll}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white border-0"
+                  onClick={handleDeleteAll}
+                  disabled={deletingAll}
+                >
+                  {deletingAll
+                    ? <><RefreshCw size={12} className="mr-1.5 animate-spin" />Deleting...</>
+                    : <><Trash2 size={12} className="mr-1.5" />Delete All</>
+                  }
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Kanban board */}
         {isLoading ? (

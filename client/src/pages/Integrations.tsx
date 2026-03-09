@@ -42,17 +42,17 @@ const PLATFORMS: PlatformConfig[] = [
       {
         key: "apiToken", label: "API Token", placeholder: "Bearer token from Webflow dashboard",
         helpText: "Generate a Site API Token in your Webflow site settings under Integrations → API Access. Use a v2 token with CMS read/write scope.",
-        helpUrl: "https://developers.webflow.com/v2.0.0/docs/getting-started-with-v2",
+        helpUrl: "https://webflow.com/dashboard/account/integrations",
       },
       {
         key: "siteId", label: "Site ID", placeholder: "Your Webflow site ID",
         helpText: "Find your Site ID in Webflow → Site Settings → General. It's the alphanumeric ID listed under 'Site ID' in the General tab.",
-        helpUrl: "https://university.webflow.com/lesson/intro-to-the-webflow-api",
+        helpUrl: "https://webflow.com/dashboard/account/integrations",
       },
       {
         key: "collectionId", label: "Blog Collection ID", placeholder: "CMS collection ID for blog posts",
         helpText: "Go to your Webflow CMS Collections list. Click on your blog collection and copy the ID from the URL. You can also use the Field Mapping section below to auto-detect collections.",
-        helpUrl: "https://developers.webflow.com/v2.0.0/reference/cms/collections/list",
+        helpUrl: "https://webflow.com/dashboard",
       },
     ],
   },
@@ -65,17 +65,17 @@ const PLATFORMS: PlatformConfig[] = [
       {
         key: "accessToken", label: "Access Token", placeholder: "OAuth access token",
         helpText: "Create a LinkedIn app at developer.linkedin.com. Under Auth, generate an access token with r_liteprofile and w_member_social permissions. Tokens expire after 60 days.",
-        helpUrl: "https://www.linkedin.com/developers/apps",
+        helpUrl: "https://www.linkedin.com/developers/apps/new",
       },
       {
         key: "personUrn", label: "Person URN", placeholder: "urn:li:person:XXXXXXXX",
         helpText: "Call the LinkedIn /v2/me API with your access token and copy the 'id' field. Format: urn:li:person:{id}",
-        helpUrl: "https://docs.microsoft.com/en-us/linkedin/shared/references/v2/profile/basic-profile",
+        helpUrl: "https://www.linkedin.com/developers/tools/oauth/token-generator",
       },
       {
         key: "organizationUrn", label: "Organization URN (optional)", placeholder: "urn:li:organization:XXXXXXXX",
         helpText: "If posting as a Company Page, find your Organization ID in your LinkedIn Company Page URL (linkedin.com/company/{id}). Format: urn:li:organization:{id}",
-        helpUrl: "https://www.linkedin.com/company/",
+        helpUrl: "https://www.linkedin.com/developers/apps",
       },
     ],
   },
@@ -88,12 +88,12 @@ const PLATFORMS: PlatformConfig[] = [
       {
         key: "accessToken", label: "Page Access Token", placeholder: "Meta page access token",
         helpText: "Create a Meta app at developers.facebook.com. Connect your Instagram Business account, then generate a Page Access Token under Graph API Explorer. Requires instagram_basic and instagram_content_publish permissions.",
-        helpUrl: "https://developers.facebook.com/docs/instagram-api/getting-started",
+        helpUrl: "https://developers.facebook.com/tools/explorer/",
       },
       {
         key: "igUserId", label: "Instagram User ID", placeholder: "Your IG Business account ID",
         helpText: "Call the Meta Graph API: GET /me?fields=id,name with your access token. The 'id' field is your Instagram User ID. Your account must be a Business or Creator account linked to a Facebook Page.",
-        helpUrl: "https://developers.facebook.com/docs/instagram-api/reference/ig-user",
+        helpUrl: "https://developers.facebook.com/tools/explorer/",
       },
     ],
   },
@@ -124,12 +124,12 @@ const PLATFORMS: PlatformConfig[] = [
       {
         key: "pageAccessToken", label: "Page Access Token", placeholder: "Facebook page access token",
         helpText: "In Meta Business Suite, go to Settings → Page Access Tokens, or use the Graph API Explorer at developers.facebook.com to generate a long-lived Page Access Token. Requires pages_manage_posts permission.",
-        helpUrl: "https://developers.facebook.com/docs/pages/access-tokens",
+        helpUrl: "https://developers.facebook.com/tools/explorer/",
       },
       {
         key: "pageId", label: "Page ID", placeholder: "Your Facebook Page ID",
         helpText: "Open your Facebook Page, click About → Page Transparency. Your Page ID is listed there. Alternatively, visit your page URL and look for the numeric ID in the source.",
-        helpUrl: "https://www.facebook.com/help/1503421039731588",
+        helpUrl: "https://www.facebook.com/pages/?category=your_pages",
       },
     ],
   },
@@ -162,7 +162,7 @@ function FieldHelpTooltip({ helpText, helpUrl }: { helpText: string; helpUrl?: s
             rel="noopener noreferrer"
             className="mt-2 flex items-center gap-1 text-primary hover:underline font-medium"
           >
-            View documentation <ExternalLink size={10} />
+            Get your token / key ↗ <ExternalLink size={10} />
           </a>
         )}
       </PopoverContent>

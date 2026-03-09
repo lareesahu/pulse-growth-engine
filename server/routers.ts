@@ -30,6 +30,7 @@ import {
   getInspectorThresholds, upsertInspectorThreshold,
   getVitalityModelAccuracy, getReviewQueue,
   getWebflowFieldMapping, upsertWebflowFieldMapping,
+  deleteAllIdeasForBrand, hardDeleteAllIdeasForBrand,
 } from "./db";
 
 // ─── Brand Router ─────────────────────────────────────────────────────────────
@@ -228,6 +229,16 @@ const ideaRouter = router({
       await updateIdea(id, { status: "archived" });
     }
     return { success: true, count: input.ids.length };
+  }),
+  deleteAll: protectedProcedure.input(z.object({
+    brandId: z.number(),
+    hardDelete: z.boolean().optional().default(false),
+  })).mutation(async ({ ctx, input }) => {
+    const count = input.hardDelete
+      ? await hardDeleteAllIdeasForBrand(input.brandId)
+      : await deleteAllIdeasForBrand(input.brandId);
+    await logAudit({ brandId: input.brandId, actorUserId: ctx.user.id, entityType: "idea", action: "delete_all", description: `${input.hardDelete ? "Hard deleted" : "Archived"} all ideas for brand (${count} affected)` });
+    return { success: true, count };
   }),
   updateStatus: protectedProcedure.input(z.object({
     id: z.number(),

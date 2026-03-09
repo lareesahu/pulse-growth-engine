@@ -180,3 +180,8 @@
 ## Bug Fixes (March 9 2026 — Round 2)
 - [x] BUG: Assets tab shows broken image placeholders — fixed: frontend was reading a.url but schema stores a.outputUrl; Assets tab now shows prompt text + Generate button for image_prompt assets, full image for image_output assets
 - [x] FEATURE: Content humanizer — server/humanizer.ts added; strips ##, **, *, em-dashes, bullet points, AI fillers from all generated variants and packages before saving; wired into both content.generate and pipeline.run procedures
+
+## Bug Fixes (March 9 2026 — Round 3)
+- [x] Integrations tooltips: replace documentation page links with direct API key/token generation URLs
+- [x] Ideas board: add "Delete All" / "Clear All" bulk action button (with confirmation dialog) to wipe all ideas in one click
+- [x] Backend: batchDeleteAllIdeas procedure — archives or hard-deletes all ideas for a brand

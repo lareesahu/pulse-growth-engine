@@ -539,3 +539,19 @@ export async function upsertWebflowFieldMapping(brandId: number, data: {
     await db.insert(webflowFieldMappings).values({ brandId, ...data });
   }
 }
+
+// ─── Bulk Idea Deletion ───────────────────────────────────────────────────────
+export async function deleteAllIdeasForBrand(brandId: number) {
+  const db = await getDb(); if (!db) return 0;
+  // Archive all non-archived ideas for the brand
+  const result = await db.update(ideas)
+    .set({ status: "archived" })
+    .where(and(eq(ideas.brandId, brandId)));
+  return (result as any)[0]?.affectedRows ?? 0;
+}
+
+export async function hardDeleteAllIdeasForBrand(brandId: number) {
+  const db = await getDb(); if (!db) return 0;
+  const result = await db.delete(ideas).where(eq(ideas.brandId, brandId));
+  return (result as any)[0]?.affectedRows ?? 0;
+}
