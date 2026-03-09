@@ -7,6 +7,9 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { getDb } from "../db";
+import { pipelineRuns } from "../../drizzle/schema";
+import { eq, lt, and } from "drizzle-orm";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -25,6 +28,24 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
     }
   }
   throw new Error(`No available port found starting from ${startPort}`);
+}
+
+/**
+ * On server startup, reset any pipeline runs that are stuck in 'running' state
+ * (e.g. from a previous server crash or restart mid-run).
+ */
+async function resetStalePipelineRuns() {
+  try {
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    const db = await getDb();
+    if (!db) return;
+    await db.update(pipelineRuns)
+      .set({ status: "failed", stage: "failed", completedAt: new Date(), errorLog: "Server restarted mid-run — auto-reset on startup" })
+      .where(and(eq(pipelineRuns.status, "running"), lt(pipelineRuns.startedAt, thirtyMinutesAgo)));
+    console.log("[Startup] Stale pipeline runs reset.");
+  } catch (err) {
+    console.warn("[Startup] Could not reset stale pipeline runs:", err);
+  }
 }
 
 async function startServer() {
@@ -56,6 +77,9 @@ async function startServer() {
   if (port !== preferredPort) {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
+
+  // Reset any stale pipeline runs from previous server crashes
+  resetStalePipelineRuns();
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);

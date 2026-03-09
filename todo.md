@@ -237,3 +237,12 @@
 - [x] BUG: Blog tab is empty — FIXED: added generateBlog procedure (800-1200 word article via LLM), Blog tab now shows empty state with "Generate Blog Article" button + Regenerate button; displays article with char count + read time
 - [x] BUG: "No image prompt found" error toast — FIXED: generateImage now auto-creates fallback image_prompt asset from masterHook if none exists in DB
 - [x] BUG: "Generating..." button stuck on content detail page — FIXED: handleGenerateVariants now calls batchRegenerate({ids:[pkg.id]}) instead of content.generate({ideaId}) which required idea.status==approved
+
+## Bug Fixes (March 10 2026 — Round 8)
+- [ ] BUG: Pipeline permanently stuck on "Crafting Variants" — background job crashed/timed out but run status never updated to failed; need to reset stuck run + add timeout/error recovery so pipeline always completes or fails gracefully
+
+## Bug Fixes + Features (March 10 2026 — Round 9)
+- [x] BUG: Pipeline stuck on "Crafting Variants" forever — FIXED: reset stale DB run via SQL + added startup cleanup in _core/index.ts to auto-reset runs older than 30min on server start
+- [x] FEATURE: Show live package/idea counts on each pipeline stage card — DONE: each stage card now shows live count badge (e.g. "3/10" for Building Content, "5" for Inspecting)
+- [x] BUG: Blog content NOT auto-generated during pipeline run — FIXED: wired blog generation (800-1200 word LLM article) into pipeline engine after each package, non-fatal if fails
+- [x] BUG: Images NOT auto-generated during pipeline run — FIXED: wired image generation (with auto-fallback prompt) into pipeline engine after each package, non-fatal if fails

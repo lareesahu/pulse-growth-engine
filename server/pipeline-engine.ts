@@ -8,7 +8,7 @@ import {
   getBrandById, getContentPillars, getBrandRules, getPromptTemplates, getAudienceProfiles,
   getIdeaById, createIdea, createContentPackage, updateContentPackage,
   getVariantsByPackageId, createVariant, updateVariant,
-  createAsset, getAllInspectorRules, createInspectionReport,
+  createAsset, updateAsset, getAssetsByPackageId, getAllInspectorRules, createInspectionReport,
   createPipelineRun, updatePipelineRun, logAudit,
 } from "./db";
 
@@ -567,6 +567,78 @@ CRITICAL RULES:
         // Update progress in DB periodically
         if (i % 3 === 0 || i === approvedIdeaIds.length - 1) {
           await updatePipelineRun(runId, { packagesGenerated, stage: "generating_content" });
+        }
+        updateProgress("generating_content");
+
+        // STEP 3b: Auto-generate blog article
+        try {
+          console.log(`[Pipeline ${runId}] Generating blog for package ${pkgId}...`);
+          const pkg = await import("./db").then(m => m.getContentPackageById(pkgId));
+          const blogSystemPrompt = `You are an expert content writer for ${brand.name}. Write a professional, engaging blog article.`;
+          const blogUserPrompt = `Write a full blog article (800-1200 words) for this topic:
+
+Title: ${pkg?.masterHook || idea.title}
+Angle: ${pkg?.masterAngle || idea.angle || ''}
+
+IMPORTANT:
+- Write naturally as a human would. No markdown formatting (no **, ##, *, em-dashes).
+- Use specific real values. No placeholders like [Year] or [Brand Name].
+- Write for ${brand.name}'s audience.
+- Return ONLY the blog article text, no JSON wrapper.`;
+          const blogResponse = await invokeLLM({
+            messages: [
+              { role: "system", content: blogSystemPrompt },
+              { role: "user", content: blogUserPrompt },
+            ],
+          });
+          const blogContent = (blogResponse.choices?.[0]?.message?.content as string) || '';
+          if (blogContent) {
+            await updateContentPackage(pkgId, { blogContent });
+            console.log(`[Pipeline ${runId}] Blog generated for package ${pkgId} (${blogContent.length} chars)`);
+          }
+        } catch (blogErr: any) {
+          console.warn(`[Pipeline ${runId}] Blog generation failed for package ${pkgId}:`, blogErr.message);
+          // Non-fatal — continue pipeline
+        }
+
+        // STEP 3c: Auto-generate image
+        try {
+          console.log(`[Pipeline ${runId}] Generating image for package ${pkgId}...`);
+          updateProgress("generating_images");
+          const { generateImage } = await import("./_core/imageGeneration");
+          const pkg = await import("./db").then(m => m.getContentPackageById(pkgId));
+          // Check if image prompt asset already exists
+          const existingAssets = await getAssetsByPackageId(pkgId);
+          let promptAsset = existingAssets.find((a: any) => a.assetType === "image_prompt" && a.status === "ready");
+          if (!promptAsset) {
+            const fallbackPrompt = `Hyperrealistic professional brand photography: ${pkg?.masterHook || idea.title}. Cool teal/blue/violet neon tones, cinematic lighting, 16:9, no text or symbols, ultra-sharp, editorial quality.`;
+            const created = await createAsset({
+              contentPackageId: pkgId,
+              assetType: "image_prompt",
+              promptText: fallbackPrompt,
+              status: "ready",
+              version: 1,
+            });
+            promptAsset = { ...(created as any), promptText: fallbackPrompt, status: "ready" };
+          }
+          if (promptAsset?.promptText) {
+            await updateAsset(promptAsset.id, { status: "generating" });
+            const { url } = await generateImage({ prompt: promptAsset.promptText });
+            await createAsset({
+              contentPackageId: pkgId,
+              assetType: "image_output",
+              promptText: promptAsset.promptText,
+              outputUrl: url,
+              provider: "manus-image",
+              status: "ready",
+              version: 1,
+            });
+            await updateAsset(promptAsset.id, { status: "ready" });
+            console.log(`[Pipeline ${runId}] Image generated for package ${pkgId}`);
+          }
+        } catch (imgErr: any) {
+          console.warn(`[Pipeline ${runId}] Image generation failed for package ${pkgId}:`, imgErr.message);
+          // Non-fatal — continue pipeline
         }
         updateProgress("generating_content");
 

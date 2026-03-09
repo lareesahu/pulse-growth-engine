@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE pipeline_runs SET status = 'failed', stage = 'failed', completedAt = NOW(), errorLog = 'Server restarted mid-run — auto-reset by system' WHERE status = 'running' AND startedAt < DATE_SUB(NOW(), INTERVAL 30 MINUTE);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute UPDATE pipeline_runs SET status = 'failed', stage = 'failed', completedAt = NOW(), errorLog = 'Server restarted mid-run — auto-reset by system' WHERE status = 'running' AND startedAt < DATE_SUB(NOW(), INTERVAL 30 MINUTE);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 77
+}

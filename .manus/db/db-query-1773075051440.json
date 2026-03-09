@@ -1,0 +1,100 @@
+{
+  "query": "SELECT id, status, stage, ideasGenerated, packagesGenerated, startedAt, completedAt FROM pipeline_runs ORDER BY startedAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, status, stage, ideasGenerated, packagesGenerated, startedAt, completedAt FROM pipeline_runs ORDER BY startedAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "120001",
+      "status": "failed",
+      "stage": "failed",
+      "ideasGenerated": "10",
+      "packagesGenerated": "1",
+      "startedAt": "2026-03-09 11:47:51",
+      "completedAt": "2026-03-09 16:50:47"
+    },
+    {
+      "id": "90006",
+      "status": "completed",
+      "stage": "NULL",
+      "ideasGenerated": "10",
+      "packagesGenerated": "10",
+      "startedAt": "2026-03-09 10:37:24",
+      "completedAt": "2026-03-09 10:46:16"
+    },
+    {
+      "id": "90005",
+      "status": "completed",
+      "stage": "NULL",
+      "ideasGenerated": "10",
+      "packagesGenerated": "10",
+      "startedAt": "2026-03-09 10:35:28",
+      "completedAt": "2026-03-09 10:44:22"
+    },
+    {
+      "id": "90004",
+      "status": "completed",
+      "stage": "NULL",
+      "ideasGenerated": "10",
+      "packagesGenerated": "10",
+      "startedAt": "2026-03-09 10:13:18",
+      "completedAt": "2026-03-09 10:23:36"
+    },
+    {
+      "id": "90003",
+      "status": "completed",
+      "stage": "NULL",
+      "ideasGenerated": "10",
+      "packagesGenerated": "10",
+      "startedAt": "2026-03-09 09:54:17",
+      "completedAt": "2026-03-09 10:05:12"
+    },
+    {
+      "id": "90002",
+      "status": "completed",
+      "stage": "NULL",
+      "ideasGenerated": "10",
+      "packagesGenerated": "10",
+      "startedAt": "2026-03-09 09:53:16",
+      "completedAt": "2026-03-09 10:04:06"
+    },
+    {
+      "id": "90001",
+      "status": "failed",
+      "stage": "NULL",
+      "ideasGenerated": "0",
+      "packagesGenerated": "0",
+      "startedAt": "2026-03-09 09:40:50",
+      "completedAt": "2026-03-09 09:40:51"
+    },
+    {
+      "id": "60011",
+      "status": "failed",
+      "stage": "NULL",
+      "ideasGenerated": "0",
+      "packagesGenerated": "0",
+      "startedAt": "2026-03-09 08:41:28",
+      "completedAt": "2026-03-09 08:41:28"
+    },
+    {
+      "id": "60010",
+      "status": "failed",
+      "stage": "NULL",
+      "ideasGenerated": "0",
+      "packagesGenerated": "0",
+      "startedAt": "2026-03-09 07:42:31",
+      "completedAt": "2026-03-09 07:42:31"
+    },
+    {
+      "id": "60009",
+      "status": "failed",
+      "stage": "NULL",
+      "ideasGenerated": "0",
+      "packagesGenerated": "0",
+      "startedAt": "2026-03-09 07:42:24",
+      "completedAt": "2026-03-09 07:42:24"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tstatus\tstage\tideasGenerated\tpackagesGenerated\tstartedAt\tcompletedAt\n120001\tfailed\tfailed\t10\t1\t2026-03-09 11:47:51\t2026-03-09 16:50:47\n90006\tcompleted\tNULL\t10\t10\t2026-03-09 10:37:24\t2026-03-09 10:46:16\n90005\tcompleted\tNULL\t10\t10\t2026-03-09 10:35:28\t2026-03-09 10:44:22\n90004\tcompleted\tNULL\t10\t10\t2026-03-09 10:13:18\t2026-03-09 10:23:36\n90003\tcompleted\tNULL\t10\t10\t2026-03-09 09:54:17\t2026-03-09 10:05:12\n90002\tcompleted\tNULL\t10\t10\t2026-03-09 09:53:16\t2026-03-09 10:04:06\n90001\tfailed\tNULL\t0\t0\t2026-03-09 09:40:50\t2026-03-09 09:40:51\n60011\tfailed\tNULL\t0\t0\t2026-03-09 08:41:28\t2026-03-09 08:41:28\n60010\tfailed\tNULL\t0\t0\t2026-03-09 07:42:31\t2026-03-09 07:42:31\n60009\tfailed\tNULL\t0\t0\t2026-03-09 07:42:24\t2026-03-09 07:42:24\n",
+  "stderr": "",
+  "execution_time_ms": 63
+}

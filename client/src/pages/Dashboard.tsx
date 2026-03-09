@@ -31,9 +31,12 @@ interface PipelineState {
   currentStep: number;
   stepLabel: string;
   ideasGenerated: number;
+  ideasApproved: number;
   packagesGenerated: number;
   variantsGenerated: number;
+  packagesInspected: number;
   readyForReview: number;
+  totalIdeas: number;
   error?: string;
 }
 
@@ -42,7 +45,7 @@ export default function Dashboard() {
   const [, navigate] = useLocation();
   const [pipeline, setPipeline] = useState<PipelineState>({
     status: "idle", currentStep: -1, stepLabel: "",
-    ideasGenerated: 0, packagesGenerated: 0, variantsGenerated: 0, readyForReview: 0,
+    ideasGenerated: 0, ideasApproved: 0, packagesGenerated: 0, variantsGenerated: 0, packagesInspected: 0, readyForReview: 0, totalIdeas: 10,
   });
 
   const { data: summary, refetch: refetchSummary } = trpc.analytics.summary.useQuery(
@@ -78,7 +81,7 @@ export default function Dashboard() {
 
   const runPipeline = trpc.pipeline.run.useMutation({
     onMutate: () => {
-      setPipeline(p => ({ ...p, status: "running", currentStep: 0, stepLabel: "Generating Ideas..." }));
+      setPipeline(p => ({ ...p, status: "running", currentStep: 0, stepLabel: "Generating Ideas...", totalIdeas: 10, ideasGenerated: 0, ideasApproved: 0, packagesGenerated: 0, packagesInspected: 0 }));
     },
     onSuccess: () => {
       // Pipeline is now running in background — polling will track progress
@@ -92,8 +95,12 @@ export default function Dashboard() {
 
   // Map stage to step index for progress display
   const stageToStep: Record<string, number> = {
-    generating_ideas: 0, saving_ideas: 1, generating_content: 2,
-    inspecting: 4, completed: 5,
+    generating_ideas: 0,
+    saving_ideas: 0,
+    generating_content: 1,
+    generating_images: 3,
+    inspecting: 4,
+    completed: 5,
   };
 
   // Track background pipeline progress via polling
@@ -104,15 +111,18 @@ export default function Dashboard() {
     if (!progress) return;
 
     if (status === "completed" || status === "partial") {
-      setPipeline({
+      setPipeline(p => ({
+        ...p,
         status: "done",
         currentStep: 5,
         stepLabel: "Ready to Review",
-        ideasGenerated: progress.ideasGenerated ?? 0,
-        packagesGenerated: progress.packagesGenerated ?? 0,
-        variantsGenerated: progress.packagesGenerated ?? 0,
+        ideasGenerated: progress.ideasGenerated ?? p.ideasGenerated,
+        ideasApproved: progress.ideasApproved ?? p.ideasApproved,
+        packagesGenerated: progress.packagesGenerated ?? p.packagesGenerated,
+        variantsGenerated: progress.packagesGenerated ?? p.packagesGenerated,
+        packagesInspected: progress.packagesInspected ?? p.packagesInspected,
         readyForReview: progress.packagesPassedInspection ?? 0,
-      });
+      }));
       refetchSummary();
       refetchRun();
       toast.success(`Pipeline complete — ${progress.packagesPassedInspection ?? 0} pieces ready for review`);
@@ -120,10 +130,18 @@ export default function Dashboard() {
       setPipeline(p => ({ ...p, status: "error", error: progress.error || "Pipeline failed" }));
       toast.error("Pipeline failed: " + (progress.error || "Unknown error"));
     } else {
-      // Still running — update step indicator
+      // Still running — update step indicator with live counts
       const step = stageToStep[progress.stage] ?? 0;
       const label = PIPELINE_STEPS[Math.min(step, PIPELINE_STEPS.length - 1)]?.label || progress.stage;
-      setPipeline(p => ({ ...p, currentStep: step, stepLabel: label }));
+      setPipeline(p => ({
+        ...p,
+        currentStep: step,
+        stepLabel: label,
+        ideasGenerated: progress.ideasGenerated ?? p.ideasGenerated,
+        ideasApproved: progress.ideasApproved ?? p.ideasApproved,
+        packagesGenerated: progress.packagesGenerated ?? p.packagesGenerated,
+        packagesInspected: progress.packagesInspected ?? p.packagesInspected,
+      }));
     }
   }, [runStatus]);
 
@@ -133,20 +151,23 @@ export default function Dashboard() {
     const run = latestRun as any;
     if (run.status === "running" && pipeline.status === "idle") {
       // Pipeline is running on server — resume tracking
-      setPipeline(p => ({ ...p, status: "running", currentStep: 0, stepLabel: "Resuming..." }));
+      setPipeline(p => ({ ...p, status: "running", currentStep: 0, stepLabel: "Resuming...", totalIdeas: (run as any).ideasGenerated || 10 }));
     } else if ((run.status === "completed" || run.status === "partial") && pipeline.status === "idle") {
       // Pipeline finished while user was away — show completed state briefly, then reset to idle so they can run again
       const completedRecently = run.completedAt && (Date.now() - new Date(run.completedAt).getTime()) < 5 * 60 * 1000; // 5 min
       if (completedRecently) {
-        setPipeline({
+        setPipeline(p => ({
+          ...p,
           status: "done",
           currentStep: 5,
           stepLabel: "Ready to Review",
-          ideasGenerated: run.ideasGenerated ?? 0,
-          packagesGenerated: run.packagesGenerated ?? 0,
-          variantsGenerated: run.packagesGenerated ?? 0,
+          ideasGenerated: run.ideasGenerated ?? p.ideasGenerated,
+          ideasApproved: run.ideasApproved ?? p.ideasApproved,
+          packagesGenerated: run.packagesGenerated ?? p.packagesGenerated,
+          variantsGenerated: run.packagesGenerated ?? p.packagesGenerated,
+          packagesInspected: run.packagesInspected ?? p.packagesInspected,
           readyForReview: run.packagesPassedInspection ?? 0,
-        });
+        }));
       }
     }
   }, [latestRun]);
@@ -251,6 +272,15 @@ export default function Dashboard() {
                     const Icon = step.icon;
                     const isDone = idx < pipeline.currentStep;
                     const isActive = idx === pipeline.currentStep;
+                    // Live count badge per stage
+                    const countBadge = (() => {
+                      if (idx === 0) return pipeline.ideasGenerated > 0 ? `${pipeline.ideasGenerated}` : null;
+                      if (idx === 1) return pipeline.packagesGenerated > 0 ? `${pipeline.packagesGenerated}/${pipeline.ideasApproved || pipeline.totalIdeas}` : null;
+                      if (idx === 2) return pipeline.packagesGenerated > 0 ? `${pipeline.packagesGenerated}` : null;
+                      if (idx === 3) return pipeline.packagesGenerated > 0 ? `${pipeline.packagesGenerated}` : null;
+                      if (idx === 4) return pipeline.packagesInspected > 0 ? `${pipeline.packagesInspected}` : null;
+                      return null;
+                    })();
                     return (
                       <div key={step.key} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
                         isActive ? "bg-[#3AC1EC]/10 border border-[#3AC1EC]/30" :
@@ -266,6 +296,11 @@ export default function Dashboard() {
                         <span className={`text-[9px] text-center leading-tight ${
                           isActive ? "text-[#3AC1EC]" : isDone ? "text-emerald-400" : "text-white/20"
                         }`}>{step.label}</span>
+                        {(isDone || isActive) && countBadge && (
+                          <span className={`text-[9px] font-bold tabular-nums ${
+                            isActive ? step.color : "text-emerald-400"
+                          }`}>{countBadge}</span>
+                        )}
                       </div>
                     );
                   })}
