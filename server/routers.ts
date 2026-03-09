@@ -1212,9 +1212,31 @@ const activityRouter = router({
     .query(async ({ input }) => getAuditLog(input.brandId, input.limit)),
 });
 
-// ─── App Router ───────────────────────────────────────────────────────────────
+// ─── AI Model Settings Router ───────────────────────────────────────────────
+const modelSettingsRouter = router({
+  get: protectedProcedure.query(async () => ({
+    textModel: process.env.DOUBAO_TEXT_MODEL || "doubao-1-5-pro-32k-250115",
+    imageModel: process.env.DOUBAO_IMAGE_MODEL || "doubao-seedream-3-0-t2i-250415",
+    videoModel: process.env.DOUBAO_VIDEO_MODEL || "doubao-seedance-1-0-lite-t2v-250428",
+  })),
+  save: protectedProcedure
+    .input(z.object({
+      textModel: z.string().optional(),
+      imageModel: z.string().optional(),
+      videoModel: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      if (input.textModel) process.env.DOUBAO_TEXT_MODEL = input.textModel;
+      if (input.imageModel) process.env.DOUBAO_IMAGE_MODEL = input.imageModel;
+      if (input.videoModel) process.env.DOUBAO_VIDEO_MODEL = input.videoModel;
+      return { success: true };
+    }),
+});
+
+// ─── App Router ─────────────────────────────────────────────────
 export const appRouter = router({
   system: systemRouter,
+  modelSettings: modelSettingsRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

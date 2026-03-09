@@ -16,6 +16,7 @@ import ReviewQueue from "./pages/ReviewQueue";
 import InspectorSettings from "./pages/InspectorSettings";
 import ForumOpportunities from "./pages/ForumOpportunities";
 import ContentPackages from "./pages/ContentPackages";
+import AIModelSettings from "./pages/AIModelSettings";
 
 function Router() {
   return (
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/inspector" component={InspectorSettings} />
       <Route path="/forums" component={ForumOpportunities} />
       <Route path="/content" component={ContentPackages} />
+      <Route path="/ai-models" component={AIModelSettings} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

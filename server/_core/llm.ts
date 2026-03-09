@@ -209,14 +209,20 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
+const ARK_BASE = "https://ark.cn-beijing.volces.com/api/v3";
+
+/** Returns the active text model — reads from env so Settings UI can override it at runtime */
+const getTextModel = () =>
+  process.env.DOUBAO_TEXT_MODEL || "doubao-1-5-pro-32k-250115";
+
 const resolveApiUrl = () =>
   ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
     ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
     : "https://forge.manus.im/v1/chat/completions";
 
 const assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
+  if (!ENV.doubaoApiKey && !ENV.forgeApiKey) {
+    throw new Error("No LLM API key configured (DOUBAO_API_KEY or BUILT_IN_FORGE_API_KEY)");
   }
 };
 
@@ -279,9 +285,14 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     response_format,
   } = params;
 
+  // Allow per-call model override via a non-standard param
+  const overrideModel = (params as any).model as string | undefined;
+  const selectedModel = overrideModel || getTextModel();
+
   const payload: Record<string, unknown> = {
-    model: "gemini-2.5-flash",
+    model: selectedModel,
     messages: messages.map(normalizeMessage),
+    max_tokens: 32768,
   };
 
   if (tools && tools.length > 0) {
@@ -296,11 +307,6 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = 32768
-  payload.thinking = {
-    "budget_tokens": 128
-  }
-
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,
     response_format,
@@ -312,13 +318,34 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
+  // Use Doubao/Ark if key is available, otherwise fall back to Manus Forge
+  if (ENV.doubaoApiKey) {
+    const response = await fetch(`${ARK_BASE}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${ENV.doubaoApiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
+      );
+    }
+    return (await response.json()) as InvokeResult;
+  }
+
+  // Forge fallback
+  const forgePayload = { ...payload, model: "gemini-2.5-flash" };
   const response = await fetch(resolveApiUrl(), {
     method: "POST",
     headers: {
       "content-type": "application/json",
       authorization: `Bearer ${ENV.forgeApiKey}`,
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(forgePayload),
   });
 
   if (!response.ok) {

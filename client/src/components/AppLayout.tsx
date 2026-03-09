@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import {
-  BarChart3, BookOpen, Brain, CheckCheck, ChevronDown, ChevronRight,
+  BarChart3, BookOpen, Brain, CheckCheck, ChevronDown, ChevronRight, Cpu,
   FileText, Globe, LayoutDashboard, LogOut, Menu, Plus, Rocket, Settings,
   Shield, Sparkles, TrendingUp, X, Zap,
 } from "lucide-react";
@@ -32,6 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Review",          href: "/review",       icon: <CheckCheck size={16} />,      mobileIcon: <CheckCheck size={20} /> },
   { label: "Forums",          href: "/forums",       icon: <TrendingUp size={16} />,      mobileIcon: <TrendingUp size={20} /> },
   { label: "Inspector",       href: "/inspector",    icon: <Shield size={16} />,          mobileIcon: <Shield size={20} /> },
+  { label: "AI Models",       href: "/ai-models",    icon: <Cpu size={16} />,             mobileIcon: <Cpu size={20} /> },
   { label: "Settings",        href: "/integrations", icon: <Zap size={16} />,             mobileIcon: <Zap size={20} /> },
 ];
 

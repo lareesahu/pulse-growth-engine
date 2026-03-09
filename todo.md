@@ -185,3 +185,10 @@
 - [x] Integrations tooltips: replace documentation page links with direct API key/token generation URLs
 - [x] Ideas board: add "Delete All" / "Clear All" bulk action button (with confirmation dialog) to wipe all ideas in one click
 - [x] Backend: batchDeleteAllIdeas procedure — archives or hard-deletes all ideas for a brand
+
+## Doubao/Ark Integration (March 9 2026)
+- [x] Replace Manus built-in LLM (usage exhausted) with Doubao/Ark API for all text generation
+- [x] Replace Manus built-in image generation with Doubao Seedream-3.0 via Ark API
+- [x] Add AI Model Settings page (/ai-models) with text/image/video model selectors
+- [x] Add AI Models nav item to sidebar
+- [x] Forge fallback preserved if DOUBAO_API_KEY not set
