@@ -292,7 +292,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   const payload: Record<string, unknown> = {
     model: selectedModel,
     messages: messages.map(normalizeMessage),
-    max_tokens: 32768,
+    max_tokens: 16000,
   };
 
   if (tools && tools.length > 0) {

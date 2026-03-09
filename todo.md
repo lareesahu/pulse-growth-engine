@@ -192,3 +192,6 @@
 - [x] Add AI Model Settings page (/ai-models) with text/image/video model selectors
 - [x] Add AI Models nav item to sidebar
 - [x] Forge fallback preserved if DOUBAO_API_KEY not set
+
+## Bug Fixes (March 9 2026 — Round 4)
+- [x] BUG: Pipeline fails with 400 Bad Request — max_tokens 32768 exceeds doubao-1-5-pro-32k limit of 16384; fixed to 16000
