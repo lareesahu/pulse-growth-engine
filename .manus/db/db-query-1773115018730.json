@@ -1,0 +1,9 @@
+{
+  "query": "\nDELETE FROM publish_jobs;\nDELETE FROM pipeline_runs;\nDELETE FROM inspection_reports;\nDELETE FROM vitality_predictions;\nDELETE FROM performance_records;\nDELETE FROM assets;\nDELETE FROM platform_variants;\nDELETE FROM content_packages;\nDELETE FROM ideas;\nDELETE FROM audit_events;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute \nDELETE FROM publish_jobs;\nDELETE FROM pipeline_runs;\nDELETE FROM inspection_reports;\nDELETE FROM vitality_predictions;\nDELETE FROM performance_records;\nDELETE FROM assets;\nDELETE FROM platform_variants;\nDELETE FROM content_packages;\nDELETE FROM ideas;\nDELETE FROM audit_events;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 176
+}
