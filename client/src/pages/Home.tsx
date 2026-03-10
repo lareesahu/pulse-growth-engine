@@ -1,13 +1,36 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Brain, Rocket, BarChart3, Zap, ArrowRight } from "lucide-react";
-import { useEffect } from "react";
+import { Sparkles, Brain, Rocket, BarChart3, ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
 export default function Home() {
   const { isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
+  const [bannerHeight, setBannerHeight] = useState(0);
+
+  // Detect Manus billing banner and push page content below it
+  useEffect(() => {
+    const measure = () => {
+      const mcr = document.querySelector('manus-content-root') as any;
+      if (mcr?.shadowRoot) {
+        const banner = mcr.shadowRoot.querySelector('.billing-banner') as HTMLElement | null;
+        if (banner) {
+          const rect = banner.getBoundingClientRect();
+          if (rect.height > 0 && rect.top <= 4) { setBannerHeight(rect.height); return; }
+        }
+      }
+      const root = document.getElementById('root');
+      if (root) setBannerHeight(Math.max(0, Math.round(root.getBoundingClientRect().top)));
+    };
+    measure();
+    const t1 = setTimeout(measure, 300);
+    const t2 = setTimeout(measure, 1000);
+    const obs = new ResizeObserver(measure);
+    obs.observe(document.body);
+    return () => { clearTimeout(t1); clearTimeout(t2); obs.disconnect(); };
+  }, []);
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
@@ -19,7 +42,7 @@ export default function Home() {
   if (isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col" style={{ marginTop: `${bannerHeight}px` }}>
       {/* Header */}
       <header className="border-b border-border px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">

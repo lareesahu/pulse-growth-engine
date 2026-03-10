@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, publishStatus, platform, SUBSTRING(errorLog, 1, 500) as errorLog FROM publish_jobs WHERE publishStatus = 'failed' ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, publishStatus, platform, SUBSTRING(errorLog, 1, 500) as errorLog FROM publish_jobs WHERE publishStatus = 'failed' ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "120001",
+      "publishStatus": "failed",
+      "platform": "webflow",
+      "errorLog": "Webflow API error 403: {\"message\":\"OAuthForbidden: You are missing the following scopes - 'cms:write'\",\"code\":\"missing_scopes\",\"externalReference\":null,\"details\":[]}"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tpublishStatus\tplatform\terrorLog\n120001\tfailed\twebflow\tWebflow API error 403: {\"message\":\"OAuthForbidden: You are missing the following scopes - 'cms:write'\",\"code\":\"missing_scopes\",\"externalReference\":null,\"details\":[]}\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

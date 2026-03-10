@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE publish_jobs SET errorLog = 'Webflow 403: Token missing cms:write scope. Fix: Webflow Site Settings → Integrations → API Access → Generate new token → under CMS enable both Read AND Write → paste new token in Settings → Integrations.' WHERE publishStatus = 'failed' AND platform = 'webflow' AND errorLog LIKE '%missing_scopes%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute UPDATE publish_jobs SET errorLog = 'Webflow 403: Token missing cms:write scope. Fix: Webflow Site Settings → Integrations → API Access → Generate new token → under CMS enable both Read AND Write → paste new token in Settings → Integrations.' WHERE publishStatus = 'failed' AND platform = 'webflow' AND errorLog LIKE '%missing_scopes%';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 65
+}
