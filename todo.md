@@ -278,3 +278,15 @@
 
 ## Bug Fix (March 10 2026 — Round 16)
 - [x] BUG: Webflow Integrations page — getWebflowCollections/getWebflowCollectionFields now return friendly 403/401/404 messages ("Token missing CMS scope. Fix: Site Settings → Integrations → API Access → new v2 token with CMS Read+Write") instead of raw JSON. Loading... button resets to Load Collections after error (correct behaviour, not a stuck state).
+
+## Feature (March 10 2026 — Round 17)
+- [ ] FEATURE: Review Queue — sort by score (high→low, low→high), filter by score range (e.g. <70, 70-85, >85), filter by platform, filter by pillar
+- [ ] FEATURE: Review Queue — batch regenerate selected items with inspector feedback (pass failed dimensions + issues as context so LLM targets specific weaknesses)
+- [ ] FEATURE: Review Queue — show score badge prominently on each card with colour coding (red <70, amber 70-84, green ≥85)
+
+## Feature (March 10 2026 — Round 17)
+- [x] FEATURE: Review Queue — sort by score (high→low, low→high), virality, newest, oldest
+- [x] FEATURE: Review Queue — filter by score tier (≥85 Excellent / 70–84 Good / <70 Needs Work), platform, pillar
+- [x] FEATURE: Review Queue — batch Regen w/ Feedback: passes inspector issues + failed dimensions as LLM context, re-generates all selected packages
+- [x] FEATURE: Review Queue — empty state when filters match nothing, with Clear filters link
+- [x] E2E TESTED: sort/filter/batch-select/Regen w/ Feedback all confirmed working in dev server

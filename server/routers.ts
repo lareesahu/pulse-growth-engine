@@ -410,6 +410,75 @@ const contentRouter = router({
     }
     return { success: true, count: regenerated };
   }),
+
+  // Regenerate with inspector feedback — passes failed dimensions + issues as additional context
+  regenWithFeedback: protectedProcedure.input(z.object({
+    ids: z.array(z.number()),
+  })).mutation(async ({ ctx, input }) => {
+    let regenerated = 0;
+    for (const pkgId of input.ids) {
+      const pkg = await getContentPackageById(pkgId);
+      if (!pkg) continue;
+      const idea = await getIdeaById(pkg.ideaId);
+      if (!idea) continue;
+      const [brand, pillars, rules, reports] = await Promise.all([
+        getBrandById(idea.brandId),
+        getContentPillars(idea.brandId),
+        getBrandRules(idea.brandId),
+        getInspectionReportsByPackage(pkgId),
+      ]);
+      if (!brand) continue;
+      const pillarName = pillars.find((p: any) => p.id === idea.pillarId)?.name || "General";
+      const doSay = rules.filter((r: any) => r.ruleType === "do_say").map((r: any) => r.content).join("; ");
+      const dontSay = rules.filter((r: any) => r.ruleType === "dont_say").map((r: any) => r.content).join("; ");
+      const VALID_PLATFORMS = ["instagram","facebook","linkedin","tiktok","webflow","medium","xiaohongshu","wechat","reddit","quora","blog"];
+      const platforms = ((idea.targetPlatforms || brand.activePlatforms || ["linkedin", "instagram", "webflow"]) as string[]).filter((p: string) => VALID_PLATFORMS.includes(p));
+
+      // Build feedback context from most recent inspection report
+      const latestReport = reports?.[0];
+      let feedbackSection = "";
+      if (latestReport) {
+        const issues = typeof latestReport.issues === "string"
+          ? (() => { try { return JSON.parse(latestReport.issues as any); } catch { return []; } })()
+          : (latestReport.issues || []);
+        const failedDims = typeof latestReport.failedDimensions === "string"
+          ? (() => { try { return JSON.parse(latestReport.failedDimensions as any); } catch { return []; } })()
+          : (latestReport.failedDimensions || []);
+        const issueLines = (issues as any[]).map((iss: any) =>
+          `- [${iss.dimension || "general"}] Score: ${iss.score ?? "?"}/10 — ${iss.feedback || ""} → Fix: ${iss.suggestion || ""}`
+        ).join("\n");
+        feedbackSection = `
+\nPREVIOUS INSPECTION FEEDBACK (Overall: ${latestReport.overallScore ?? 0}/100, Attempt #${latestReport.attemptNumber ?? 1}):
+Failed dimensions: ${failedDims.join(", ") || "none"}
+Specific issues to fix:
+${issueLines || "No specific issues logged — improve overall quality and brand voice."}\n\nYou MUST address every issue listed above in this regeneration. Do not repeat the same mistakes.`;
+      }
+
+      // Reset package
+      await updateContentPackage(pkgId, { status: "generating" });
+      await deleteVariantsByPackageId(pkgId);
+
+      // Re-generate with feedback injected into user prompt
+      const { systemPrompt, userPrompt } = buildContentPrompt({ idea, pillarName, brand, doSay, dontSay, platforms });
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt + feedbackSection },
+        ],
+        response_format: { type: "json_object" } as any,
+      });
+      let generated: any = {};
+      try {
+        const raw = (response.choices?.[0]?.message?.content as string) || "{}";
+        generated = JSON.parse(raw);
+      } catch { generated = {}; }
+      await saveGeneratedContent({ pkgId, generated, idea, platforms, userPrompt: userPrompt + feedbackSection });
+      await logAudit({ brandId: idea.brandId, actorUserId: ctx.user.id, entityType: "content_package", entityId: pkgId, action: "regenerated_with_feedback", description: `Content package regenerated with inspector feedback for: "${idea.title}"` });
+      regenerated++;
+    }
+    return { success: true, count: regenerated };
+  }),
+
   generate: protectedProcedure.input(z.object({
     ideaId: z.number(),
     targetPlatforms: z.array(z.string()).optional(),
@@ -991,7 +1060,7 @@ const pipelineRouter = router({
         getInspectionReportsByPackage(pkg.id),
         pkg.ideaId ? getIdeaById(pkg.ideaId) : Promise.resolve(null),
       ]);
-      return { ...pkg, title: idea?.title ?? "Untitled Content", ideaAngle: idea?.angle ?? "", variants, assets: pkgAssets, inspectionReports: reports };
+      return { ...pkg, title: idea?.title ?? "Untitled Content", ideaAngle: idea?.angle ?? "", pillarId: idea?.pillarId ?? null, variants, assets: pkgAssets, inspectionReports: reports };
     }));
     return enriched;
   }),

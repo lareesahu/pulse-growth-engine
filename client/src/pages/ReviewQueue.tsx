@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import {
@@ -14,6 +15,7 @@ import {
   ShieldCheck, Target, Sparkles, RefreshCw,
   ChevronDown, ChevronUp, Linkedin, Instagram, Globe, MessageSquare,
   AlertTriangle, CheckCheck, Inbox, Trash2, Square, CheckSquare,
+  SortAsc, Filter, ArrowUpDown, Wand2,
 } from "lucide-react";
 
 const SCORE_DIMS = [
@@ -42,6 +44,21 @@ function ScoreBar({ score, color }: { score: number; color: string }) {
   );
 }
 
+function OverallScoreBadge({ score }: { score: number }) {
+  const cfg = score >= 85
+    ? { label: "Excellent", cls: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" }
+    : score >= 70
+    ? { label: "Good", cls: "bg-[#3AC1EC]/20 text-[#3AC1EC] border-[#3AC1EC]/30" }
+    : score >= 50
+    ? { label: "Fair", cls: "bg-amber-500/20 text-amber-400 border-amber-500/30" }
+    : { label: "Low", cls: "bg-red-500/20 text-red-400 border-red-500/30" };
+  return (
+    <Badge className={`text-xs border font-bold px-2 py-0.5 ${cfg.cls}`}>
+      {score}/100 · {cfg.label}
+    </Badge>
+  );
+}
+
 function ViralityBadge({ score }: { score: number }) {
   const tier = score >= 80 ? { label: "🔥 Viral", bg: "bg-red-500/20 text-red-400 border-red-500/30" }
     : score >= 65 ? { label: "⚡ High", bg: "bg-amber-500/20 text-amber-400 border-amber-500/30" }
@@ -49,7 +66,6 @@ function ViralityBadge({ score }: { score: number }) {
     : { label: "↗ Moderate", bg: "bg-white/10 text-white/50 border-white/10" };
   return <Badge className={`text-xs border ${tier.bg}`}>{tier.label} · {score}/100</Badge>;
 }
-
 
 function ContentCard({ item, selected, onToggleSelect, onApprove, onReject }: {
   item: any; selected: boolean; onToggleSelect: () => void;
@@ -73,7 +89,7 @@ function ContentCard({ item, selected, onToggleSelect, onApprove, onReject }: {
   const variants = item.variants || [];
   const hasIssues = (report?.issues?.length ?? 0) > 0;
   const overallScore = report?.overallScore ?? 0;
-  const borderColor = selected ? "border-[#3AC1EC]/60" : overallScore >= 70 ? "border-emerald-500/20" : overallScore >= 50 ? "border-amber-500/20" : "border-red-500/20";
+  const borderColor = selected ? "border-[#3AC1EC]/60" : overallScore >= 85 ? "border-emerald-500/30" : overallScore >= 70 ? "border-[#3AC1EC]/20" : overallScore >= 50 ? "border-amber-500/20" : "border-red-500/20";
 
   return (
     <Card className={`border transition-all ${borderColor} ${selected ? "bg-[#3AC1EC]/5" : "bg-white/3 hover:bg-white/5"}`}>
@@ -85,7 +101,10 @@ function ContentCard({ item, selected, onToggleSelect, onApprove, onReject }: {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 flex-wrap">
               <h3 className="text-white font-semibold text-sm leading-tight">{item.title || "Untitled Content"}</h3>
-              {report?.viralityScore ? <ViralityBadge score={report.viralityScore} /> : null}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {report?.overallScore != null && <OverallScoreBadge score={overallScore} />}
+                {report?.viralityScore ? <ViralityBadge score={report.viralityScore} /> : null}
+              </div>
             </div>
             {item.ideaAngle && <p className="text-white/40 text-xs mt-0.5 line-clamp-1">{item.ideaAngle}</p>}
             <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -127,7 +146,7 @@ function ContentCard({ item, selected, onToggleSelect, onApprove, onReject }: {
               <span className="text-amber-400 text-[10px] font-medium">{report.issues.length} issue{report.issues.length > 1 ? "s" : ""} noted</span>
             </div>
             {report.issues.slice(0, 2).map((issue: any, i: number) => (
-              <p key={i} className="text-white/40 text-[10px] ml-4">• {typeof issue === "string" ? issue : issue.description || issue.message || JSON.stringify(issue)}</p>
+              <p key={i} className="text-white/40 text-[10px] ml-4">• {typeof issue === "string" ? issue : issue.feedback || issue.description || issue.message || JSON.stringify(issue)}</p>
             ))}
             {report.issues.length > 2 && <p className="text-white/30 text-[10px] ml-4">+{report.issues.length - 2} more</p>}
           </div>
@@ -156,13 +175,12 @@ function ContentCard({ item, selected, onToggleSelect, onApprove, onReject }: {
                   <div className="bg-white/5 rounded-lg p-3 max-h-48 overflow-y-auto">
                     {(() => {
                       const content = v.body || v.caption || v.headline || "";
-                      // Detect stale/empty content: body is just the idea title (< 100 chars and matches title)
                       const isStale = !content || content.length < 100;
                       if (isStale) {
                         return (
                           <div className="flex items-center gap-2 text-amber-400/70">
                             <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-                            <p className="text-xs">Content too short or not generated yet. Regenerate this package from the Content page.</p>
+                            <p className="text-xs">Content too short or not generated yet. Use Regenerate with Feedback below.</p>
                           </div>
                         );
                       }
@@ -191,15 +209,27 @@ function ContentCard({ item, selected, onToggleSelect, onApprove, onReject }: {
   );
 }
 
+type SortKey = "score_desc" | "score_asc" | "virality_desc" | "newest" | "oldest";
+type ScoreFilter = "all" | "high" | "mid" | "low";
+
 export default function ReviewQueue() {
   const { activeBrandId } = useBrand();
   const [, navigate] = useLocation();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [batchMode, setBatchMode] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>("score_desc");
+  const [scoreFilter, setScoreFilter] = useState<ScoreFilter>("all");
+  const [platformFilter, setPlatformFilter] = useState<string>("all");
+  const [pillarFilter, setPillarFilter] = useState<string>("all");
 
   const { data: queue = [], isLoading, refetch } = trpc.pipeline.getReviewQueue.useQuery(
     { brandId: activeBrandId! },
     { enabled: !!activeBrandId, refetchInterval: 30000 }
+  );
+
+  const { data: pillars = [] } = trpc.brand.getPillars.useQuery(
+    { brandId: activeBrandId! },
+    { enabled: !!activeBrandId }
   );
 
   const utils = trpc.useUtils();
@@ -229,9 +259,63 @@ export default function ReviewQueue() {
     onError: (e) => toast.error(e.message),
   });
 
+  const regenWithFeedback = trpc.content.regenWithFeedback.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Regenerating ${data.count} package${data.count !== 1 ? "s" : ""} with inspector feedback — check back in ~30s`);
+      setSelectedIds(new Set());
+      setBatchMode(false);
+      setTimeout(() => utils.pipeline.getReviewQueue.invalidate(), 35000);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const pendingItems = useMemo(() => queue.filter((item: any) => item.status === "generated" || item.status === "needs_revision"), [queue]);
   const approvedItems = useMemo(() => queue.filter((item: any) => item.status === "approved_for_publish" || item.status === "approved"), [queue]);
-  const allSelected = pendingItems.length > 0 && selectedIds.size === pendingItems.length;
+
+  // Derive available platforms from current queue
+  const availablePlatforms = useMemo(() => {
+    const set = new Set<string>();
+    pendingItems.forEach((item: any) => (item.variants || []).forEach((v: any) => set.add(v.platform)));
+    return Array.from(set);
+  }, [pendingItems]);
+
+  // Apply filters and sort
+  const filteredItems = useMemo(() => {
+    let items = [...pendingItems];
+
+    // Score filter
+    if (scoreFilter === "high") items = items.filter((i: any) => (i.inspectionReports?.[0]?.overallScore ?? 0) >= 85);
+    else if (scoreFilter === "mid") items = items.filter((i: any) => { const s = i.inspectionReports?.[0]?.overallScore ?? 0; return s >= 70 && s < 85; });
+    else if (scoreFilter === "low") items = items.filter((i: any) => (i.inspectionReports?.[0]?.overallScore ?? 0) < 70);
+
+    // Platform filter
+    if (platformFilter !== "all") {
+      items = items.filter((i: any) => (i.variants || []).some((v: any) => v.platform === platformFilter));
+    }
+
+    // Pillar filter
+    if (pillarFilter !== "all") {
+      items = items.filter((i: any) => String(i.pillarId) === pillarFilter);
+    }
+
+    // Sort
+    items.sort((a: any, b: any) => {
+      const aScore = a.inspectionReports?.[0]?.overallScore ?? 0;
+      const bScore = b.inspectionReports?.[0]?.overallScore ?? 0;
+      const aViral = a.inspectionReports?.[0]?.viralityScore ?? 0;
+      const bViral = b.inspectionReports?.[0]?.viralityScore ?? 0;
+      if (sortKey === "score_desc") return bScore - aScore;
+      if (sortKey === "score_asc") return aScore - bScore;
+      if (sortKey === "virality_desc") return bViral - aViral;
+      if (sortKey === "newest") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sortKey === "oldest") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      return 0;
+    });
+
+    return items;
+  }, [pendingItems, scoreFilter, platformFilter, pillarFilter, sortKey]);
+
+  const allSelected = filteredItems.length > 0 && selectedIds.size === filteredItems.length;
 
   function toggleSelect(id: number) {
     setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
@@ -239,14 +323,30 @@ export default function ReviewQueue() {
 
   function toggleSelectAll() {
     if (allSelected) setSelectedIds(new Set());
-    else setSelectedIds(new Set(pendingItems.map((item: any) => item.id)));
+    else setSelectedIds(new Set(filteredItems.map((item: any) => item.id)));
   }
 
   const selectedArray = Array.from(selectedIds);
 
+  const scoreFilterLabel: Record<ScoreFilter, string> = {
+    all: "All Scores",
+    high: "≥85 Excellent",
+    mid: "70–84 Good",
+    low: "<70 Needs Work",
+  };
+
+  const sortLabel: Record<SortKey, string> = {
+    score_desc: "Score: High → Low",
+    score_asc: "Score: Low → High",
+    virality_desc: "Virality: High → Low",
+    newest: "Newest First",
+    oldest: "Oldest First",
+  };
+
   return (
     <AppLayout>
       <div className="p-4 md:p-6 space-y-5 max-w-2xl mx-auto pb-8">
+        {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
@@ -266,6 +366,7 @@ export default function ReviewQueue() {
           </div>
         </div>
 
+        {/* Stats */}
         <div className="grid grid-cols-3 gap-2">
           {[
             { label: "Awaiting Review", value: pendingItems.length, color: "text-amber-400" },
@@ -279,11 +380,82 @@ export default function ReviewQueue() {
           ))}
         </div>
 
-        {batchMode && pendingItems.length > 0 && (
+        {/* Sort + Filter Controls */}
+        {pendingItems.length > 0 && (
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="flex items-center gap-1.5 text-white/40 text-xs flex-shrink-0">
+              <ArrowUpDown className="w-3 h-3" />
+              <span>Sort:</span>
+            </div>
+            <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
+              <SelectTrigger className="h-7 text-xs w-44 bg-white/5 border-white/10 text-white/70">
+                <SelectValue>{sortLabel[sortKey]}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.entries(sortLabel) as [SortKey, string][]).map(([k, label]) => (
+                  <SelectItem key={k} value={k} className="text-xs">{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="flex items-center gap-1.5 text-white/40 text-xs flex-shrink-0 ml-1">
+              <Filter className="w-3 h-3" />
+              <span>Filter:</span>
+            </div>
+            <Select value={scoreFilter} onValueChange={(v) => setScoreFilter(v as ScoreFilter)}>
+              <SelectTrigger className="h-7 text-xs w-36 bg-white/5 border-white/10 text-white/70">
+                <SelectValue>{scoreFilterLabel[scoreFilter]}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.entries(scoreFilterLabel) as [ScoreFilter, string][]).map(([k, label]) => (
+                  <SelectItem key={k} value={k} className="text-xs">{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {availablePlatforms.length > 0 && (
+              <Select value={platformFilter} onValueChange={setPlatformFilter}>
+                <SelectTrigger className="h-7 text-xs w-32 bg-white/5 border-white/10 text-white/70">
+                  <SelectValue>{platformFilter === "all" ? "All Platforms" : platformFilter}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">All Platforms</SelectItem>
+                  {availablePlatforms.map(p => (
+                    <SelectItem key={p} value={p} className="text-xs capitalize">{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {(pillars as any[]).length > 0 && (
+              <Select value={pillarFilter} onValueChange={setPillarFilter}>
+                <SelectTrigger className="h-7 text-xs w-32 bg-white/5 border-white/10 text-white/70">
+                  <SelectValue>{pillarFilter === "all" ? "All Pillars" : (pillars as any[]).find((p: any) => String(p.id) === pillarFilter)?.name || "Pillar"}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">All Pillars</SelectItem>
+                  {(pillars as any[]).map((p: any) => (
+                    <SelectItem key={p.id} value={String(p.id)} className="text-xs">{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {(scoreFilter !== "all" || platformFilter !== "all" || pillarFilter !== "all") && (
+              <button onClick={() => { setScoreFilter("all"); setPlatformFilter("all"); setPillarFilter("all"); }}
+                className="text-[10px] text-white/30 hover:text-white/60 underline">
+                Clear filters
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Batch toolbar */}
+        {batchMode && filteredItems.length > 0 && (
           <div className="sticky top-2 z-20 bg-[#0f1117]/95 backdrop-blur border border-[#3AC1EC]/30 rounded-xl p-3 flex items-center gap-2 flex-wrap">
             <button onClick={toggleSelectAll} className="flex items-center gap-1.5 text-xs text-white/60 hover:text-white mr-1">
               {allSelected ? <CheckSquare className="w-4 h-4 text-[#3AC1EC]" /> : <Square className="w-4 h-4" />}
-              {allSelected ? "Deselect All" : `All (${pendingItems.length})`}
+              {allSelected ? "Deselect All" : `All (${filteredItems.length})`}
             </button>
             <div className="flex-1" />
             {selectedIds.size > 0 && (
@@ -292,6 +464,13 @@ export default function ReviewQueue() {
                 <Button size="sm" onClick={() => batchApprove.mutate({ contentPackageIds: selectedArray })} disabled={batchApprove.isPending}
                   className="h-7 text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30">
                   <CheckCheck className="w-3 h-3 mr-1" />{batchApprove.isPending ? "Approving..." : "Approve"}
+                </Button>
+                <Button size="sm"
+                  onClick={() => regenWithFeedback.mutate({ ids: selectedArray })}
+                  disabled={regenWithFeedback.isPending}
+                  className="h-7 text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30">
+                  <Wand2 className="w-3 h-3 mr-1" />
+                  {regenWithFeedback.isPending ? "Regenerating..." : "Regen w/ Feedback"}
                 </Button>
                 <Button size="sm" onClick={() => batchReject.mutate({ contentPackageIds: selectedArray })} disabled={batchReject.isPending}
                   variant="ghost" className="h-7 text-xs text-amber-400/70 hover:text-amber-400 hover:bg-amber-500/10">
@@ -308,7 +487,7 @@ export default function ReviewQueue() {
 
         {isLoading ? (
           <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-48 bg-white/5 rounded-xl animate-pulse border border-white/10" />)}</div>
-        ) : pendingItems.length === 0 ? (
+        ) : filteredItems.length === 0 && pendingItems.length === 0 ? (
           <Card className="bg-white/3 border-white/10">
             <CardContent className="py-16 text-center">
               <Inbox className="w-12 h-12 text-white/10 mx-auto mb-3" />
@@ -319,18 +498,30 @@ export default function ReviewQueue() {
               </Button>
             </CardContent>
           </Card>
+        ) : filteredItems.length === 0 ? (
+          <Card className="bg-white/3 border-white/10">
+            <CardContent className="py-10 text-center">
+              <Filter className="w-8 h-8 text-white/10 mx-auto mb-2" />
+              <p className="text-white/40 text-sm font-medium">No items match these filters</p>
+              <button onClick={() => { setScoreFilter("all"); setPlatformFilter("all"); setPillarFilter("all"); }}
+                className="mt-2 text-xs text-[#3AC1EC] hover:underline">Clear filters</button>
+            </CardContent>
+          </Card>
         ) : (
           <div className="space-y-4">
             {!batchMode && (
               <div className="flex items-center justify-between">
-                <p className="text-white/50 text-xs">{pendingItems.length} item{pendingItems.length !== 1 ? "s" : ""} awaiting your decision</p>
-                <Button onClick={() => pendingItems.forEach((item: any) => { if (item.id) approveForPublish.mutate({ contentPackageId: item.id }); })}
+                <p className="text-white/50 text-xs">
+                  {filteredItems.length} item{filteredItems.length !== 1 ? "s" : ""}
+                  {filteredItems.length !== pendingItems.length ? ` (filtered from ${pendingItems.length})` : " awaiting your decision"}
+                </p>
+                <Button onClick={() => filteredItems.forEach((item: any) => { if (item.id) approveForPublish.mutate({ contentPackageId: item.id }); })}
                   className="text-xs h-8 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30" disabled={approveForPublish.isPending}>
                   <CheckCheck className="w-3 h-3 mr-1" />Approve All
                 </Button>
               </div>
             )}
-            {pendingItems.map((item: any) => (
+            {filteredItems.map((item: any) => (
               <ContentCard key={item.id} item={item} selected={selectedIds.has(item.id)}
                 onToggleSelect={() => { if (!batchMode) setBatchMode(true); toggleSelect(item.id); }}
                 onApprove={() => { if (item.id) approveForPublish.mutate({ contentPackageId: item.id }); }}
