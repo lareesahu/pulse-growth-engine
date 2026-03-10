@@ -271,3 +271,7 @@
 - [x] FEATURE: Forum Hunt shows real matched threads/posts with links; Chinese platforms get Chinese reply drafts
 - [x] FEATURE: Chinese humanizer — humanizeZh() second pass runs on WeChat and Xiaohongshu content (strips Chinese AI filler phrases)
 - [x] FEATURE: AI Models settings — separate Chinese Text Model selector for WeChat/Xiaohongshu (DOUBAO_ZH_TEXT_MODEL env var)
+
+## Bug Fix (March 10 2026 — Round 15)
+- [x] BUG: Billing banner overlaps page content on mobile (published site) — FIXED: AppLayout now reads banner height from manus-content-root shadow DOM (.billing-banner, fixed, 36px); polls at 300ms+1000ms for shadow DOM readiness; fallback to #root.getBoundingClientRect().top
+- [x] BUG: Forum Hunt returning zero results — ROOT CAUSE: Google/search Data API does not exist in Manus hub. FIXED: Reddit public JSON API + HackerNews Algolia API + Medium RSS feed for open platforms; LLM synthesis with direct search URLs for gated platforms (Quora, LinkedIn, ProductHunt, IndieHackers, GrowthHackers, Zhihu, Xiaohongshu)

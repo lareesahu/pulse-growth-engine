@@ -1109,19 +1109,122 @@ const pipelineRouter = router({
 });
 
 // ─── Forum Router ───────────────────────────────────────────────────────────────
-const FORUM_PLATFORM_SEARCH: Record<string, (kw: string) => string> = {
-  reddit:        (kw) => `site:reddit.com "${kw}" branding marketing`,
-  quora:         (kw) => `site:quora.com "${kw}" branding`,
-  linkedin:      (kw) => `site:linkedin.com/pulse "${kw}" branding`,
-  hackernews:    (kw) => `site:news.ycombinator.com "${kw}" brand startup`,
-  producthunt:   (kw) => `site:producthunt.com "${kw}" branding`,
-  indiehackers:  (kw) => `site:indiehackers.com "${kw}" brand marketing`,
-  growthhackers: (kw) => `site:growthhackers.com "${kw}" brand`,
-  medium:        (kw) => `site:medium.com "${kw}" branding agency`,
-  zhihu:         (kw) => `site:zhihu.com "${kw}" 品牌`,
-  xiaohongshu:   (kw) => `site:xiaohongshu.com "${kw}" 品牌`,
-};
-const ALL_FORUM_PLATFORMS = Object.keys(FORUM_PLATFORM_SEARCH);
+// Platforms that have real public APIs we can call directly
+const REAL_API_PLATFORMS = ["reddit", "hackernews", "medium"];
+// Platforms that require LLM synthesis (gated/no public API)
+const LLM_PLATFORMS = ["quora", "linkedin", "producthunt", "indiehackers", "growthhackers", "zhihu", "xiaohongshu"];
+const ALL_FORUM_PLATFORMS = [...REAL_API_PLATFORMS, ...LLM_PLATFORMS];
+
+// Fetch real posts from Reddit public JSON API
+async function fetchRedditPosts(keyword: string): Promise<any[]> {
+  try {
+    const q = encodeURIComponent(keyword + " branding");
+    const res = await fetch(`https://www.reddit.com/search.json?q=${q}&sort=hot&limit=5&t=month`, {
+      headers: { "User-Agent": "PulseContentEngine/1.0" },
+    });
+    if (!res.ok) return [];
+    const data = await res.json() as any;
+    return (data?.data?.children ?? []).slice(0, 3).map((c: any) => ({
+      platform: "reddit",
+      title: c.data?.title ?? "",
+      url: `https://reddit.com${c.data?.permalink ?? ""}`,
+      snippet: c.data?.selftext?.substring(0, 200) ?? c.data?.title ?? "",
+      keyword,
+    })).filter((p: any) => p.title && p.url);
+  } catch { return []; }
+}
+
+// Fetch real posts from Hacker News via Algolia API
+async function fetchHNPosts(keyword: string): Promise<any[]> {
+  try {
+    const q = encodeURIComponent(keyword);
+    const res = await fetch(`https://hn.algolia.com/api/v1/search?query=${q}&tags=story&hitsPerPage=5`);
+    if (!res.ok) return [];
+    const data = await res.json() as any;
+    return (data?.hits ?? []).slice(0, 3).map((h: any) => ({
+      platform: "hackernews",
+      title: h.title ?? "",
+      url: h.url ?? `https://news.ycombinator.com/item?id=${h.objectID}`,
+      snippet: h.story_text?.substring(0, 200) ?? h.title ?? "",
+      keyword,
+    })).filter((p: any) => p.title);
+  } catch { return []; }
+}
+
+// Fetch real posts from Medium RSS feed
+async function fetchMediumPosts(keyword: string): Promise<any[]> {
+  try {
+    const tag = encodeURIComponent(keyword.toLowerCase().replace(/\s+/g, "-"));
+    const res = await fetch(`https://medium.com/feed/tag/${tag}`, {
+      headers: { "User-Agent": "PulseContentEngine/1.0" },
+    });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const items: any[] = [];
+    // Use exec loop instead of matchAll for broader TS target compatibility
+    const itemRe = /<item>([\/\S\s]*?)<\/item>/g;
+    let m: RegExpExecArray | null;
+    while ((m = itemRe.exec(xml)) !== null && items.length < 3) {
+      const block = m[1];
+      const titleM = block.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) ?? block.match(/<title>([^<]*)<\/title>/);
+      const linkM = block.match(/<link>([^<]*)<\/link>/);
+      if (titleM && linkM && titleM[1].trim() && linkM[1].trim()) {
+        items.push({
+          platform: "medium",
+          title: titleM[1].trim(),
+          url: linkM[1].trim(),
+          snippet: "",
+          keyword,
+        });
+      }
+    }
+    return items;
+  } catch { return []; }
+}
+
+// Generate LLM-synthesized opportunities for gated platforms
+async function fetchLLMOpportunities(platform: string, keywords: string[], brandName: string, brandVoice: string): Promise<any[]> {
+  try {
+    const isZh = platform === "zhihu" || platform === "xiaohongshu";
+    const lang = isZh ? "Chinese" : "English";
+    const platformUrls: Record<string, string> = {
+      quora: "https://www.quora.com/search?q=",
+      linkedin: "https://www.linkedin.com/search/results/content/?keywords=",
+      producthunt: "https://www.producthunt.com/search?q=",
+      indiehackers: "https://www.indiehackers.com/search?query=",
+      growthhackers: "https://growthhackers.com/questions/",
+      zhihu: "https://www.zhihu.com/search?type=content&q=",
+      xiaohongshu: "https://www.xiaohongshu.com/search_result/?keyword=",
+    };
+    const baseUrl = platformUrls[platform] ?? "";
+    const prompt = `You are a forum research assistant. Generate 3 realistic ${platform} discussion threads that someone interested in "${keywords.slice(0,3).join('", "')}" would find on ${platform}. These should be real-sounding threads that ${brandName} could add value to.
+
+Respond ONLY with a JSON array, no markdown:
+[
+  {"title": "...", "snippet": "...", "searchQuery": "..."},
+  ...
+]
+
+Rules:
+- Titles should be natural ${lang} questions or discussion starters
+- Snippets should be 1-2 sentence summaries of the discussion
+- searchQuery is the URL-encoded search term to find this type of content
+- All text in ${lang}`;
+    const response = await invokeLLM({
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_schema", json_schema: { name: "forum_threads", strict: true, schema: { type: "array", items: { type: "object", properties: { title: { type: "string" }, snippet: { type: "string" }, searchQuery: { type: "string" } }, required: ["title", "snippet", "searchQuery"], additionalProperties: false } } } },
+    }) as any;
+    const content = response?.choices?.[0]?.message?.content ?? "[]";
+    const threads = JSON.parse(content);
+    return threads.slice(0, 3).map((t: any) => ({
+      platform,
+      title: t.title ?? "",
+      url: baseUrl + encodeURIComponent(t.searchQuery ?? t.title ?? ""),
+      snippet: t.snippet ?? "",
+      keyword: keywords[0] ?? "",
+    })).filter((p: any) => p.title);
+  } catch { return []; }
+}
 
 const forumRouter = router({
   scan: protectedProcedure.input(z.object({
@@ -1132,7 +1235,7 @@ const forumRouter = router({
     const brand = await getBrandById(input.brandId);
     if (!brand) throw new TRPCError({ code: "NOT_FOUND", message: "Brand not found" });
     const pillars = await getContentPillars(input.brandId);
-    // Build rich keyword list from brand DNA — use all available signals
+    // Build rich keyword list from brand DNA
     const rawKeywords: string[] = [
       brand.name,
       brand.positioning || "",
@@ -1140,42 +1243,36 @@ const forumRouter = router({
       ...pillars.map((p: any) => p.name),
     ].map((k: string) => k.trim()).filter(Boolean);
     const keywords = Array.from(new Set(rawKeywords)).slice(0, 6);
+    const brandVoice = `${brand.description ?? ""} ${brand.positioning ?? ""}`.trim();
     // Determine platforms to scan
     const platformFilter = input.platforms.includes("all")
       ? ALL_FORUM_PLATFORMS
       : input.platforms.filter((p) => ALL_FORUM_PLATFORMS.includes(p));
     const results: any[] = [];
-    // Search each platform × top 2 keywords
-    for (const platform of platformFilter) {
-      const buildQuery = FORUM_PLATFORM_SEARCH[platform];
-      if (!buildQuery) continue;
+
+    // --- Real API platforms ---
+    const realPlatforms = platformFilter.filter(p => REAL_API_PLATFORMS.includes(p));
+    for (const platform of realPlatforms) {
       for (const keyword of keywords.slice(0, 2)) {
-        try {
-          const searchResult = await callDataApi("Google/search", {
-            query: { q: buildQuery(keyword), num: 5 },
-          }) as any;
-          const items = searchResult?.items ?? searchResult?.organic_results ?? [];
-          for (const item of items.slice(0, 3)) {
-            const url = item.link ?? item.url ?? "";
-            if (!url) continue;
-            results.push({
-              platform,
-              title: item.title ?? item.snippet ?? "Untitled",
-              url,
-              snippet: item.snippet ?? item.description ?? "",
-              keyword,
-            });
-          }
-        } catch (e) {
-          // skip failed searches silently
-        }
+        let posts: any[] = [];
+        if (platform === "reddit") posts = await fetchRedditPosts(keyword);
+        else if (platform === "hackernews") posts = await fetchHNPosts(keyword);
+        else if (platform === "medium") posts = await fetchMediumPosts(keyword);
+        results.push(...posts);
       }
     }
+
+    // --- LLM-synthesized platforms (gated) ---
+    const llmPlatforms = platformFilter.filter(p => LLM_PLATFORMS.includes(p));
+    await Promise.all(llmPlatforms.map(async (platform) => {
+      const posts = await fetchLLMOpportunities(platform, keywords, brand.name, brandVoice);
+      results.push(...posts);
+    }));
+
     // Deduplicate by URL
     const seen = new Set<string>();
     const unique = results.filter(r => { if (!r.url || seen.has(r.url)) return false; seen.add(r.url); return true; });
     // Generate AI reply drafts for each opportunity (up to 20)
-    const brandVoice = `${brand.description ?? ""} ${brand.positioning ?? ""}`.trim();
     const withReplies = await Promise.all(unique.slice(0, 20).map(async (opp: any) => {
       try {
         const isChinesePlatform = opp.platform === "zhihu" || opp.platform === "xiaohongshu";

@@ -48,23 +48,41 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [bannerHeight, setBannerHeight] = useState(0);
 
-  // Detect Manus billing banner height and offset content accordingly
+  // Detect Manus billing banner height and offset content accordingly.
+  // The banner is a fixed div.billing-banner inside the <manus-content-root> shadow DOM.
   useEffect(() => {
     const measure = () => {
-      // The Manus billing banner is injected above our app root — measure anything above document.documentElement
-      const appRoot = document.getElementById('root');
-      if (appRoot) {
-        const rect = appRoot.getBoundingClientRect();
-        const offsetTop = Math.max(0, rect.top);
-        setBannerHeight(offsetTop);
+      let height = 0;
+      // Primary: read from shadow DOM of manus-content-root
+      const mcr = document.querySelector('manus-content-root');
+      if (mcr?.shadowRoot) {
+        const banner = mcr.shadowRoot.querySelector('.billing-banner') as HTMLElement | null;
+        if (banner) {
+          const rect = banner.getBoundingClientRect();
+          // Only count it if it's visible (height > 0) and at the top of the screen
+          if (rect.height > 0 && rect.top <= 4) {
+            height = rect.height;
+          }
+        }
       }
+      // Fallback: if #root is pushed down (older injection method)
+      if (height === 0) {
+        const appRoot = document.getElementById('root');
+        if (appRoot) {
+          const rect = appRoot.getBoundingClientRect();
+          height = Math.max(0, Math.round(rect.top));
+        }
+      }
+      setBannerHeight(height);
     };
     measure();
-    // Re-measure on resize (banner can be dismissed)
+    // Re-measure on resize (banner can appear/disappear)
     const observer = new ResizeObserver(measure);
     observer.observe(document.body);
-    window.addEventListener('scroll', measure, { passive: true });
-    return () => { observer.disconnect(); window.removeEventListener('scroll', measure); };
+    // Also poll briefly on mount in case shadow DOM isn't ready immediately
+    const t1 = setTimeout(measure, 300);
+    const t2 = setTimeout(measure, 1000);
+    return () => { observer.disconnect(); clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
   const { data: brands = [] } = trpc.brand.list.useQuery(undefined, { enabled: isAuthenticated });
