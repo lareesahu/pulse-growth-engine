@@ -3,7 +3,6 @@ import { useBrand } from "@/hooks/useBrand";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,24 +11,28 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Brain, Plus, RefreshCw, Sparkles, Trash2, CheckCircle,
-  XCircle, BarChart2, List, CheckSquare, CheckCheck, X, AlertTriangle
+  XCircle, ChevronRight, AlertTriangle, Filter
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 
-const STATUSES = [
-  { key: "proposed",  label: "Proposed",  color: "#3AC1EC" },
-  { key: "in_review", label: "In Review", color: "#56C4C4" },
-  { key: "approved",  label: "Approved",  color: "#2163AF" },
-  { key: "rejected",  label: "Rejected",  color: "#ef4444" },
-  { key: "archived",  label: "Archived",  color: "#6b7280" },
-];
+const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
+  proposed:  { label: "Proposed",  color: "text-[#3AC1EC]",  dot: "bg-[#3AC1EC]" },
+  in_review: { label: "In Review", color: "text-[#56C4C4]",  dot: "bg-[#56C4C4]" },
+  approved:  { label: "Approved",  color: "text-emerald-400", dot: "bg-emerald-400" },
+  rejected:  { label: "Rejected",  color: "text-red-400",    dot: "bg-red-400" },
+  archived:  { label: "Archived",  color: "text-white/30",   dot: "bg-white/20" },
+  generated: { label: "Generated", color: "text-violet-400", dot: "bg-violet-400" },
+};
 
 export default function IdeasBoard() {
   const { activeBrand, activeBrandId, setActiveBrandId } = useBrand();
+  const [, navigate] = useLocation();
   const utils = trpc.useUtils();
   const [generating, setGenerating] = useState(false);
   const [batchCount, setBatchCount] = useState(10);
+  const [filterStatus, setFilterStatus] = useState("all");
   const [filterPillar, setFilterPillar] = useState("all");
   const [newIdea, setNewIdea] = useState({ title: "", pillar: "", platform: "linkedin", angle: "" });
   const [showNewIdea, setShowNewIdea] = useState(false);
@@ -46,7 +49,6 @@ export default function IdeasBoard() {
   const generateBatch = trpc.idea.generateBatch.useMutation();
   const createIdea = trpc.idea.create.useMutation({ onSuccess: () => { refetch(); setShowNewIdea(false); toast.success("Idea added"); } });
   const updateStatus = trpc.idea.updateStatus.useMutation({ onSuccess: () => refetch() });
-  const deleteIdea = trpc.idea.updateStatus.useMutation({ onSuccess: () => refetch() });
   const deleteAllMutation = trpc.idea.deleteAll.useMutation();
   const generateContent = trpc.content.generate.useMutation();
 
@@ -84,9 +86,10 @@ export default function IdeasBoard() {
     if (!activeBrandId) return;
     setGeneratingContentFor(ideaId);
     try {
-      const result = await generateContent.mutateAsync({ ideaId });
+      await generateContent.mutateAsync({ ideaId });
       toast.success("Content package generated!");
       utils.activity.list.invalidate({ brandId: activeBrandId });
+      refetch();
     } catch (e: any) {
       toast.error(e.message || "Content generation failed");
     } finally {
@@ -95,53 +98,48 @@ export default function IdeasBoard() {
   };
 
   const pillarMap = Object.fromEntries(pillars.map(p => [p.id, p.name]));
-  const filteredIdeas = filterPillar === "all" ? ideas : ideas.filter(i => i.pillarId !== null && pillarMap[i.pillarId] === filterPillar);
 
-  const ideasByStatus = STATUSES.reduce((acc, s) => {
-    acc[s.key] = filteredIdeas.filter(i => i.status === s.key);
+  const filteredIdeas = ideas.filter(i => {
+    if (filterStatus !== "all" && i.status !== filterStatus) return false;
+    if (filterPillar !== "all" && (i.pillarId === null || pillarMap[i.pillarId] !== filterPillar)) return false;
+    return true;
+  });
+
+  // Status counts for filter tabs
+  const statusCounts = ideas.reduce((acc, i) => {
+    acc[i.status] = (acc[i.status] || 0) + 1;
     return acc;
-  }, {} as Record<string, typeof ideas>);
+  }, {} as Record<string, number>);
 
   return (
     <AppLayout brandId={activeBrandId} onBrandChange={setActiveBrandId}>
-      <div className="p-4 md:p-6 space-y-4 md:space-y-5">
-        {/* Header */}
-        <div className="space-y-3">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Ideas Board</h1>
-              <p className="text-xs text-muted-foreground mt-0.5">{activeBrand?.name} · {ideas.length} ideas total</p>
-            </div>
-          </div>
-          {/* Controls row — scrollable on mobile */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-            {/* Pillar filter */}
-            <Select value={filterPillar} onValueChange={setFilterPillar}>
-              <SelectTrigger className="w-36 h-9 text-xs flex-shrink-0"><SelectValue placeholder="All pillars" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Pillars</SelectItem>
-                {pillars.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+      <div className="p-4 md:p-6 space-y-4">
 
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Ideas</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">{activeBrand?.name} · {ideas.length} total</p>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
             {/* Batch generate */}
-            <div className="flex items-center gap-0 border border-border rounded-md overflow-hidden flex-shrink-0">
+            <div className="flex items-center gap-0 border border-border rounded-md overflow-hidden">
               <Select value={String(batchCount)} onValueChange={v => setBatchCount(Number(v))}>
-                <SelectTrigger className="w-14 h-9 text-xs border-0 rounded-none"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-14 h-8 text-xs border-0 rounded-none focus:ring-0"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {[5, 10, 15, 20, 30].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Button size="sm" className="h-9 rounded-none text-xs px-3 flex-shrink-0" onClick={handleBatchGenerate} disabled={generating} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+              <Button size="sm" className="h-8 rounded-none text-xs px-3" onClick={handleBatchGenerate} disabled={generating} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
                 {generating ? <RefreshCw size={12} className="mr-1.5 animate-spin" /> : <Brain size={12} className="mr-1.5" />}
                 {generating ? "Generating..." : "Generate"}
               </Button>
             </div>
 
-            {/* Add new idea */}
+            {/* Add idea */}
             <Dialog open={showNewIdea} onOpenChange={setShowNewIdea}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9 flex-shrink-0"><Plus size={14} className="mr-1" /> Add</Button>
+                <Button variant="outline" size="sm" className="h-8 px-3"><Plus size={13} /></Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Add New Idea</DialogTitle></DialogHeader>
@@ -170,21 +168,64 @@ export default function IdeasBoard() {
                 </div>
               </DialogContent>
             </Dialog>
-
-            {/* Clear All button */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 flex-shrink-0 border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/60"
-              onClick={() => setShowDeleteAll(true)}
-              disabled={ideas.length === 0}
-            >
-              <Trash2 size={12} className="mr-1.5" /> Clear All
-            </Button>
           </div>
         </div>
 
-        {/* Delete All confirmation dialog */}
+        {/* Filter row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Status tabs */}
+          <div className="flex items-center gap-1 flex-wrap">
+            <button
+              onClick={() => setFilterStatus("all")}
+              className={`text-xs px-2.5 py-1 rounded-full transition-all ${filterStatus === "all" ? "bg-white/10 text-white font-medium" : "text-white/40 hover:text-white/70"}`}
+            >
+              All <span className="ml-1 opacity-60">{ideas.length}</span>
+            </button>
+            {Object.entries(STATUS_CONFIG).map(([key, cfg]) => {
+              const count = statusCounts[key] || 0;
+              if (count === 0) return null;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setFilterStatus(filterStatus === key ? "all" : key)}
+                  className={`text-xs px-2.5 py-1 rounded-full transition-all flex items-center gap-1.5 ${filterStatus === key ? "bg-white/10 text-white font-medium" : "text-white/40 hover:text-white/70"}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                  {cfg.label}
+                  <span className="opacity-60">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Pillar filter */}
+          {pillars.length > 0 && (
+            <Select value={filterPillar} onValueChange={setFilterPillar}>
+              <SelectTrigger className="h-7 text-xs w-auto min-w-[110px] border-border/50 ml-auto">
+                <Filter size={10} className="mr-1.5 opacity-50" />
+                <SelectValue placeholder="All pillars" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Pillars</SelectItem>
+                {pillars.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Clear all */}
+          {ideas.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-red-400/60 hover:text-red-400 hover:bg-red-500/10 px-2"
+              onClick={() => setShowDeleteAll(true)}
+            >
+              <Trash2 size={11} className="mr-1" /> Clear
+            </Button>
+          )}
+        </div>
+
+        {/* Delete All confirmation */}
         <Dialog open={showDeleteAll} onOpenChange={setShowDeleteAll}>
           <DialogContent className="max-w-sm">
             <DialogHeader>
@@ -194,114 +235,100 @@ export default function IdeasBoard() {
             </DialogHeader>
             <div className="py-2 space-y-3">
               <p className="text-sm text-muted-foreground">
-                This will permanently delete all{" "}
-                <strong className="text-foreground">{ideas.length} ideas</strong> for{" "}
-                <strong className="text-foreground">{activeBrand?.name}</strong>. This cannot be undone.
+                This will permanently delete all <strong className="text-foreground">{ideas.length} ideas</strong> for <strong className="text-foreground">{activeBrand?.name}</strong>. This cannot be undone.
               </p>
               <div className="flex gap-2 pt-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => setShowDeleteAll(false)}
-                  disabled={deletingAll}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  size="sm"
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white border-0"
-                  onClick={handleDeleteAll}
-                  disabled={deletingAll}
-                >
-                  {deletingAll
-                    ? <><RefreshCw size={12} className="mr-1.5 animate-spin" />Deleting...</>
-                    : <><Trash2 size={12} className="mr-1.5" />Delete All</>
-                  }
+                <Button variant="outline" size="sm" className="flex-1" onClick={() => setShowDeleteAll(false)} disabled={deletingAll}>Cancel</Button>
+                <Button size="sm" className="flex-1 bg-red-600 hover:bg-red-700 text-white border-0" onClick={handleDeleteAll} disabled={deletingAll}>
+                  {deletingAll ? <><RefreshCw size={12} className="mr-1.5 animate-spin" />Deleting...</> : <><Trash2 size={12} className="mr-1.5" />Delete All</>}
                 </Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
 
-        {/* Kanban board */}
+        {/* Ideas list */}
         {isLoading ? (
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {STATUSES.map(s => <Skeleton key={s.key} className="h-64 min-w-[240px]" />)}
+          <div className="space-y-2">
+            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
+          </div>
+        ) : filteredIdeas.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center">
+              <Brain size={22} className="text-white/20" />
+            </div>
+            <p className="text-sm text-white/40">
+              {ideas.length === 0 ? "No ideas yet — hit Generate to let Caelum create some" : "No ideas match this filter"}
+            </p>
+            {ideas.length === 0 && (
+              <Button size="sm" onClick={handleBatchGenerate} disabled={generating} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+                {generating ? <RefreshCw size={12} className="mr-1.5 animate-spin" /> : <Brain size={12} className="mr-1.5" />}
+                Generate 10 Ideas
+              </Button>
+            )}
           </div>
         ) : (
-          <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-5 md:gap-4 snap-x snap-mandatory">
-            {STATUSES.map(status => (
-              <div key={status.key} className="min-w-[260px] md:min-w-0 flex-shrink-0 snap-start">
-                {/* Column header */}
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-2 h-2 rounded-full" style={{ background: status.color }} />
-                  <span className="text-xs font-semibold text-foreground">{status.label}</span>
-                  <span className="text-xs text-muted-foreground ml-auto">{ideasByStatus[status.key]?.length || 0}</span>
-                </div>
+          <div className="space-y-1.5">
+            {filteredIdeas.map(idea => {
+              const cfg = STATUS_CONFIG[idea.status] || STATUS_CONFIG.proposed;
+              const pillarName = idea.pillarId ? pillarMap[idea.pillarId] : null;
+              return (
+                <div
+                  key={idea.id}
+                  className="group flex items-center gap-3 px-3 py-3 rounded-xl bg-white/3 hover:bg-white/6 border border-transparent hover:border-white/8 transition-all cursor-pointer"
+                  onClick={() => navigate(`/content/idea-${idea.id}`)}
+                >
+                  {/* Status dot */}
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />
 
-                {/* Cards */}
-                <div className="space-y-2">
-                  {(ideasByStatus[status.key] || []).map(idea => (
-                    <Card key={idea.id} className="border-border bg-card hover:border-primary/30 transition-colors group cursor-pointer" onClick={() => window.location.href = `/content/idea-${idea.id}`}>
-                      <CardContent className="p-3">
-                        <div className="text-xs font-medium text-foreground leading-snug mb-2">{idea.title}</div>
-                        {idea.pillarId && pillarMap[idea.pillarId] && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 mb-2 border-primary/30 text-primary/80">{pillarMap[idea.pillarId]}</Badge>
-                        )}
-                        {idea.angle && <p className="text-[10px] text-muted-foreground mb-2 line-clamp-2">{idea.angle}</p>}
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-1 mt-2">
-                          {status.key === "proposed" && (
-                            <>
-                              <Button size="icon" variant="ghost" className="h-6 w-6 text-green-400 hover:text-green-300" onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: idea.id, status: "approved" }); }}>
-                                <CheckCircle size={12} />
-                              </Button>
-                              <Button size="icon" variant="ghost" className="h-6 w-6 text-red-400 hover:text-red-300" onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: idea.id, status: "rejected" }); }}>
-                                <XCircle size={12} />
-                              </Button>
-                            </>
-                          )}
-                          {status.key === "in_review" && (
-                            <>
-                              <Button size="icon" variant="ghost" className="h-6 w-6 text-green-400 hover:text-green-300" onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: idea.id, status: "approved" }); }}>
-                                <CheckCircle size={12} />
-                              </Button>
-                              <Button size="icon" variant="ghost" className="h-6 w-6 text-red-400 hover:text-red-300" onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: idea.id, status: "rejected" }); }}>
-                                <XCircle size={12} />
-                              </Button>
-                            </>
-                          )}
-                          {status.key === "approved" && (
-                            <Button size="sm" variant="ghost" className={`h-6 text-[10px] px-2 transition-all ${generatingContentFor === idea.id ? "text-amber-400 hover:text-amber-300 bg-amber-500/10" : "text-primary hover:text-primary/80"}`} onClick={(e) => { e.stopPropagation(); if (generatingContentFor !== idea.id) { toast.info("Generating content package..."); handleGenerateContent(idea.id); } }} disabled={generatingContentFor === idea.id}>
-                              {generatingContentFor === idea.id ? <><RefreshCw size={10} className="mr-1 animate-spin" />Generating...</> : <><Sparkles size={10} className="mr-1" />Generate</>}
-                            </Button>
-                          )}
-                          {(status.key === "rejected" || status.key === "proposed") && (
-                            <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-muted-foreground/60" onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: idea.id, status: "archived" }); }}>
-                            </Button>
-                          )}
-                          <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive ml-auto" onClick={(e) => { e.stopPropagation(); deleteIdea.mutate({ id: idea.id, status: "archived" }); }}>
-                            <Trash2 size={10} />
-                          </Button>
-                        </div>
-
-                        {/* View content link */}
-                        <div className="flex items-center gap-1 mt-2 text-[10px] text-primary/60">
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-
-                  {(ideasByStatus[status.key] || []).length === 0 && (
-                    <div className="border border-dashed border-border rounded-lg p-4 text-center text-[10px] text-muted-foreground">
-                      {status.key === "proposed" ? "Generate ideas to fill this column" : `No ${status.label.toLowerCase()} ideas`}
+                  {/* Main content */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate leading-snug">{idea.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className={`text-[10px] ${cfg.color}`}>{cfg.label}</span>
+                      {pillarName && (
+                        <span className="text-[10px] text-white/30 border border-white/10 rounded px-1.5 py-0">{pillarName}</span>
+                      )}
+                      {idea.angle && (
+                        <span className="text-[10px] text-white/25 truncate max-w-[200px] hidden sm:block">{idea.angle}</span>
+                      )}
                     </div>
-                  )}
+                  </div>
+
+                  {/* Quick actions — visible on hover */}
+                  <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                    {(idea.status === "proposed" || idea.status === "in_review") && (
+                      <>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10" title="Approve"
+                          onClick={() => updateStatus.mutate({ id: idea.id, status: "approved" })}>
+                          <CheckCircle size={13} />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-500/10" title="Reject"
+                          onClick={() => updateStatus.mutate({ id: idea.id, status: "rejected" })}>
+                          <XCircle size={13} />
+                        </Button>
+                      </>
+                    )}
+                    {idea.status === "approved" && (
+                      <Button size="sm" variant="ghost" className="h-7 text-[11px] px-2 text-violet-400 hover:text-violet-300 hover:bg-violet-500/10"
+                        onClick={() => { toast.info("Generating content..."); handleGenerateContent(idea.id); }}
+                        disabled={generatingContentFor === idea.id}>
+                        {generatingContentFor === idea.id
+                          ? <><RefreshCw size={10} className="mr-1 animate-spin" />Generating</>
+                          : <><Sparkles size={10} className="mr-1" />Generate</>}
+                      </Button>
+                    )}
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-white/20 hover:text-red-400 hover:bg-red-500/10" title="Archive"
+                      onClick={() => updateStatus.mutate({ id: idea.id, status: "archived" })}>
+                      <Trash2 size={11} />
+                    </Button>
+                  </div>
+
+                  {/* Arrow */}
+                  <ChevronRight size={14} className="text-white/15 flex-shrink-0 group-hover:text-white/40 transition-colors" />
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -207,7 +207,23 @@ export default function PublishingCenter() {
             <h1 className="text-xl font-bold text-foreground">Publishing Center</h1>
             <p className="text-xs text-muted-foreground mt-0.5">{activeBrand?.name} · Publish jobs</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {(stats?.failed || 0) > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10 px-3"
+                onClick={() => {
+                  const failedJobs = jobs.filter((j: any) => j.publishStatus === 'failed');
+                  failedJobs.forEach((j: any) => retry.mutate({ jobId: j.id }));
+                  toast.info(`Retrying ${failedJobs.length} failed job${failedJobs.length !== 1 ? 's' : ''}...`);
+                }}
+                disabled={retry.isPending}
+              >
+                <RefreshCw size={12} className="mr-1.5" />
+                Retry All Failed ({stats?.failed})
+              </Button>
+            )}
             {webflowIntegration && (
               <Button
                 size="sm"

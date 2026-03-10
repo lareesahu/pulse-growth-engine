@@ -41,7 +41,7 @@ const PLATFORMS: PlatformConfig[] = [
     fields: [
       {
         key: "apiToken", label: "API Token", placeholder: "Bearer token from Webflow dashboard",
-        helpText: "Generate a Site API Token in your Webflow site settings under Integrations → API Access. Use a v2 token with CMS read/write scope.",
+        helpText: "IMPORTANT: You need a v2 Site API Token with 'cms:write' scope. Go to Webflow Site Settings → Integrations → API Access → Generate API Token. Under 'CMS', enable both Read AND Write. If you see '403 missing_scopes: cms:write' errors, your current token is missing this permission — generate a new one.",
         helpUrl: "https://webflow.com/dashboard/account/integrations",
       },
       {

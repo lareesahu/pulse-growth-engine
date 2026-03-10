@@ -12,42 +12,263 @@ import {
   createPipelineRun, updatePipelineRun, logAudit,
 } from "./db";
 
-// ─── Platform-aware variant prompt builder ─────────────────────────────────
+// ─── Pulse Branding Validated Content Prompts (9-step sequential generation) ──
+// Based on: /home/ubuntu/upload/Pasted_content_03.txt
+// These are the battle-tested prompts used in the Zapier automation flow.
 
-const PLATFORM_INSTRUCTIONS: Record<string, string> = {
-  linkedin:     `"title": "...", "body": "LinkedIn post (1200-1800 chars, thought leadership tone, ends with engagement question, no ** markdown, no em-dashes)", "hashtags": ["tag1", "tag2"]`,
-  instagram:    `"caption": "Instagram caption (150-300 chars, strong hook, visual-first, emojis OK)", "hashtags": ["tag1", "tag2", "tag3", "tag4", "tag5"]`,
-  webflow:      `"title": "SEO article title", "body": "Full article for blog (800-1200 words, formatted for web)"`,
-  wechat:       `"title": "WeChat title", "body": "WeChat article (Chinese-friendly tone, 400-600 chars, warm and insightful)"`,
-  blog:         `"title": "Blog post title", "body": "Full blog article (800-1200 words, informative and engaging)"`,
-  facebook:     `"body": "Facebook post (200-400 chars, conversational, shareable, includes a question or CTA)", "hashtags": ["tag1", "tag2"]`,
-  tiktok:       `"body": "TikTok caption (100-200 chars, punchy, trend-aware, hook in first line)", "hashtags": ["tag1", "tag2", "tag3"]`,
-  medium:       `"title": "Medium article title", "body": "Medium article (800-1500 words, in-depth, thought-provoking)"`,
-  xiaohongshu:  `"title": "小红书标题", "body": "小红书笔记 (300-500字, 生活化语气, 实用分享)", "hashtags": ["tag1", "tag2"]`,
-  reddit:       `"title": "Reddit post title", "body": "Reddit post (200-500 chars, authentic, community-focused, no self-promotion)"`,
-  quora:        `"body": "Quora answer (300-600 chars, helpful, authoritative, naturally references expertise)"`,
-};
+const PULSE_STANDARD_HASHTAGS = `#subconscious #branding #marketing #graphicdesign #design #logo #digitalmarketing #brand #business #advertising #socialmediamarketing #brandidentity #entrepreneur #artificialintelligence #ai #neuroscience #neuromarketing #brandstrategy #growthhacking #startups #founderlife #scaleup`;
 
 /**
- * Build a dynamic variant section for the LLM prompt based on the actual target platforms.
+ * Generate all content for a package using the 9 validated Pulse Branding prompts.
+ * Returns a structured object with all generated content.
  */
-function buildVariantPromptSection(platforms: string[]): string {
-  const entries = platforms
-    .filter(p => PLATFORM_INSTRUCTIONS[p])
-    .map(p => `    "${p}": { ${PLATFORM_INSTRUCTIONS[p]} }`);
-  
-  if (entries.length === 0) {
-    // Fallback to core 4 platforms
-    return `    "linkedin": { ${PLATFORM_INSTRUCTIONS.linkedin} },
-    "instagram": { ${PLATFORM_INSTRUCTIONS.instagram} },
-    "webflow": { ${PLATFORM_INSTRUCTIONS.webflow} },
-    "wechat": { ${PLATFORM_INSTRUCTIONS.wechat} }`;
-  }
-  return entries.join(",\n");
+export async function generateContentWithValidatedPrompts(params: {
+  topic: string;
+  brand: { name: string; url?: string | null };
+}): Promise<{
+  blogTitle: string;
+  blogHtml: string;
+  blogSubheader: string;
+  blogSummary: string;
+  imageConcept: string;
+  imagePrompt: string;
+  wechatHtml: string;
+  wechatTitle: string;
+  socialCaption: string;
+}> {
+  const { topic, brand } = params;
+  const brandUrl = brand.url || 'pulse-branding.com';
+
+  // Prompt 1: Blog Title
+  const titleResp = await invokeLLM({
+    messages: [
+      { role: 'system', content: 'You are a content writer for a branding agency. Return only the requested output, no extra text.' },
+      { role: 'user', content: `You are writing a blog title about ${topic}.
+Requirements:
+Write 1 title only.
+Make it super engaging, catchy, and short.
+Use plain, everyday language that is easy to understand.
+Make it feel relatable to the reader's real concerns.
+Avoid jargon, technical language, and promotional wording.
+Do not use quotation marks or special symbols.
+Make sure it can be copy-pasted directly into Webflow with no edits.
+Style reference:
+Why Branding Can Boost Your ROI 3X
+Is Your Branding Holding You Back
+The Core of Branding Explained Simply
+How Can Better Branding Make You More Money
+Branding Basics You Need to Know
+Output:
+Return the title only.
+No extra text.` },
+    ],
+  });
+  const blogTitle = humanize((titleResp.choices?.[0]?.message?.content as string || topic).trim());
+
+  // Prompt 2: Blog Article (clean HTML)
+  const articleResp = await invokeLLM({
+    messages: [
+      { role: 'system', content: 'You are a content writer for a branding agency. Return only clean HTML as instructed.' },
+      { role: 'user', content: `Write a blog post about ${topic}.
+Goal:
+Make the topic easy to understand using simple, direct language that anyone can grasp.
+Requirements:
+Output in clean basic HTML only.
+Allowed tags: <h1>, <p>, <strong>, <em>, <ul>, <ol>
+Do not use <li>.
+Do not use CSS, JavaScript, markdown, or code fences.
+Do not include the title inside the blog content.
+Make the HTML clean and ready to paste directly into Webflow rich text.
+Content requirements:
+Explain what the topic is in simple terms.
+Explain why it matters.
+Give clear, practical, actionable advice.
+Help readers understand how to apply it to improve their business.
+Keep the tone down-to-earth, helpful, and conversational.
+Avoid promotional language and empty hype.
+Output:
+Return HTML only.
+No intro note.
+No markdown.
+No code block.` },
+    ],
+  });
+  const blogHtml = (articleResp.choices?.[0]?.message?.content as string || '').trim();
+
+  // Prompt 3: Blog Subheader
+  const subheaderResp = await invokeLLM({
+    messages: [
+      { role: 'system', content: 'You are a content writer. Return only the requested output.' },
+      { role: 'user', content: `Write a short and engaging subheader for the blog title "${blogTitle}", based on the topic ${topic}.
+Requirements:
+Maximum 8 words.
+Use simple, direct, everyday language.
+Make it instantly understandable.
+Keep it relatable and aligned with the core message.
+Avoid jargon, complexity, and promotional tone.
+Make sure it can be pasted directly into Webflow with no edits.
+Output:
+Return the subheader only.
+No extra text.` },
+    ],
+  });
+  const blogSubheader = humanize((subheaderResp.choices?.[0]?.message?.content as string || '').trim());
+
+  // Prompt 4: Blog Summary
+  const summaryResp = await invokeLLM({
+    messages: [
+      { role: 'system', content: 'You are a content writer. Return only the requested output.' },
+      { role: 'user', content: `Based on the blog content below, write a short and engaging summary for the article about ${topic}.
+Content:
+${blogHtml.substring(0, 2000)}
+Requirements:
+Maximum 280 characters total.
+Start with a punchy question that hits the reader's core pain point.
+Add a line break after the first line.
+The second line should explain the concept using a simple everyday analogy.
+End with a line that encourages the reader to read the full blog.
+Keep the tone down-to-earth, conversational, and natural.
+Do not oversell.
+Do not use emojis.
+Make it ready to paste directly into Webflow.
+Output:
+Return the summary only.
+No extra text.` },
+    ],
+  });
+  const blogSummary = humanize((summaryResp.choices?.[0]?.message?.content as string || '').trim());
+
+  // Prompt 5: Banner Image Concept
+  const conceptResp = await invokeLLM({
+    messages: [
+      { role: 'system', content: 'You are a visual director. Return only the requested output.' },
+      { role: 'user', content: `Read the blog content below and suggest the single best banner image concept.
+Content:
+${blogHtml.substring(0, 2000)}
+Requirements:
+Give 1 image suggestion only.
+Focus only on what should be visually shown.
+No text or symbols inside the image.
+If people appear, use no more than 2 people.
+Use visual metaphor logic when helpful, but do not explain the metaphor.
+Only describe what is visible in the image.
+Include:
+main objects or subjects
+composition/layout
+lighting
+texture
+mood
+Do not explain the meaning.
+Do not include anything beyond the visual description.
+Output:
+Return one clean image description only.` },
+    ],
+  });
+  const imageConcept = (conceptResp.choices?.[0]?.message?.content as string || '').trim();
+
+  // Prompt 6: Image Generation Prompt
+  const imgPromptResp = await invokeLLM({
+    messages: [
+      { role: 'system', content: 'You are an AI image prompt engineer. Return only the final image prompt.' },
+      { role: 'user', content: `Create a high-end image generation prompt based on this image concept:
+${imageConcept}
+Requirements:
+Hyperrealistic photo
+Horizontal composition
+16:9 aspect ratio
+No text or symbols in the image
+Cool tone overall
+Use teal, blue, and violet neon highlights
+Natural light feel
+Detailed, polished, visually striking
+Suitable as a blog banner
+Output:
+Return the final image prompt only.` },
+    ],
+  });
+  const imagePrompt = (imgPromptResp.choices?.[0]?.message?.content as string || '').trim();
+
+  // Prompt 7: WeChat Article Adaptation
+  const wechatResp = await invokeLLM({
+    messages: [
+      { role: 'system', content: 'You are a Chinese content writer. Return only clean HTML as instructed.' },
+      { role: 'user', content: `Transform the following English content into a reader-focused WeChat article in Chinese.
+Source content:
+${blogHtml.substring(0, 3000)}
+Requirements:
+Write in natural, conversational, human-like Chinese.
+Focus on the reader's perspective.
+Adapt the content for Chinese social media culture and reading habits.
+Use phrasing that feels relatable and familiar to a Chinese audience.
+Keep it concise, lively, and practical.
+Use short, impactful sentences.
+Add strong hooks at the beginning and smooth transitions throughout.
+Reduce any obvious AI-generated feel.
+Avoid repetitive structure and robotic phrasing.
+Use culturally familiar examples, scenes, or analogies where helpful.
+End with a clear, motivating call to action, such as inviting comments, discussion, sharing, or direct contact.
+Formatting requirements:
+Output in clean basic HTML only.
+Allowed tags: <h1>, <p>, <strong>, <em>, <ul>, <ol>
+Do not use <li>.
+Do not use CSS, JavaScript, markdown, or code fences.
+Make it ready to paste directly into WeChat rich text.
+Output:
+Return HTML only.
+No extra text.` },
+    ],
+  });
+  const wechatHtml = (wechatResp.choices?.[0]?.message?.content as string || '').trim();
+
+  // Prompt 8: WeChat Title
+  const wechatTitleResp = await invokeLLM({
+    messages: [
+      { role: 'system', content: 'You are a Chinese content writer. Return only the requested output.' },
+      { role: 'user', content: `Write a title for this WeChat article.
+Content:
+${wechatHtml.substring(0, 1000)}
+Requirements:
+Chinese only.
+Maximum 20 Chinese characters.
+Clear, catchy, and easy to understand.
+Natural and reader-friendly.
+Avoid stiff, formal, or clickbait wording.
+Output:
+Return the title only.` },
+    ],
+  });
+  const wechatTitle = (wechatTitleResp.choices?.[0]?.message?.content as string || '').trim();
+
+  // Prompt 9: Social Caption (LinkedIn / Instagram / X cross-platform)
+  const captionResp = await invokeLLM({
+    messages: [
+      { role: 'system', content: 'You are a social media content writer. Return only the requested output.' },
+      { role: 'user', content: `Based on the content below, write a short share caption for this blog article about ${topic}.
+Content:
+${blogHtml.substring(0, 2000)}
+Requirements:
+Total length must be under 140 characters including hashtags.
+Start with a punchy question that hits the core pain point.
+Add a line break after the first line.
+Keep the tone down-to-earth, conversational, and clear.
+Avoid overselling.
+Do not use emojis.
+Include at least 5 relevant hashtags.
+End with a short prompt encouraging people to read the blog at ${brandUrl}.
+Make it usable across LinkedIn personal, LinkedIn company page, Instagram, and X with no edits.
+Output:
+Return the caption only.
+No extra text.` },
+    ],
+  });
+  const socialCaption = humanize((captionResp.choices?.[0]?.message?.content as string || '').trim());
+
+  return { blogTitle, blogHtml, blogSubheader, blogSummary, imageConcept, imagePrompt, wechatHtml, wechatTitle, socialCaption };
 }
 
 /**
  * Build the full content generation prompt for a given idea and platforms.
+ * Legacy single-call approach — kept as fallback for manual regeneration.
  */
 export function buildContentPrompt(params: {
   idea: { title: string; angle?: string | null; summary?: string | null; funnelStage?: string | null };
@@ -57,49 +278,30 @@ export function buildContentPrompt(params: {
   dontSay: string;
   platforms: string[];
 }): { systemPrompt: string; userPrompt: string } {
-  const { idea, pillarName, brand, doSay, dontSay, platforms } = params;
-  
+  const { idea, brand } = params;
   const systemPrompt = `You are Caelum Liu, Chief Growth Officer for ${brand.name}. You are a world-class brand content strategist. Generate high-quality, on-brand content packages. Always return ONLY valid JSON. Never include markdown formatting like **, ##, or em-dashes in the content itself.`;
-
-  const variantSection = buildVariantPromptSection(platforms);
-
   const userPrompt = `Generate a complete content package for this approved idea:
 
 Title: ${idea.title}
-Angle: ${idea.angle || ""}
-Summary: ${idea.summary || ""}
-Content Pillar: ${pillarName}
-Funnel Stage: ${idea.funnelStage || "awareness"}
-
+Angle: ${idea.angle || ''}
+Summary: ${idea.summary || ''}
 Brand: ${brand.name}
-Mission: ${brand.mission || ""}
-Positioning: ${brand.positioning || ""}
-Tone: ${brand.toneSummary || "authoritative, empathetic, forward-thinking"}
-${doSay ? `Do say: ${doSay}` : ""}
-${dontSay ? `Don't say: ${dontSay}` : ""}
+Mission: ${brand.mission || ''}
+Positioning: ${brand.positioning || ''}
+Tone: ${brand.toneSummary || 'authoritative, empathetic, forward-thinking'}
 
-Target platforms: ${platforms.join(", ")}
-
-CRITICAL RULES:
-- Every variant MUST have substantial content. Never leave body or caption empty.
-- Do NOT use markdown formatting (**, ##, *, em-dashes) in any content.
-- Write naturally as a human would. Avoid AI filler phrases.
-- Each platform variant must be tailored to that platform's style and audience.
-- NEVER use placeholder text like [Year], [Brand Name], [Company], [X%], [Number]. Use specific real values (e.g. "2026" not "[Year]").
-
-Return ONLY valid JSON with this structure:
+Return ONLY valid JSON:
 {
-  "masterHook": "Compelling one-line hook (required, non-empty)",
-  "masterAngle": "Core strategic angle for this piece (required, non-empty)",
-  "cta": "Primary call to action — a specific directive like 'Book a free brand audit at pulsebranding.com' (required, non-empty)",
-  "keyPoints": ["Specific insight 1", "Specific insight 2", "Specific insight 3", "Specific insight 4", "Specific insight 5"],
-  "blogContent": "Full blog article (800-1200 words)",
+  "masterHook": "Compelling one-line hook",
+  "masterAngle": "Core strategic angle",
+  "cta": "Call to action",
+  "keyPoints": ["insight 1", "insight 2", "insight 3"],
   "variants": {
-${variantSection}
-  },
-  "imagePrompt": "Detailed image generation prompt: hyperrealistic, 16:9, cool teal/blue/violet neon tones, professional, no text or symbols, cinematic lighting"
+    "linkedin": { "title": "title", "body": "LinkedIn post (1200-1800 chars, thought leadership, ends with question, no markdown)", "hashtags": [] },
+    "instagram": { "caption": "Instagram caption (150-300 chars, strong hook)", "hashtags": [] },
+    "facebook": { "body": "Facebook post (200-400 chars)", "hashtags": [] }
+  }
 }`;
-
   return { systemPrompt, userPrompt };
 }
 
@@ -535,33 +737,120 @@ CRITICAL RULES:
         });
         const pkgId = (pkgResult as any)?.id;
 
-        // Build dynamic prompt based on actual platforms
-        const { systemPrompt, userPrompt } = buildContentPrompt({
-          idea,
-          pillarName,
-          brand,
-          doSay,
-          dontSay,
-          platforms,
+        // ─── STEP 3: Generate content using 9 validated Pulse Branding prompts sequentially ──
+        console.log(`[Pipeline ${runId}] Running 9-step validated content generation for "${idea.title}"...`);
+        
+        const topic = `${idea.title}${idea.angle ? ` — ${idea.angle}` : ''}`;
+        const content9 = await generateContentWithValidatedPrompts({
+          topic,
+          brand: { name: brand.name, url: (brand as any).websiteUrl || 'pulse-branding.com' },
         });
 
-        const contentResponse = await invokeLLM({
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-          response_format: { type: "json_object" } as any,
+        console.log(`[Pipeline ${runId}] 9-step generation complete: title="${content9.blogTitle}", blogHtml=${content9.blogHtml.length}chars, wechat=${content9.wechatHtml.length}chars`);
+
+        // Map 9-step output to the DB structure
+        const brandName = brand.name;
+        const cleanedBlogHtml = cleanPlaceholders(content9.blogHtml, brandName);
+        const cleanedWechatHtml = cleanPlaceholders(content9.wechatHtml, brandName);
+        const cleanedCaption = cleanPlaceholders(content9.socialCaption, brandName);
+
+        // Save the package with blog content and master hook from the generated title
+        await updateContentPackage(pkgId, {
+          masterHook: content9.blogTitle,
+          masterAngle: cleanPlaceholders(idea.angle || content9.blogSubheader, brandName),
+          cta: `Explore how ${brandName} can help you build a stronger brand — visit pulse-branding.com`,
+          keyPoints: [
+            content9.blogSubheader,
+            content9.blogSummary,
+            `Read the full article at pulse-branding.com`,
+          ].filter(Boolean),
+          blogContent: cleanedBlogHtml,
+          status: "generated",
+          generationModel: process.env.DOUBAO_TEXT_MODEL || "doubao-1-5-pro-32k-250115",
+          generationPrompt: `9-step validated prompts for topic: ${topic}`,
         });
 
-        let generated: any = {};
-        try {
-          const raw = (contentResponse.choices?.[0]?.message?.content as string) || "{}";
-          generated = JSON.parse(raw);
-        } catch { generated = {}; }
+        // Save Webflow variant (blog article HTML)
+        await createVariant({
+          contentPackageId: pkgId,
+          brandId: idea.brandId,
+          platform: "webflow" as any,
+          formatType: "article",
+          title: content9.blogTitle,
+          body: cleanedBlogHtml,
+          caption: content9.blogSummary,
+          hashtags: [],
+          status: "generated",
+          version: 1,
+        });
 
-        console.log(`[Pipeline ${runId}] LLM returned content for "${idea.title}": hook="${(generated.masterHook || "").substring(0, 50)}", variants=${Object.keys(generated.variants || {}).join(",")}`);
+        // Save Blog variant (same as Webflow but stored separately)
+        await createVariant({
+          contentPackageId: pkgId,
+          brandId: idea.brandId,
+          platform: "blog" as any,
+          formatType: "article",
+          title: content9.blogTitle,
+          body: cleanedBlogHtml,
+          caption: content9.blogSummary,
+          hashtags: [],
+          status: "generated",
+          version: 1,
+        });
 
-        await saveGeneratedContent({ pkgId, generated, idea, platforms, userPrompt });
+        // Save WeChat variant
+        await createVariant({
+          contentPackageId: pkgId,
+          brandId: idea.brandId,
+          platform: "wechat" as any,
+          formatType: "article",
+          title: content9.wechatTitle || content9.blogTitle,
+          body: cleanedWechatHtml,
+          caption: "",
+          hashtags: [],
+          status: "generated",
+          version: 1,
+        });
+
+        // Save LinkedIn variant (social caption adapted for LinkedIn)
+        const linkedinBody = `${cleanedCaption}\n\nRead the full article: pulse-branding.com`;
+        await createVariant({
+          contentPackageId: pkgId,
+          brandId: idea.brandId,
+          platform: "linkedin" as any,
+          formatType: "long_post",
+          title: content9.blogTitle,
+          body: linkedinBody,
+          caption: cleanedCaption,
+          hashtags: PULSE_STANDARD_HASHTAGS.split(' ').slice(0, 10),
+          status: "generated",
+          version: 1,
+        });
+
+        // Save Instagram variant (social caption)
+        await createVariant({
+          contentPackageId: pkgId,
+          brandId: idea.brandId,
+          platform: "instagram" as any,
+          formatType: "caption",
+          title: content9.blogTitle,
+          body: "",
+          caption: cleanedCaption,
+          hashtags: PULSE_STANDARD_HASHTAGS.split(' '),
+          status: "generated",
+          version: 1,
+        });
+
+        // Save image prompt asset (from validated Prompt #6)
+        const imagePromptText = content9.imagePrompt || `Hyperrealistic photo, horizontal composition, 16:9 aspect ratio, no text or symbols, cool tone, teal blue violet neon highlights, natural light, detailed polished visually striking, suitable as blog banner: ${content9.imageConcept}`;
+        const imagePromptAsset = await createAsset({
+          contentPackageId: pkgId,
+          assetType: "image_prompt",
+          promptText: imagePromptText,
+          status: "ready",
+          version: 1,
+        });
+
         packagesGenerated++;
 
         // Update progress in DB periodically
@@ -570,72 +859,25 @@ CRITICAL RULES:
         }
         updateProgress("generating_content");
 
-        // STEP 3b: Auto-generate blog article
-        try {
-          console.log(`[Pipeline ${runId}] Generating blog for package ${pkgId}...`);
-          const pkg = await import("./db").then(m => m.getContentPackageById(pkgId));
-          const blogSystemPrompt = `You are an expert content writer for ${brand.name}. Write a professional, engaging blog article.`;
-          const blogUserPrompt = `Write a full blog article (800-1200 words) for this topic:
-
-Title: ${pkg?.masterHook || idea.title}
-Angle: ${pkg?.masterAngle || idea.angle || ''}
-
-IMPORTANT:
-- Write naturally as a human would. No markdown formatting (no **, ##, *, em-dashes).
-- Use specific real values. No placeholders like [Year] or [Brand Name].
-- Write for ${brand.name}'s audience.
-- Return ONLY the blog article text, no JSON wrapper.`;
-          const blogResponse = await invokeLLM({
-            messages: [
-              { role: "system", content: blogSystemPrompt },
-              { role: "user", content: blogUserPrompt },
-            ],
-          });
-          const blogContent = (blogResponse.choices?.[0]?.message?.content as string) || '';
-          if (blogContent) {
-            await updateContentPackage(pkgId, { blogContent });
-            console.log(`[Pipeline ${runId}] Blog generated for package ${pkgId} (${blogContent.length} chars)`);
-          }
-        } catch (blogErr: any) {
-          console.warn(`[Pipeline ${runId}] Blog generation failed for package ${pkgId}:`, blogErr.message);
-          // Non-fatal — continue pipeline
-        }
-
-        // STEP 3c: Auto-generate image
+        // STEP 3c: Auto-generate image using the validated image prompt
         try {
           console.log(`[Pipeline ${runId}] Generating image for package ${pkgId}...`);
           updateProgress("generating_images");
           const { generateImage } = await import("./_core/imageGeneration");
-          const pkg = await import("./db").then(m => m.getContentPackageById(pkgId));
-          // Check if image prompt asset already exists
-          const existingAssets = await getAssetsByPackageId(pkgId);
-          let promptAsset = existingAssets.find((a: any) => a.assetType === "image_prompt" && a.status === "ready");
-          if (!promptAsset) {
-            const fallbackPrompt = `Hyperrealistic professional brand photography: ${pkg?.masterHook || idea.title}. Cool teal/blue/violet neon tones, cinematic lighting, 16:9, no text or symbols, ultra-sharp, editorial quality.`;
-            const created = await createAsset({
-              contentPackageId: pkgId,
-              assetType: "image_prompt",
-              promptText: fallbackPrompt,
-              status: "ready",
-              version: 1,
-            });
-            promptAsset = { ...(created as any), promptText: fallbackPrompt, status: "ready" };
-          }
-          if (promptAsset?.promptText) {
-            await updateAsset(promptAsset.id, { status: "generating" });
-            const { url } = await generateImage({ prompt: promptAsset.promptText });
-            await createAsset({
-              contentPackageId: pkgId,
-              assetType: "image_output",
-              promptText: promptAsset.promptText,
-              outputUrl: url,
-              provider: "manus-image",
-              status: "ready",
-              version: 1,
-            });
-            await updateAsset(promptAsset.id, { status: "ready" });
-            console.log(`[Pipeline ${runId}] Image generated for package ${pkgId}`);
-          }
+          const promptAssetId = (imagePromptAsset as any)?.id;
+          if (promptAssetId) await updateAsset(promptAssetId, { status: "generating" });
+          const { url } = await generateImage({ prompt: imagePromptText });
+          await createAsset({
+            contentPackageId: pkgId,
+            assetType: "image_output",
+            promptText: imagePromptText,
+            outputUrl: url,
+            provider: "manus-image",
+            status: "ready",
+            version: 1,
+          });
+          if (promptAssetId) await updateAsset(promptAssetId, { status: "ready" });
+          console.log(`[Pipeline ${runId}] Image generated for package ${pkgId}`);
         } catch (imgErr: any) {
           console.warn(`[Pipeline ${runId}] Image generation failed for package ${pkgId}:`, imgErr.message);
           // Non-fatal — continue pipeline

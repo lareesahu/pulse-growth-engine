@@ -246,3 +246,11 @@
 - [x] FEATURE: Show live package/idea counts on each pipeline stage card — DONE: each stage card now shows live count badge (e.g. "3/10" for Building Content, "5" for Inspecting)
 - [x] BUG: Blog content NOT auto-generated during pipeline run — FIXED: wired blog generation (800-1200 word LLM article) into pipeline engine after each package, non-fatal if fails
 - [x] BUG: Images NOT auto-generated during pipeline run — FIXED: wired image generation (with auto-fallback prompt) into pipeline engine after each package, non-fatal if fails
+
+## UI Improvements (March 10 2026 — Round 10)
+- [x] REDESIGN: Ideas page — replace Kanban with clean list/table view, mobile-friendly, no horizontal scroll
+
+## Critical Fixes (March 10 2026 — Round 11 — User Report)
+- [x] BUG: Variant body content is just the title repeated — FIXED: replaced single-call JSON generation with 9 sequential validated prompts (blog title, blog HTML, subheader, summary, banner concept, image prompt, WeChat article, WeChat title, social caption) exactly matching original Pulse Branding Zapier flow
+- [x] BUG: Image style wrong — FIXED: image generation now uses Prompt #6 from validated prompts (cinematic brand photography, teal/blue/violet neon tones, 16:9, no text, ultra-sharp editorial quality)
+- [x] BUG: Webflow publishing failing — ROOT CAUSE: API token missing 'cms:write' scope (403 OAuthForbidden). FIXED: updated Integrations help text with clear instructions to regenerate token with CMS Read+Write scope. Added 'Retry All Failed' button to Publishing Center header.
