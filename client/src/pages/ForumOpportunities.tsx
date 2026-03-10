@@ -13,10 +13,18 @@ import {
 } from "lucide-react";
 
 const PLATFORM_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  reddit: { label: "Reddit", color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20" },
-  quora: { label: "Quora", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20" },
-  linkedin: { label: "LinkedIn", color: "text-[#3AC1EC]", bg: "bg-[#3AC1EC]/10", border: "border-[#3AC1EC]/20" },
+  reddit:        { label: "Reddit",        color: "text-orange-400",   bg: "bg-orange-500/10",   border: "border-orange-500/20" },
+  quora:         { label: "Quora",         color: "text-red-400",      bg: "bg-red-500/10",      border: "border-red-500/20" },
+  linkedin:      { label: "LinkedIn",      color: "text-[#3AC1EC]",   bg: "bg-[#3AC1EC]/10",   border: "border-[#3AC1EC]/20" },
+  hackernews:    { label: "Hacker News",   color: "text-amber-400",   bg: "bg-amber-500/10",   border: "border-amber-500/20" },
+  producthunt:   { label: "Product Hunt",  color: "text-rose-400",    bg: "bg-rose-500/10",    border: "border-rose-500/20" },
+  indiehackers:  { label: "IndieHackers",  color: "text-blue-400",    bg: "bg-blue-500/10",    border: "border-blue-500/20" },
+  growthhackers: { label: "GrowthHackers", color: "text-green-400",   bg: "bg-green-500/10",   border: "border-green-500/20" },
+  medium:        { label: "Medium",        color: "text-white",       bg: "bg-white/10",       border: "border-white/20" },
+  zhihu:         { label: "Zhihu 知乎",     color: "text-blue-300",    bg: "bg-blue-400/10",    border: "border-blue-400/20" },
+  xiaohongshu:   { label: "Xiaohongshu 小红书", color: "text-pink-400", bg: "bg-pink-500/10",    border: "border-pink-500/20" },
 };
+const ALL_PLATFORM_KEYS = Object.keys(PLATFORM_CONFIG);
 
 interface Opportunity {
   platform: string;
@@ -116,7 +124,7 @@ export default function ForumOpportunities() {
         {/* Platform Filter */}
         <div className="flex items-center gap-2 flex-wrap">
           <Filter className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
-          {["all", "reddit", "quora", "linkedin"].map(platform => {
+          {["all", ...ALL_PLATFORM_KEYS].map(platform => {
             const isActive = selectedPlatforms.includes(platform);
             const cfg = platform === "all" ? null : PLATFORM_CONFIG[platform];
             return (
@@ -131,7 +139,7 @@ export default function ForumOpportunities() {
                     : "bg-transparent text-white/30 border-white/10 hover:border-white/20"
                 }`}
               >
-                {platform === "all" ? "All Platforms" : PLATFORM_CONFIG[platform].label}
+                {platform === "all" ? "All Platforms" : PLATFORM_CONFIG[platform]?.label ?? platform}
               </button>
             );
           })}

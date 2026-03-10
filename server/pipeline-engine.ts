@@ -3,7 +3,7 @@
  * Extracted from routers.ts so it can run independently of HTTP request lifecycle.
  */
 import { invokeLLM } from "./_core/llm";
-import { humanize, humanizeVariant, humanizePackage } from "./humanizer";
+import { humanize, humanizeVariant, humanizePackage, humanizeZh, isChineseText } from "./humanizer";
 import {
   getBrandById, getContentPillars, getBrandRules, getPromptTemplates, getAudienceProfiles,
   getIdeaById, createIdea, createContentPackage, updateContentPackage,
@@ -218,7 +218,8 @@ Return HTML only.
 No extra text.` },
     ],
   });
-  const wechatHtml = (wechatResp.choices?.[0]?.message?.content as string || '').trim();
+  // Apply Chinese humanizer pass to strip AI filler phrases from WeChat content
+  const wechatHtml = humanizeZh((wechatResp.choices?.[0]?.message?.content as string || '').trim());
 
   // Prompt 8: WeChat Title
   const wechatTitleResp = await invokeLLM({
@@ -237,7 +238,7 @@ Output:
 Return the title only.` },
     ],
   });
-  const wechatTitle = (wechatTitleResp.choices?.[0]?.message?.content as string || '').trim();
+  const wechatTitle = humanizeZh((wechatTitleResp.choices?.[0]?.message?.content as string || '').trim());
 
   // Prompt 9: Social Caption (LinkedIn / Instagram / X cross-platform)
   const captionResp = await invokeLLM({
@@ -398,12 +399,19 @@ export async function saveGeneratedContent(params: {
       }
     }
     
+    const isZhPlatform = platform === "wechat" || platform === "xiaohongshu";
     const cleanVariant = humanizeVariant({
       title: cleanPlaceholders(v.title || generated.masterHook || idea.title, brandName),
       body: cleanPlaceholders(body, brandName),
       caption: cleanPlaceholders(caption, brandName),
       hashtags: (v.hashtags || []).map((h: string) => cleanPlaceholders(h, brandName)),
     });
+    // Apply Chinese humanizer second pass for Chinese platforms
+    if (isZhPlatform) {
+      if (cleanVariant.body) cleanVariant.body = humanizeZh(cleanVariant.body);
+      if (cleanVariant.caption) cleanVariant.caption = humanizeZh(cleanVariant.caption);
+      if (cleanVariant.title) cleanVariant.title = humanizeZh(cleanVariant.title);
+    }
     
     await createVariant({
       contentPackageId: pkgId,

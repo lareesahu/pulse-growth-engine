@@ -171,6 +171,51 @@ export function humanize(text: string): string {
 }
 
 /**
+ * Detect if text is predominantly Chinese (>30% Chinese characters)
+ */
+export function isChineseText(text: string): boolean {
+  if (!text) return false;
+  const chineseChars = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/g) || []).length;
+  return chineseChars / text.length > 0.3;
+}
+
+/**
+ * Chinese-specific humanizer — removes AI-sounding Chinese filler phrases.
+ * Run this AFTER the English humanizer for Chinese content (WeChat, Xiaohongshu).
+ */
+export function humanizeZh(text: string): string {
+  if (!text || typeof text !== "string") return text;
+  let result = text;
+  const zhFillers: RegExp[] = [
+    /^\s*总的来说[，,]?\s*/gm,
+    /^\s*总结一下[，,]?\s*/gm,
+    /^\s*首先[，,]?\s*/gm,
+    /^\s*其次[，,]?\s*/gm,
+    /^\s*最后[，,]?\s*/gm,
+    /^\s*小结一下[，,]?\s*/gm,
+    /^\s*小结[：:]?\s*/gm,
+    /作为AI语言模型[，,]?/g,
+    /作为一个AI[，,]?/g,
+    /当然！/g,
+    /当然，/g,
+    /答案是肯定的。/g,
+    /这是一个非常好的问题。?/g,
+    /很高兴回答这个问题。?/g,
+    /我来为您解答。?/g,
+    /以下是我的回答[：:]?/g,
+    /以下是一些建议[：:]?/g,
+    /希望这对您有帮助。?/g,
+    /如有任何问题，请随时告知。?/g,
+    /如需进一步了解，欢迎随时联系。?/g,
+  ];
+  for (const filler of zhFillers) {
+    result = result.replace(filler, "");
+  }
+  result = result.replace(/\n{3,}/g, "\n\n");
+  return result.trim();
+}
+
+/**
  * Humanize a variant object — applies humanize() to body, caption, title
  */
 export function humanizeVariant(variant: {

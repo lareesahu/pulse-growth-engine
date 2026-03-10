@@ -263,3 +263,11 @@
 - [x] BUG: Dashboard shows 10 Content Packages but 0 Ideas and 0 Pending Review — FIXED: same as below
 - [x] BUG: Dashboard/Ideas show 0 stats — FIXED: useBrand hook now validates stored brand ID against available brands on load; if stale, auto-falls back to default brand.
 - [x] BUG: Top billing banner overlaps page content on mobile — FIXED: AppLayout uses ResizeObserver on document.body to measure the app root's offsetTop (banner height) and applies marginTop + reduced height dynamically.
+
+## Bug Fixes & Features (March 10 2026 — Round 14)
+- [x] BUG: Webflow publish fails 403 — improved error messages: 403 now shows exact step-by-step fix (Webflow Site Settings → Integrations → API Access → new token with CMS Read+Write); 401 and 404 also have clear guidance
+- [x] FEATURE: Forum Hunt expanded to 10 platforms (Reddit, Quora, LinkedIn, HackerNews, ProductHunt, IndieHackers, GrowthHackers, Medium, Zhihu, Xiaohongshu)
+- [x] FEATURE: Forum Hunt uses brand keywords from Brand Workspace (name, positioning, audienceSummary, pillar names) as search prompts
+- [x] FEATURE: Forum Hunt shows real matched threads/posts with links; Chinese platforms get Chinese reply drafts
+- [x] FEATURE: Chinese humanizer — humanizeZh() second pass runs on WeChat and Xiaohongshu content (strips Chinese AI filler phrases)
+- [x] FEATURE: AI Models settings — separate Chinese Text Model selector for WeChat/Xiaohongshu (DOUBAO_ZH_TEXT_MODEL env var)

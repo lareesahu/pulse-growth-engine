@@ -663,8 +663,20 @@ const publishingRouter = router({
 
       if (!response.ok) {
         const errText = await response.text();
-        await updatePublishJob(input.jobId, { publishStatus: "failed", errorLog: `Webflow API error ${response.status}: ${errText.slice(0, 300)}` });
-        throw new TRPCError({ code: "BAD_REQUEST", message: `Webflow API error: ${response.status} — ${errText.slice(0, 200)}` });
+        let friendlyMsg = `Webflow API error ${response.status}: ${errText.slice(0, 300)}`;
+        let throwMsg = `Webflow API error: ${response.status} — ${errText.slice(0, 200)}`;
+        if (response.status === 403 || errText.includes("missing_scopes") || errText.includes("cms:write")) {
+          friendlyMsg = `Webflow 403: Token missing cms:write scope. Fix: Webflow Site Settings → Integrations → API Access → Generate new token → under CMS enable both Read AND Write → paste new token in Settings → Integrations.`;
+          throwMsg = `Webflow token is missing cms:write permission. Go to Webflow Site Settings → Integrations → API Access → generate a new v2 Site API Token with CMS Read + Write enabled, then update it in Settings → Integrations.`;
+        } else if (response.status === 401) {
+          friendlyMsg = `Webflow 401: Invalid API token. Re-generate your token in Webflow Site Settings → Integrations → API Access and update it in Settings → Integrations.`;
+          throwMsg = friendlyMsg;
+        } else if (response.status === 404) {
+          friendlyMsg = `Webflow 404: Collection not found. Check your Collection ID in Settings → Integrations → Webflow.`;
+          throwMsg = friendlyMsg;
+        }
+        await updatePublishJob(input.jobId, { publishStatus: "failed", errorLog: friendlyMsg });
+        throw new TRPCError({ code: "BAD_REQUEST", message: throwMsg });
       }
 
       const data = await response.json();
@@ -726,7 +738,13 @@ const publishingRouter = router({
         });
         if (!response.ok) {
           const errText = await response.text();
-          await updatePublishJob(job.id, { publishStatus: "failed", errorLog: `Webflow API error ${response.status}: ${errText.slice(0, 300)}` });
+          let bulkErrMsg = `Webflow API error ${response.status}: ${errText.slice(0, 300)}`;
+          if (response.status === 403 || errText.includes("missing_scopes") || errText.includes("cms:write")) {
+            bulkErrMsg = `Webflow 403: Token missing cms:write scope. Fix: Webflow Site Settings → Integrations → API Access → Generate new token with CMS Read + Write, then update in Settings → Integrations.`;
+          } else if (response.status === 401) {
+            bulkErrMsg = `Webflow 401: Invalid API token. Re-generate in Webflow Site Settings → Integrations → API Access.`;
+          }
+          await updatePublishJob(job.id, { publishStatus: "failed", errorLog: bulkErrMsg });
           failed++;
         } else {
           const data = await response.json();
@@ -1091,39 +1109,59 @@ const pipelineRouter = router({
 });
 
 // ─── Forum Router ───────────────────────────────────────────────────────────────
+const FORUM_PLATFORM_SEARCH: Record<string, (kw: string) => string> = {
+  reddit:        (kw) => `site:reddit.com "${kw}" branding marketing`,
+  quora:         (kw) => `site:quora.com "${kw}" branding`,
+  linkedin:      (kw) => `site:linkedin.com/pulse "${kw}" branding`,
+  hackernews:    (kw) => `site:news.ycombinator.com "${kw}" brand startup`,
+  producthunt:   (kw) => `site:producthunt.com "${kw}" branding`,
+  indiehackers:  (kw) => `site:indiehackers.com "${kw}" brand marketing`,
+  growthhackers: (kw) => `site:growthhackers.com "${kw}" brand`,
+  medium:        (kw) => `site:medium.com "${kw}" branding agency`,
+  zhihu:         (kw) => `site:zhihu.com "${kw}" 品牌`,
+  xiaohongshu:   (kw) => `site:xiaohongshu.com "${kw}" 品牌`,
+};
+const ALL_FORUM_PLATFORMS = Object.keys(FORUM_PLATFORM_SEARCH);
+
 const forumRouter = router({
   scan: protectedProcedure.input(z.object({
     brandId: z.number(),
-    platforms: z.array(z.enum(["reddit", "quora", "linkedin", "all"])).optional().default(["all"]),
+    platforms: z.array(z.string()).optional().default(["all"]),
     forceRefresh: z.boolean().optional().default(false),
   })).mutation(async ({ input, ctx }) => {
     const brand = await getBrandById(input.brandId);
     if (!brand) throw new TRPCError({ code: "NOT_FOUND", message: "Brand not found" });
     const pillars = await getContentPillars(input.brandId);
-    const keywords = [
+    // Build rich keyword list from brand DNA — use all available signals
+    const rawKeywords: string[] = [
       brand.name,
-      ...(brand.positioning ? [brand.positioning] : []),
-      ...pillars.slice(0, 4).map((p: any) => p.name),
-    ].filter(Boolean);
-    const platformFilter = input.platforms.includes("all") ? ["reddit", "quora", "linkedin"] : input.platforms;
+      brand.positioning || "",
+      brand.audienceSummary || "",
+      ...pillars.map((p: any) => p.name),
+    ].map((k: string) => k.trim()).filter(Boolean);
+    const keywords = Array.from(new Set(rawKeywords)).slice(0, 6);
+    // Determine platforms to scan
+    const platformFilter = input.platforms.includes("all")
+      ? ALL_FORUM_PLATFORMS
+      : input.platforms.filter((p) => ALL_FORUM_PLATFORMS.includes(p));
     const results: any[] = [];
+    // Search each platform × top 2 keywords
     for (const platform of platformFilter) {
-      for (const keyword of keywords.slice(0, 3)) {
+      const buildQuery = FORUM_PLATFORM_SEARCH[platform];
+      if (!buildQuery) continue;
+      for (const keyword of keywords.slice(0, 2)) {
         try {
-          const searchQuery = platform === "reddit"
-            ? `site:reddit.com ${keyword} branding marketing`
-            : platform === "quora"
-            ? `site:quora.com ${keyword}`
-            : `${keyword} branding agency LinkedIn`;
           const searchResult = await callDataApi("Google/search", {
-            query: { q: searchQuery, num: 5 },
+            query: { q: buildQuery(keyword), num: 5 },
           }) as any;
           const items = searchResult?.items ?? searchResult?.organic_results ?? [];
           for (const item of items.slice(0, 3)) {
+            const url = item.link ?? item.url ?? "";
+            if (!url) continue;
             results.push({
               platform,
               title: item.title ?? item.snippet ?? "Untitled",
-              url: item.link ?? item.url ?? "",
+              url,
               snippet: item.snippet ?? item.description ?? "",
               keyword,
             });
@@ -1136,16 +1174,20 @@ const forumRouter = router({
     // Deduplicate by URL
     const seen = new Set<string>();
     const unique = results.filter(r => { if (!r.url || seen.has(r.url)) return false; seen.add(r.url); return true; });
-    // Generate AI reply drafts for each opportunity
-    const withReplies = await Promise.all(unique.slice(0, 15).map(async (opp: any) => {
+    // Generate AI reply drafts for each opportunity (up to 20)
+    const brandVoice = `${brand.description ?? ""} ${brand.positioning ?? ""}`.trim();
+    const withReplies = await Promise.all(unique.slice(0, 20).map(async (opp: any) => {
       try {
-        const replyPrompt = `You are ${brand.name}'s AI Growth Officer, Caelum Liu. Your bran      brand.description ?? brand.positioning ?? "".
+        const isChinesePlatform = opp.platform === "zhihu" || opp.platform === "xiaohongshu";
+        const replyLang = isChinesePlatform ? "Chinese" : "English";
+        const replyPrompt = `You are ${brand.name}'s AI Growth Officer, Caelum Liu.
+Brand context: ${brandVoice}
 
 A relevant discussion was found on ${opp.platform}:
 Title: "${opp.title}"
 Context: ${opp.snippet}
 
-Write a genuinely helpful, non-promotional reply that adds real value. Naturally mention ${brand.name} only if it's directly relevant. Keep it concise (2-3 paragraphs max). No ** bold markdown. No em-dashes. Sound human.`;
+Write a genuinely helpful, non-promotional reply in ${replyLang} that adds real value to the discussion. Naturally mention ${brand.name} only if directly relevant. Keep it concise (2-3 paragraphs). No ** bold markdown. No em-dashes. Sound like a real human expert, not a brand account.`;
         const response = await invokeLLM({ messages: [{ role: "user", content: replyPrompt }] }) as any;
         const reply = response?.choices?.[0]?.message?.content ?? "";
         return { ...opp, suggestedReply: reply, status: "new" };
@@ -1153,7 +1195,7 @@ Write a genuinely helpful, non-promotional reply that adds real value. Naturally
         return { ...opp, suggestedReply: "", status: "new" };
       }
     }));
-    await logAudit({ brandId: input.brandId, actorUserId: ctx.user.id, entityType: "forum", entityId: 0, action: "scanned", description: `Forum scan found ${withReplies.length} opportunities` });
+    await logAudit({ brandId: input.brandId, actorUserId: ctx.user.id, entityType: "forum", entityId: 0, action: "scanned", description: `Forum scan found ${withReplies.length} opportunities across ${platformFilter.length} platforms` });
     return { opportunities: withReplies, count: withReplies.length };
   }),
 });
@@ -1168,17 +1210,20 @@ const activityRouter = router({
 const modelSettingsRouter = router({
   get: protectedProcedure.query(async () => ({
     textModel: process.env.DOUBAO_TEXT_MODEL || "doubao-1-5-pro-32k-250115",
+    zhTextModel: process.env.DOUBAO_ZH_TEXT_MODEL || "doubao-1-5-pro-32k-250115",
     imageModel: process.env.DOUBAO_IMAGE_MODEL || "doubao-seedream-3-0-t2i-250415",
     videoModel: process.env.DOUBAO_VIDEO_MODEL || "doubao-seedance-1-0-lite-t2v-250428",
   })),
   save: protectedProcedure
     .input(z.object({
       textModel: z.string().optional(),
+      zhTextModel: z.string().optional(),
       imageModel: z.string().optional(),
       videoModel: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
       if (input.textModel) process.env.DOUBAO_TEXT_MODEL = input.textModel;
+      if (input.zhTextModel) process.env.DOUBAO_ZH_TEXT_MODEL = input.zhTextModel;
       if (input.imageModel) process.env.DOUBAO_IMAGE_MODEL = input.imageModel;
       if (input.videoModel) process.env.DOUBAO_VIDEO_MODEL = input.videoModel;
       return { success: true };
