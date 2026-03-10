@@ -801,7 +801,15 @@ const integrationsRouter = router({
     });
     if (!response.ok) {
       const err = await response.text();
-      throw new TRPCError({ code: "BAD_REQUEST", message: `Webflow API error: ${response.status} — ${err.slice(0, 200)}` });
+      let msg = `Webflow API error: ${response.status} — ${err.slice(0, 200)}`;
+      if (response.status === 403 || err.includes("missing_scopes") || err.includes("cms:read") || err.includes("cms:write")) {
+        msg = `Webflow 403: Token missing CMS scope. Fix: In Webflow go to Site Settings → Integrations → API Access → Generate a new v2 Site API Token → under CMS enable both Read AND Write → paste new token here.`;
+      } else if (response.status === 401) {
+        msg = `Webflow 401: Invalid API token. Re-generate your token in Webflow Site Settings → Integrations → API Access and paste it here.`;
+      } else if (response.status === 404) {
+        msg = `Webflow 404: Site not found. Check your Site ID in the Webflow Site Settings URL.`;
+      }
+      throw new TRPCError({ code: "BAD_REQUEST", message: msg });
     }
     const data = await response.json();
     return (data.collections || []).map((c: any) => ({
@@ -826,7 +834,15 @@ const integrationsRouter = router({
     });
     if (!response.ok) {
       const err = await response.text();
-      throw new TRPCError({ code: "BAD_REQUEST", message: `Webflow API error: ${response.status} — ${err.slice(0, 200)}` });
+      let msg = `Webflow API error: ${response.status} — ${err.slice(0, 200)}`;
+      if (response.status === 403 || err.includes("missing_scopes") || err.includes("cms:read") || err.includes("cms:write")) {
+        msg = `Webflow 403: Token missing CMS scope. Fix: In Webflow go to Site Settings → Integrations → API Access → Generate a new v2 Site API Token → under CMS enable both Read AND Write → paste new token here.`;
+      } else if (response.status === 401) {
+        msg = `Webflow 401: Invalid API token. Re-generate your token in Webflow Site Settings → Integrations → API Access and paste it here.`;
+      } else if (response.status === 404) {
+        msg = `Webflow 404: Collection not found. Check your Collection ID in Settings → Integrations → Webflow.`;
+      }
+      throw new TRPCError({ code: "BAD_REQUEST", message: msg });
     }
     const data = await response.json();
     const fields = data.fields || [];
