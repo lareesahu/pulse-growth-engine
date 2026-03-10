@@ -258,3 +258,8 @@
 ## Next Steps (March 10 2026 — Round 12)
 - [x] FEATURE: Review badge on bottom nav — DONE: red badge shows pending count on Review tab, refreshes every 30s
 - [x] TEST: Run fresh pipeline with 9-step validated prompts — PASSED: 10/10 packages completed, all with real blog HTML (2252-4760 chars), WeChat content (709-1172 chars), images generated, inspector passed all 10
+
+## Bug Fixes (March 10 2026 — Round 13)
+- [x] BUG: Dashboard shows 10 Content Packages but 0 Ideas and 0 Pending Review — FIXED: same as below
+- [x] BUG: Dashboard/Ideas show 0 stats — FIXED: useBrand hook now validates stored brand ID against available brands on load; if stale, auto-falls back to default brand.
+- [x] BUG: Top billing banner overlaps page content on mobile — FIXED: AppLayout uses ResizeObserver on document.body to measure the app root's offsetTop (banner height) and applies marginTop + reduced height dynamically.

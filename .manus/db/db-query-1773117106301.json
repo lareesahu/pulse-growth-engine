@@ -1,0 +1,34 @@
+{
+  "query": "SELECT id, name FROM brands; SELECT COUNT(*) as ideas_count, brandId FROM ideas GROUP BY brandId; SELECT COUNT(*) as pkg_count, brandId FROM content_packages GROUP BY brandId;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, name FROM brands; SELECT COUNT(*) as ideas_count, brandId FROM ideas GROUP BY brandId; SELECT COUNT(*) as pkg_count, brandId FROM content_packages GROUP BY brandId;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Pulse Branding"
+    },
+    {
+      "id": "30001",
+      "name": "Test Brand 2"
+    },
+    {
+      "id": "ideas_count",
+      "name": "brandId"
+    },
+    {
+      "id": "20",
+      "name": "1"
+    },
+    {
+      "id": "pkg_count",
+      "name": "brandId"
+    },
+    {
+      "id": "10",
+      "name": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n1\tPulse Branding\n30001\tTest Brand 2\nideas_count\tbrandId\n20\t1\npkg_count\tbrandId\n10\t1\n",
+  "stderr": "",
+  "execution_time_ms": 81
+}

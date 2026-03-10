@@ -1,0 +1,11 @@
+{
+  "query": "SELECT id, name FROM brands; SELECT COUNT(*) as ideas_count, brand_id FROM ideas GROUP BY brand_id; SELECT COUNT(*) as pkg_count, brand_id FROM content_packages GROUP BY brand_id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, name FROM brands; SELECT COUNT(*) as ideas_count, brand_id FROM ideas GROUP BY brand_id; SELECT COUNT(*) as pkg_count, brand_id FROM content_packages GROUP BY brand_id;",
+  "returncode": 1,
+  "logs": [
+    "id\tname",
+    "1\tPulse Branding",
+    "30001\tTest Brand 2",
+    "ERROR 1054 (42S22) at line 1: Unknown column 'brand_id' in 'group statement'"
+  ]
+}

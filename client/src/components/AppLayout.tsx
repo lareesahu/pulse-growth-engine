@@ -6,7 +6,7 @@ import {
   FileText, Globe, LayoutDashboard, LogOut, Menu, Plus, Rocket, Settings,
   Shield, Sparkles, TrendingUp, X, Zap,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "./ui/button";
 import {
@@ -46,6 +46,26 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
   const { user, loading, isAuthenticated, logout } = useAuth();
   const [location] = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [bannerHeight, setBannerHeight] = useState(0);
+
+  // Detect Manus billing banner height and offset content accordingly
+  useEffect(() => {
+    const measure = () => {
+      // The Manus billing banner is injected above our app root — measure anything above document.documentElement
+      const appRoot = document.getElementById('root');
+      if (appRoot) {
+        const rect = appRoot.getBoundingClientRect();
+        const offsetTop = Math.max(0, rect.top);
+        setBannerHeight(offsetTop);
+      }
+    };
+    measure();
+    // Re-measure on resize (banner can be dismissed)
+    const observer = new ResizeObserver(measure);
+    observer.observe(document.body);
+    window.addEventListener('scroll', measure, { passive: true });
+    return () => { observer.disconnect(); window.removeEventListener('scroll', measure); };
+  }, []);
 
   const { data: brands = [] } = trpc.brand.list.useQuery(undefined, { enabled: isAuthenticated });
   const currentBrand = brands.find(b => b.id === brandId) || brands[0];
@@ -232,7 +252,7 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
   );
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex bg-background overflow-hidden" style={{ height: `calc(100dvh - ${bannerHeight}px)`, marginTop: `${bannerHeight}px` }}>
 
       {/* ── Desktop Sidebar ── */}
       <aside className="hidden md:flex w-60 flex-shrink-0 border-r border-border flex-col" style={{ background: "oklch(12% 0.045 268)" }}>
