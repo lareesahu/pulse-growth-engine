@@ -111,7 +111,7 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-background">
+      <div className="flex bg-background" style={{ height: `calc(100dvh - ${bannerHeight}px)`, marginTop: `${bannerHeight}px` }}>
         <div className="hidden md:flex w-60 border-r border-border p-4 space-y-3 flex-col">
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-6 w-3/4" />
@@ -125,7 +125,7 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
 
   if (!isAuthenticated) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background px-6">
+      <div className="flex items-center justify-center bg-background px-6" style={{ height: `calc(100dvh - ${bannerHeight}px)`, marginTop: `${bannerHeight}px` }}>
         <div className="text-center space-y-6 w-full max-w-sm">
           <div className="flex items-center justify-center gap-3 mb-8">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>

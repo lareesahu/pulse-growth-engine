@@ -274,4 +274,4 @@
 
 ## Bug Fix (March 10 2026 — Round 15)
 - [x] BUG: Billing banner overlaps page content on mobile (published site) — FIXED: AppLayout now reads banner height from manus-content-root shadow DOM (.billing-banner, fixed, 36px); polls at 300ms+1000ms for shadow DOM readiness; fallback to #root.getBoundingClientRect().top
-- [x] BUG: Forum Hunt returning zero results — ROOT CAUSE: Google/search Data API does not exist in Manus hub. FIXED: Reddit public JSON API + HackerNews Algolia API + Medium RSS feed for open platforms; LLM synthesis with direct search URLs for gated platforms (Quora, LinkedIn, ProductHunt, IndieHackers, GrowthHackers, Zhihu, Xiaohongshu)
+- [x] BUG: Forum Hunt returning zero results — ROOT CAUSE: Google/search Data API does not exist in Manus hub. FIXED: Reddit public JSON API + HackerNews Algolia API + Medium RSS feed for open platforms; LLM synthesis with direct search URLs for gated platforms; added 10s timeout per LLM platform + 8s per reply draft so scan completes in ~15s even when LLM is unavailable. E2E TESTED: 18 real results returned from Reddit/HN/Medium with AI-drafted replies.

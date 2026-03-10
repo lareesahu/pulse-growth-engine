@@ -1263,16 +1263,21 @@ const forumRouter = router({
     }
 
     // --- LLM-synthesized platforms (gated) ---
+    // Use a 10s timeout per platform so a slow/unavailable LLM doesn't block the whole scan
     const llmPlatforms = platformFilter.filter(p => LLM_PLATFORMS.includes(p));
-    await Promise.all(llmPlatforms.map(async (platform) => {
-      const posts = await fetchLLMOpportunities(platform, keywords, brand.name, brandVoice);
-      results.push(...posts);
+    const llmResults = await Promise.allSettled(llmPlatforms.map(async (platform) => {
+      const timeoutPromise = new Promise<any[]>((_, reject) => setTimeout(() => reject(new Error('LLM timeout')), 10000));
+      const posts = await Promise.race([fetchLLMOpportunities(platform, keywords, brand.name, brandVoice), timeoutPromise]);
+      return posts;
     }));
+    for (const r of llmResults) {
+      if (r.status === 'fulfilled') results.push(...r.value);
+    }
 
     // Deduplicate by URL
     const seen = new Set<string>();
     const unique = results.filter(r => { if (!r.url || seen.has(r.url)) return false; seen.add(r.url); return true; });
-    // Generate AI reply drafts for each opportunity (up to 20)
+    // Generate AI reply drafts for each opportunity (up to 20) — with 8s timeout per draft
     const withReplies = await Promise.all(unique.slice(0, 20).map(async (opp: any) => {
       try {
         const isChinesePlatform = opp.platform === "zhihu" || opp.platform === "xiaohongshu";
@@ -1285,8 +1290,9 @@ Title: "${opp.title}"
 Context: ${opp.snippet}
 
 Write a genuinely helpful, non-promotional reply in ${replyLang} that adds real value to the discussion. Naturally mention ${brand.name} only if directly relevant. Keep it concise (2-3 paragraphs). No ** bold markdown. No em-dashes. Sound like a real human expert, not a brand account.`;
-        const response = await invokeLLM({ messages: [{ role: "user", content: replyPrompt }] }) as any;
-        const reply = response?.choices?.[0]?.message?.content ?? "";
+        const replyTimeout = new Promise<string>((_, reject) => setTimeout(() => reject(new Error('reply timeout')), 8000));
+        const llmCall = invokeLLM({ messages: [{ role: "user", content: replyPrompt }] }).then((r: any) => r?.choices?.[0]?.message?.content ?? "");
+        const reply = await Promise.race([llmCall, replyTimeout]).catch(() => "");
         return { ...opp, suggestedReply: reply, status: "new" };
       } catch {
         return { ...opp, suggestedReply: "", status: "new" };
