@@ -254,3 +254,7 @@
 - [x] BUG: Variant body content is just the title repeated — FIXED: replaced single-call JSON generation with 9 sequential validated prompts (blog title, blog HTML, subheader, summary, banner concept, image prompt, WeChat article, WeChat title, social caption) exactly matching original Pulse Branding Zapier flow
 - [x] BUG: Image style wrong — FIXED: image generation now uses Prompt #6 from validated prompts (cinematic brand photography, teal/blue/violet neon tones, 16:9, no text, ultra-sharp editorial quality)
 - [x] BUG: Webflow publishing failing — ROOT CAUSE: API token missing 'cms:write' scope (403 OAuthForbidden). FIXED: updated Integrations help text with clear instructions to regenerate token with CMS Read+Write scope. Added 'Retry All Failed' button to Publishing Center header.
+
+## Next Steps (March 10 2026 — Round 12)
+- [x] FEATURE: Review badge on bottom nav — DONE: red badge shows pending count on Review tab, refreshes every 30s
+- [x] TEST: Run fresh pipeline with 9-step validated prompts — PASSED: 10/10 packages completed, all with real blog HTML (2252-4760 chars), WeChat content (709-1172 chars), images generated, inspector passed all 10

@@ -50,6 +50,14 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
   const { data: brands = [] } = trpc.brand.list.useQuery(undefined, { enabled: isAuthenticated });
   const currentBrand = brands.find(b => b.id === brandId) || brands[0];
 
+  // Pending review count for badge
+  const activeBrandId = brandId || currentBrand?.id;
+  const { data: reviewQueue = [] } = trpc.pipeline.getReviewQueue.useQuery(
+    { brandId: activeBrandId! },
+    { enabled: !!activeBrandId && isAuthenticated, refetchInterval: 30000 }
+  );
+  const pendingReviewCount = reviewQueue.length;
+
   // Close drawer on route change
   useEffect(() => { setDrawerOpen(false); }, [location]);
 
@@ -310,14 +318,21 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
             </div>
           </Link>
           {/* Review + Publishing */}
-          {[{ label: "Review", href: "/review", icon: <CheckCheck size={20} /> }, { label: "Publish", href: "/publishing", icon: <Rocket size={20} /> }].map(item => {
+          {[{ label: "Review", href: "/review", icon: <CheckCheck size={20} />, badge: pendingReviewCount }, { label: "Publish", href: "/publishing", icon: <Rocket size={20} />, badge: 0 }].map(item => {
             const isActive = location === item.href || location.startsWith(item.href + "/");
             return (
               <Link key={item.href} href={item.href}>
                 <div className={`flex flex-col items-center justify-center gap-0.5 py-2 px-3 min-h-[56px] min-w-[52px] transition-colors ${
                   isActive ? "text-primary" : "text-muted-foreground"
                 }`}>
-                  <span>{item.icon}</span>
+                  <span className="relative">
+                    {item.icon}
+                    {item.badge > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                        {item.badge > 99 ? "99+" : item.badge}
+                      </span>
+                    )}
+                  </span>
                   <span className="text-[9px] font-medium leading-none">{item.label}</span>
                   {isActive && <div className="w-1 h-1 rounded-full bg-primary mt-0.5" />}
                 </div>
