@@ -1,0 +1,16 @@
+{
+  "query": "SELECT platform, accountName, LEFT(apiKey, 8) as apiKeyPrefix, extraConfig FROM integration_accounts WHERE platform = 'webflow' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT platform, accountName, LEFT(apiKey, 8) as apiKeyPrefix, extraConfig FROM integration_accounts WHERE platform = 'webflow' LIMIT 1;",
+  "rows": [
+    {
+      "platform": "webflow",
+      "accountName": "673498ac936e891beb4335fd",
+      "apiKeyPrefix": "ws-9d02d",
+      "extraConfig": "{\"apiToken\": \"ws-9d02d85b03a2e331702f3278d34d75052697c954938fdd8ef02509d1879247b4\", \"collectionId\": \"673498ac936e891beb433701\", \"siteId\": \"673498ac936e891beb4335fd\"}"
+    }
+  ],
+  "messages": [],
+  "stdout": "platform\taccountName\tapiKeyPrefix\textraConfig\nwebflow\t673498ac936e891beb4335fd\tws-9d02d\t{\"apiToken\": \"ws-9d02d85b03a2e331702f3278d34d75052697c954938fdd8ef02509d1879247b4\", \"collectionId\": \"673498ac936e891beb433701\", \"siteId\": \"673498ac936e891beb4335fd\"}\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

@@ -1,0 +1,13 @@
+{
+  "query": "SHOW TABLES LIKE '%integrat%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SHOW TABLES LIKE '%integrat%';",
+  "rows": [
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo (%integrat%)": "integration_accounts"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo (%integrat%)\nintegration_accounts\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

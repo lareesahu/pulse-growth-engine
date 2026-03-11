@@ -726,6 +726,32 @@ const publishingRouter = router({
       fieldData.slug = job.contentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 80) + "-" + Date.now().toString(36);
     }
 
+    // Set author name and publish date
+    fieldData["author-name"] = fieldData["author-name"] || "Pulse Branding";
+    fieldData["publish-date"] = new Date().toISOString();
+
+    // Extract opening paragraph from body as article-single-details
+    if (richTextBody && !fieldData["article-single-details"]) {
+      const firstParaMatch = richTextBody.match(/<p>([\s\S]*?)<\/p>/);
+      if (firstParaMatch) {
+        const plainText = firstParaMatch[1].replace(/<[^>]+>/g, "");
+        fieldData["article-single-details"] = plainText.substring(0, 280);
+      }
+    }
+
+    // Generate a header image for the article
+    try {
+      const { generateImage } = await import("./_core/imageGeneration");
+      const imagePrompt = `Editorial photography style header image for a premium branding agency blog article titled "${job.contentTitle}". Cinematic, moody, sophisticated. Dark navy blue background, warm golden lighting, minimalist composition. No text. Ultra high quality, 4K, magazine aesthetic.`;
+      const { url: headerImageUrl } = await generateImage({ prompt: imagePrompt });
+      if (headerImageUrl) {
+        fieldData["main-image"] = { url: headerImageUrl, alt: job.contentTitle || "Article header image" };
+      }
+    } catch (imgErr: any) {
+      // Non-fatal: continue without image if generation fails
+      console.warn("[Webflow] Header image generation failed:", imgErr?.message);
+    }
+
     // Mark as publishing
     await updatePublishJob(input.jobId, { publishStatus: "publishing", lastAttemptAt: new Date() });
 
@@ -804,11 +830,37 @@ const publishingRouter = router({
     for (const job of webflowJobs) {
       const mapping = (fieldMapping?.fieldMapping as Record<string, string>) || {};
       const fieldData: Record<string, any> = {};
+
+      // Convert body to HTML if needed
+      let bulkRichTextBody = job.variantBody || "";
+      if (bulkRichTextBody && !bulkRichTextBody.includes("<p>")) {
+        bulkRichTextBody = bulkRichTextBody.split(/\n\n+/).filter((p: string) => p.trim()).map((p: string) => `<p>${p.trim().replace(/\n/g, "<br/>")}</p>`).join("");
+      }
+
       if (mapping.name && job.contentTitle) fieldData[mapping.name] = job.contentTitle;
-      if (mapping.body && job.variantBody) fieldData[mapping.body] = job.variantBody;
+      if (mapping.body && bulkRichTextBody) fieldData[mapping.body] = bulkRichTextBody;
       if (mapping.slug && job.contentTitle) fieldData[mapping.slug] = job.contentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 80);
       if (!fieldData.name && job.contentTitle) fieldData.name = job.contentTitle;
       if (!fieldData.slug && job.contentTitle) fieldData.slug = job.contentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 80) + "-" + Date.now().toString(36);
+
+      // Author, publish date, opening paragraph
+      fieldData["author-name"] = fieldData["author-name"] || "Pulse Branding";
+      fieldData["publish-date"] = new Date().toISOString();
+      if (bulkRichTextBody && !fieldData["article-single-details"]) {
+        const firstParaMatch = bulkRichTextBody.match(/<p>([\s\S]*?)<\/p>/);
+        if (firstParaMatch) fieldData["article-single-details"] = firstParaMatch[1].replace(/<[^>]+>/g, "").substring(0, 280);
+      }
+
+      // Generate header image (non-fatal)
+      try {
+        const { generateImage } = await import("./_core/imageGeneration");
+        const imagePrompt = `Editorial photography style header image for a premium branding agency blog article titled "${job.contentTitle}". Cinematic, moody, sophisticated. Dark navy blue background, warm golden lighting, minimalist composition. No text. Ultra high quality, 4K, magazine aesthetic.`;
+        const { url: headerImageUrl } = await generateImage({ prompt: imagePrompt });
+        if (headerImageUrl) fieldData["main-image"] = { url: headerImageUrl, alt: job.contentTitle || "Article header image" };
+      } catch (imgErr: any) {
+        console.warn("[Webflow] Header image generation failed:", imgErr?.message);
+      }
+
       await updatePublishJob(job.id, { publishStatus: "publishing", lastAttemptAt: new Date() });
       try {
         const response = await fetch(`https://api.webflow.com/v2/collections/${bulkCollectionId}/items`, {
