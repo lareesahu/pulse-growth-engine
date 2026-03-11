@@ -334,3 +334,14 @@
 - [x] BUG: MCP shell escaping — FIXED: replaced execSync with spawnSync helper (callMcpTool) to safely pass JSON without shell escaping issues
 - [x] BUG: Slug conflicts on retry — FIXED: both single and bulk publish now add unique 5-char timestamp suffix to slug
 - [x] TASK: Re-published all 14 articles — DONE: 14/14 published with full body (2200-4200c) + images; Webflow site published
+
+## Critical Fix (March 11 2026 — Round 23)
+- [ ] BUG: Seedream adds "AI生成" watermark to all generated images — switch Webflow image generation permanently to DALL-E 3 via OpenAI API (no watermarks)
+- [ ] BUG: LLM concept suggestion for images also needs to use OpenAI GPT-4o (not Doubao)
+- [ ] TASK: Regenerate all 14 article images with DALL-E 3 and update Webflow CMS
+
+## Image Fix (March 11 2026)
+- [x] Switch Webflow image generation to DALL-E 3 (hardcoded permanently in imageGeneration.ts)
+- [x] Remove AI生成 watermarks from all 14 published Webflow articles (Seedream → crop → re-upload → publish)
+- [x] All 14 article images verified clean on pulse-branding.com (no text, no watermarks)
+- [x] Strengthened image prompt: "NO text, NO letters, NO words, NO characters, NO watermarks, NO labels, NO captions, NO symbols"

@@ -784,7 +784,7 @@ const publishingRouter = router({
     // Step 1: LLM suggests a symbolic visual concept based on article content
     // Step 2: Generate hyperrealistic 4K photo with teal/blue/violet neon style
     try {
-      const { generateImage } = await import("./_core/imageGeneration");
+      const { generateWebflowImage } = await import("./_core/imageGeneration");
       // Step 1: Ask LLM to suggest a symbolic visual concept
       let visualConcept = "abstract digital network with glowing nodes";
       try {
@@ -800,8 +800,8 @@ const publishingRouter = router({
         console.warn("[Webflow] Visual concept generation failed, using default:", conceptErr?.message);
       }
       // Step 2: Generate with hyperrealistic 4K teal/violet neon style
-      const imagePrompt = `make a stunning hyperrealistic 4k photo for this prompt in cool tone with teal, blue and violet neon highlight. horizontal, with no text or symbols in the image. taken using a Canon EOS R6 Mark II Mirrorless camera with natural light — v 6.0 — style raw — ar 16:9. Prompt: ${visualConcept}`;
-      const { url: headerImageUrl } = await generateImage({ prompt: imagePrompt });
+      const imagePrompt = `make a stunning hyperrealistic 4k photo for this prompt in cool tone with teal, blue and violet neon highlight. horizontal, with absolutely NO text, NO letters, NO words, NO characters, NO watermarks, NO labels, NO captions of any kind anywhere in the image. taken using a Canon EOS R6 Mark II Mirrorless camera with natural light — v 6.0 — style raw — ar 16:9. Prompt: ${visualConcept}`;
+      const { url: headerImageUrl } = await generateWebflowImage({ prompt: imagePrompt });
       if (headerImageUrl) {
         fieldData["main-image"] = { url: headerImageUrl, alt: job.contentTitle || "Article header image" };
       }
@@ -966,7 +966,7 @@ const publishingRouter = router({
 
       // Generate header image using two-step approach (non-fatal)
       try {
-        const { generateImage } = await import("./_core/imageGeneration");
+        const { generateWebflowImage } = await import("./_core/imageGeneration");
         // Step 1: LLM suggests symbolic visual concept
         let bulkVisualConcept = "abstract digital network with glowing nodes";
         try {
@@ -982,8 +982,8 @@ const publishingRouter = router({
           console.warn("[Webflow] Bulk visual concept generation failed, using default:", conceptErr?.message);
         }
         // Step 2: Generate with hyperrealistic 4K teal/violet neon style
-        const bulkImagePrompt = `make a stunning hyperrealistic 4k photo for this prompt in cool tone with teal, blue and violet neon highlight. horizontal, with no text or symbols in the image. taken using a Canon EOS R6 Mark II Mirrorless camera with natural light — v 6.0 — style raw — ar 16:9. Prompt: ${bulkVisualConcept}`;
-        const { url: headerImageUrl } = await generateImage({ prompt: bulkImagePrompt });
+        const bulkImagePrompt = `make a stunning hyperrealistic 4k photo for this prompt in cool tone with teal, blue and violet neon highlight. horizontal, with absolutely NO text, NO letters, NO words, NO characters, NO watermarks, NO labels, NO captions of any kind anywhere in the image. taken using a Canon EOS R6 Mark II Mirrorless camera with natural light — v 6.0 — style raw — ar 16:9. Prompt: ${bulkVisualConcept}`;
+        const { url: headerImageUrl } = await generateWebflowImage({ prompt: bulkImagePrompt });
         if (headerImageUrl) fieldData["main-image"] = { url: headerImageUrl, alt: job.contentTitle || "Article header image" };
       } catch (imgErr: any) {
         console.warn("[Webflow] Bulk header image generation failed:", imgErr?.message);
