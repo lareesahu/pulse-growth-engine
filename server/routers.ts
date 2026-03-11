@@ -956,6 +956,49 @@ const integrationsRouter = router({
   getWebflowFieldMapping: protectedProcedure.input(z.object({ brandId: z.number() })).query(async ({ input }) => {
     return getWebflowFieldMapping(input.brandId);
   }),
+
+  // Check if Webflow token has cms:write scope by attempting a harmless API call
+  checkWebflowTokenScope: protectedProcedure.input(z.object({
+    brandId: z.number(),
+  })).query(async ({ input }) => {
+    const integrations = await getIntegrations(input.brandId);
+    const webflowIntegration = integrations.find((i: any) => i.platform === "webflow" && i.status === "connected");
+    if (!webflowIntegration?.apiKey) return { connected: false, hasWriteScope: false, error: "Webflow not connected" };
+
+    // Use /v2/token/introspect or /v2/sites to check token validity and scopes
+    try {
+      const resp = await fetch("https://api.webflow.com/v2/token/introspect", {
+        headers: { Authorization: `Bearer ${webflowIntegration.apiKey}`, Accept: "application/json" },
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        const scopes: string[] = data.scopes || data.grantedScopes || [];
+        const hasCmsWrite = scopes.some((s: string) => s.includes("cms:write") || s.includes("cms_write"));
+        const hasCmsRead = scopes.some((s: string) => s.includes("cms:read") || s.includes("cms_read"));
+        return { connected: true, hasWriteScope: hasCmsWrite, hasReadScope: hasCmsRead, scopes };
+      } else if (resp.status === 404) {
+        // Introspect endpoint may not exist on all plans — fall back to sites list
+        const sitesResp = await fetch("https://api.webflow.com/v2/sites", {
+          headers: { Authorization: `Bearer ${webflowIntegration.apiKey}`, Accept: "application/json" },
+        });
+        if (sitesResp.ok) {
+          return { connected: true, hasWriteScope: true, hasReadScope: true, scopes: ["unknown"] };
+        } else if (sitesResp.status === 403) {
+          return { connected: true, hasWriteScope: false, hasReadScope: false, error: "Token missing scopes" };
+        } else if (sitesResp.status === 401) {
+          return { connected: false, hasWriteScope: false, hasReadScope: false, error: "Invalid token" };
+        }
+        return { connected: true, hasWriteScope: true, hasReadScope: true, scopes: ["unknown"] };
+      } else if (resp.status === 401) {
+        return { connected: false, hasWriteScope: false, hasReadScope: false, error: "Invalid token — please regenerate" };
+      } else if (resp.status === 403) {
+        return { connected: true, hasWriteScope: false, hasReadScope: false, error: "Token missing cms:write scope" };
+      }
+      return { connected: true, hasWriteScope: true, hasReadScope: true, scopes: [] };
+    } catch {
+      return { connected: true, hasWriteScope: true, hasReadScope: true, scopes: [] };
+    }
+  }),
 });
 
 // ─── Analytics Router ─────────────────────────────────────────────────────────

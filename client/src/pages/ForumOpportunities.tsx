@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import {
   Search, Copy, ExternalLink, RefreshCw, Loader2,
   MessageSquare, Globe, Linkedin, TrendingUp, CheckCheck,
-  ChevronDown, ChevronUp, Sparkles, Filter
+  ChevronDown, ChevronUp, Sparkles, Filter, CheckCircle2, X
 } from "lucide-react";
 
 const PLATFORM_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
@@ -41,6 +41,8 @@ export default function ForumOpportunities() {
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["all"]);
   const [hasScanned, setHasScanned] = useState(false);
+  const [usedOpps, setUsedOpps] = useState<Set<number>>(new Set());
+  const [showUsed, setShowUsed] = useState(false);
 
   const scanMutation = trpc.forum.scan.useMutation({
     onSuccess: (data: any) => {
@@ -87,9 +89,24 @@ export default function ForumOpportunities() {
     }
   };
 
-  const filteredOpps = selectedPlatforms.includes("all")
+  const handleMarkUsed = (idx: number) => {
+    setUsedOpps(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) {
+        next.delete(idx);
+      } else {
+        next.add(idx);
+        toast.success("Marked as used — great work posting that reply!");
+      }
+      return next;
+    });
+  };
+
+  const platformFiltered = selectedPlatforms.includes("all")
     ? opportunities
     : opportunities.filter(o => selectedPlatforms.includes(o.platform));
+  const filteredOpps = showUsed ? platformFiltered : platformFiltered.filter((_, i) => !usedOpps.has(i));
+  const usedCount = platformFiltered.filter((_, i) => usedOpps.has(i)).length;
 
   return (
     <AppLayout brandId={activeBrandId} onBrandChange={setActiveBrandId}>
@@ -142,9 +159,23 @@ export default function ForumOpportunities() {
             );
           })}
           {opportunities.length > 0 && (
-            <span className="text-white/30 text-xs ml-auto">
-              {filteredOpps.length} of {opportunities.length} shown
-            </span>
+            <div className="flex items-center gap-3 ml-auto">
+              {usedCount > 0 && (
+                <button
+                  onClick={() => setShowUsed(prev => !prev)}
+                  className={`text-xs px-2 py-1 rounded-full border transition-all ${
+                    showUsed
+                      ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                      : "bg-white/5 text-white/30 border-white/10 hover:border-white/20"
+                  }`}
+                >
+                  {showUsed ? `Hide ${usedCount} used` : `Show ${usedCount} used`}
+                </button>
+              )}
+              <span className="text-white/30 text-xs">
+                {filteredOpps.length} shown
+              </span>
+            </div>
           )}
         </div>
 
@@ -274,6 +305,21 @@ export default function ForumOpportunities() {
                       Open Thread
                     </Button>
                   )}
+                  <Button
+                    onClick={() => handleMarkUsed(idx)}
+                    variant="ghost"
+                    className={`text-xs h-8 gap-1.5 ml-auto ${
+                      usedOpps.has(idx)
+                        ? "text-emerald-400 hover:text-emerald-300"
+                        : "text-white/20 hover:text-white/50"
+                    }`}
+                  >
+                    {usedOpps.has(idx) ? (
+                      <><CheckCircle2 className="w-3.5 h-3.5" /> Used</>
+                    ) : (
+                      <><CheckCircle2 className="w-3.5 h-3.5" /> Mark Used</>
+                    )}
+                  </Button>
                 </div>
               </CardContent>
             </Card>

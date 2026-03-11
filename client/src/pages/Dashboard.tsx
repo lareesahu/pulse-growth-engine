@@ -411,7 +411,7 @@ export default function Dashboard() {
                 {[
                   { label: "Ideas", value: (latestRun as any).ideasGenerated ?? 0 },
                   { label: "Packages", value: (latestRun as any).packagesGenerated ?? 0 },
-                  { label: "Passed Inspection", value: (latestRun as any).passedInspection ?? 0 },
+                  { label: "Passed Inspection", value: (latestRun as any).packagesPassedInspection ?? (latestRun as any).passedInspection ?? 0 },
                 ].map(({ label, value }) => (
                   <div key={label} className="text-center">
                     <p className="text-white font-bold text-lg">{value}</p>

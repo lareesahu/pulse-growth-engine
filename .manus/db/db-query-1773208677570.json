@@ -1,0 +1,75 @@
+{
+  "query": "SELECT * FROM inspector_rules LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT * FROM inspector_rules LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "brandId": "1",
+      "ruleType": "banned_phrase",
+      "platform": "all",
+      "ruleValue": "**",
+      "severity": "error",
+      "autoFix": "1",
+      "isActive": "1",
+      "sortOrder": "1",
+      "createdAt": "2026-03-08 19:38:40",
+      "updatedAt": "2026-03-08 19:38:40"
+    },
+    {
+      "id": "2",
+      "brandId": "1",
+      "ruleType": "banned_phrase",
+      "platform": "all",
+      "ruleValue": "—",
+      "severity": "warning",
+      "autoFix": "1",
+      "isActive": "1",
+      "sortOrder": "2",
+      "createdAt": "2026-03-08 19:38:40",
+      "updatedAt": "2026-03-08 19:38:40"
+    },
+    {
+      "id": "3",
+      "brandId": "1",
+      "ruleType": "banned_phrase",
+      "platform": "all",
+      "ruleValue": "delve into",
+      "severity": "error",
+      "autoFix": "1",
+      "isActive": "1",
+      "sortOrder": "3",
+      "createdAt": "2026-03-08 19:38:40",
+      "updatedAt": "2026-03-08 19:38:40"
+    },
+    {
+      "id": "4",
+      "brandId": "1",
+      "ruleType": "banned_phrase",
+      "platform": "all",
+      "ruleValue": "game-changer",
+      "severity": "warning",
+      "autoFix": "1",
+      "isActive": "1",
+      "sortOrder": "4",
+      "createdAt": "2026-03-08 19:38:40",
+      "updatedAt": "2026-03-08 19:38:40"
+    },
+    {
+      "id": "5",
+      "brandId": "1",
+      "ruleType": "banned_phrase",
+      "platform": "all",
+      "ruleValue": "unlock your potential",
+      "severity": "error",
+      "autoFix": "1",
+      "isActive": "1",
+      "sortOrder": "5",
+      "createdAt": "2026-03-08 19:38:40",
+      "updatedAt": "2026-03-08 19:38:40"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tbrandId\truleType\tplatform\truleValue\tseverity\tautoFix\tisActive\tsortOrder\tcreatedAt\tupdatedAt\n1\t1\tbanned_phrase\tall\t**\terror\t1\t1\t1\t2026-03-08 19:38:40\t2026-03-08 19:38:40\n2\t1\tbanned_phrase\tall\t—\twarning\t1\t1\t2\t2026-03-08 19:38:40\t2026-03-08 19:38:40\n3\t1\tbanned_phrase\tall\tdelve into\terror\t1\t1\t3\t2026-03-08 19:38:40\t2026-03-08 19:38:40\n4\t1\tbanned_phrase\tall\tgame-changer\twarning\t1\t1\t4\t2026-03-08 19:38:40\t2026-03-08 19:38:40\n5\t1\tbanned_phrase\tall\tunlock your potential\terror\t1\t1\t5\t2026-03-08 19:38:40\t2026-03-08 19:38:40\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

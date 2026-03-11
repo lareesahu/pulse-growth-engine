@@ -303,3 +303,11 @@
 - [x] FEATURE: Hide Chinese platforms (WeChat, Xiaohongshu) from all UI — removed from dashboard, publishing, forums, platform filters, integrations, content detail, review queue; kept content generation for manual copy-paste only
 - [x] BUG FIX: Webflow body field empty — now converts plain text/markdown to proper HTML format with <p> tags and <br/> line breaks before sending to Webflow API; tested end-to-end (fails only due to missing cms:write scope on token, not body field issue)
 - [x] FEATURE: Improved Webflow error messages — 403 now shows exact step-by-step fix (Site Settings → Integrations → API Access → generate new v2 token with CMS Read+Write → paste in Settings → Integrations)
+
+## Testing & Fixes (March 11 2026 — Round 19)
+- [x] TEST: Webflow E2E publish verified via MCP — article created + published with HTML body content confirmed in CMS (lastPublished: 2026-03-11T05:55:26Z)
+- [x] BUG: Dashboard showing "0 Passed Inspection" — FIXED: was reading wrong field (passedInspection vs packagesPassedInspection); now correctly shows 10/10
+- [x] FEATURE: Forum Hunt — "Mark as Used" button added; marks opportunity as used (emerald green), hides used items by default, toggle to show/hide with count badge
+- [x] FEATURE: Webflow token scope auto-check — checkWebflowTokenScope endpoint added; PublishingCenter shows red warning banner if token missing cms:write scope
+- [x] BUG: Old WeChat/Xiaohongshu jobs in publishing queue — FIXED: deleted 10 stale wechat/xiaohongshu queued jobs from DB
+- [x] TESTS: All 29 tests passing (updated pipeline-engine.test.ts to match current buildContentPrompt implementation)

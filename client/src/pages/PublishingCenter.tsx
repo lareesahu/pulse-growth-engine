@@ -146,6 +146,11 @@ export default function PublishingCenter() {
 
   const webflowIntegration = (integration || []).find((i: any) => i.platform === "webflow" && i.status === "connected");
 
+  const { data: tokenScope } = trpc.integrations.checkWebflowTokenScope.useQuery(
+    { brandId: activeBrandId! },
+    { enabled: !!activeBrandId && !!webflowIntegration, staleTime: 60000 }
+  );
+
   const markPublished = trpc.publishing.markPublished.useMutation({ onSuccess: () => { refetch(); toast.success("Marked as published"); } });
   const markFailed = trpc.publishing.markFailed.useMutation({ onSuccess: () => { refetch(); toast.error("Marked as failed"); } });
   const retry = trpc.publishing.retry.useMutation({ onSuccess: () => { refetch(); toast.success("Job retried"); } });
@@ -257,7 +262,16 @@ export default function PublishingCenter() {
             <p className="text-xs text-amber-300 flex-1">Webflow is not connected. Connect it in <a href="/settings" className="underline text-amber-400">Settings → Integrations</a> to enable one-click publishing.</p>
           </div>
         )}
-        {webflowIntegration && (
+        {webflowIntegration && tokenScope && !tokenScope.hasWriteScope && (
+          <div className="flex items-start gap-3 p-3 rounded-lg border border-red-500/30 bg-red-500/5">
+            <AlertCircle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-xs text-red-300 font-medium">Webflow token missing cms:write scope</p>
+              <p className="text-xs text-red-400/70 mt-0.5">Publishing will fail with 403. Fix: Webflow Site Settings → Integrations → API Access → Generate new v2 token → enable CMS Read + Write → paste in Settings → Integrations.</p>
+            </div>
+          </div>
+        )}
+        {webflowIntegration && (!tokenScope || tokenScope.hasWriteScope) && (
           <div className="flex items-center gap-3 p-3 rounded-lg border border-[#4353FF]/30 bg-[#4353FF]/5">
             <Globe size={14} className="text-[#4353FF] flex-shrink-0" />
             <p className="text-xs text-[#4353FF]/80 flex-1">Webflow connected — <span className="font-medium text-[#4353FF]">{webflowIntegration.accountName || "your site"}</span>. Click "Push to Webflow" on any queued Webflow job to publish.</p>
