@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, platform, CAST(extraConfig AS CHAR) as extraConfig_str FROM integration_accounts WHERE platform = 'webflow'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, platform, CAST(extraConfig AS CHAR) as extraConfig_str FROM integration_accounts WHERE platform = 'webflow'",
+  "rows": [
+    {
+      "id": "2",
+      "platform": "webflow",
+      "extraConfig_str": "{\"apiToken\": \"\", \"collectionId\": \"673498ac936e891beb433701\", \"customDomain\": \"pulse-branding.com\", \"siteId\": \"673498ac936e891beb4335fd\"}"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tplatform\textraConfig_str\n2\twebflow\t{\"apiToken\": \"\", \"collectionId\": \"673498ac936e891beb433701\", \"customDomain\": \"pulse-branding.com\", \"siteId\": \"673498ac936e891beb4335fd\"}\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

@@ -1,0 +1,14 @@
+{
+  "query": "SELECT publishStatus, COUNT(*) as cnt FROM publish_jobs WHERE platform = 'webflow' GROUP BY publishStatus",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT publishStatus, COUNT(*) as cnt FROM publish_jobs WHERE platform = 'webflow' GROUP BY publishStatus",
+  "rows": [
+    {
+      "publishStatus": "queued",
+      "cnt": "14"
+    }
+  ],
+  "messages": [],
+  "stdout": "publishStatus\tcnt\nqueued\t14\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

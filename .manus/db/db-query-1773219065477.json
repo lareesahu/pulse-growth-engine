@@ -1,0 +1,48 @@
+{
+  "query": "SELECT id, platform, title, CHAR_LENGTH(body) as body_length, LEFT(body, 200) as body_preview FROM platform_variants WHERE platform IN ('webflow', 'blog') ORDER BY id DESC LIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, platform, title, CHAR_LENGTH(body) as body_length, LEFT(body, 200) as body_preview FROM platform_variants WHERE platform IN ('webflow', 'blog') ORDER BY id DESC LIMIT 5",
+  "rows": [
+    {
+      "id": "240091",
+      "platform": "blog",
+      "title": "How Emotional Resonance Builds Stand - Out Brands and Customer Loyalty",
+      "body_length": "350",
+      "body_preview": "Emotional resonance in branding creates an emotional connection with customers. It helps a brand stand out and build loyalty. Understand your audience, tell a story, be consistent, and show empathy. C"
+    },
+    {
+      "id": "240090",
+      "platform": "webflow",
+      "title": "How Emotional Resonance Builds Stand - Out Brands and Customer Loyalty",
+      "body_length": "350",
+      "body_preview": "Emotional resonance in branding creates an emotional connection with customers. It helps a brand stand out and build loyalty. Understand your audience, tell a story, be consistent, and show empathy. C"
+    },
+    {
+      "id": "240087",
+      "platform": "blog",
+      "title": "How Chinese Business Owners Can Build a Global Brand",
+      "body_length": "2617",
+      "body_preview": "Platform: blog"
+    },
+    {
+      "id": "240086",
+      "platform": "webflow",
+      "title": "How Chinese Business Owners Can Build a Global Brand",
+      "body_length": "2620",
+      "body_preview": "Platform: webflow"
+    },
+    {
+      "id": "240083",
+      "platform": "blog",
+      "title": "Strategies for Marketing Directors to Grow Their Brand Sustainably",
+      "body_length": "355",
+      "body_preview": "Marketing directors and CMOs are key for a company's success. Optimize your brand by making it more appealing, visible, and valuable. Understand your audience, build a consistent brand identity, focus"
+    }
+  ],
+  "messages": [
+    "<p>Building a global brand as a Chinese - speaking business owner means getting your products or services known all over the world. It's like taking your local store and making it famou",
+    "<p>Building a global brand as a Chinese - speaking business owner means getting your products or services known all over the world. It's like taking your local store and making it fa"
+  ],
+  "stdout": "id\tplatform\ttitle\tbody_length\tbody_preview\n240091\tblog\tHow Emotional Resonance Builds Stand - Out Brands and Customer Loyalty\t350\tEmotional resonance in branding creates an emotional connection with customers. It helps a brand stand out and build loyalty. Understand your audience, tell a story, be consistent, and show empathy. C\n240090\twebflow\tHow Emotional Resonance Builds Stand - Out Brands and Customer Loyalty\t350\tEmotional resonance in branding creates an emotional connection with customers. It helps a brand stand out and build loyalty. Understand your audience, tell a story, be consistent, and show empathy. C\n240087\tblog\tHow Chinese Business Owners Can Build a Global Brand\t2617\tPlatform: blog\n<p>Building a global brand as a Chinese - speaking business owner means getting your products or services known all over the world. It's like taking your local store and making it famou\n240086\twebflow\tHow Chinese Business Owners Can Build a Global Brand\t2620\tPlatform: webflow\n<p>Building a global brand as a Chinese - speaking business owner means getting your products or services known all over the world. It's like taking your local store and making it fa\n240083\tblog\tStrategies for Marketing Directors to Grow Their Brand Sustainably\t355\tMarketing directors and CMOs are key for a company's success. Optimize your brand by making it more appealing, visible, and valuable. Understand your audience, build a consistent brand identity, focus\n",
+  "stderr": "",
+  "execution_time_ms": 99
+}

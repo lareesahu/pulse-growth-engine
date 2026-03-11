@@ -1,0 +1,13 @@
+{
+  "query": "SHOW TABLES LIKE '%variant%'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SHOW TABLES LIKE '%variant%'",
+  "rows": [
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo (%variant%)": "platform_variants"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo (%variant%)\nplatform_variants\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

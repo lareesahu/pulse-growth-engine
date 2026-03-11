@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE publish_jobs SET publishStatus = 'queued', publishedAt = NULL, errorLog = NULL, externalPostId = NULL WHERE platform = 'webflow' AND publishStatus IN ('published', 'failed', 'partial_failure')",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute UPDATE publish_jobs SET publishStatus = 'queued', publishedAt = NULL, errorLog = NULL, externalPostId = NULL WHERE platform = 'webflow' AND publishStatus IN ('published', 'failed', 'partial_failure')",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 62
+}

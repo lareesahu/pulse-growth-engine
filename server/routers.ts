@@ -706,8 +706,19 @@ const publishingRouter = router({
 
     // Convert body to Webflow rich text format (HTML with proper paragraph wrapping)
     let richTextBody = job.variantBody || "";
-    if (richTextBody && !richTextBody.includes("<p>")) {
-      // If not already HTML, wrap paragraphs
+    // Strip platform prefix if present (e.g., "Platform: webflow\n")
+    richTextBody = richTextBody.replace(/^Platform:\s*\S+\s*\n/i, "").trim();
+    if (richTextBody && richTextBody.includes("<p>")) {
+      // Already HTML — clean up semicolons used as separators between tags
+      richTextBody = richTextBody
+        .replace(/>\s*;\s*</g, "><")  // Remove "; " between closing and opening tags
+        .replace(/;\s*<\/ol>/g, "</ol>")  // Fix orphaned semicolons before </ol>
+        .replace(/<ol>\s*<p>/g, "<ol><li>")  // Convert <ol><p> to proper list items
+        .replace(/<\/p>\s*(<\/ol>)/g, "</li>$1")  // Close list items before </ol>
+        .replace(/<ol>\s*<\/ol>/g, "")  // Remove empty lists
+        .trim();
+    } else if (richTextBody) {
+      // Plain text — wrap paragraphs
       richTextBody = richTextBody
         .split(/\n\n+/)
         .filter((p: string) => p.trim())
@@ -740,10 +751,27 @@ const publishingRouter = router({
       }
     }
 
-    // Generate a header image for the article
+    // Generate a header image for the article using two-step approach:
+    // Step 1: LLM suggests a symbolic visual concept based on article content
+    // Step 2: Generate hyperrealistic 4K photo with teal/blue/violet neon style
     try {
       const { generateImage } = await import("./_core/imageGeneration");
-      const imagePrompt = `Editorial photography style header image for a premium branding agency blog article titled "${job.contentTitle}". Cinematic, moody, sophisticated. Dark navy blue background, warm golden lighting, minimalist composition. No text. Ultra high quality, 4K, magazine aesthetic.`;
+      // Step 1: Ask LLM to suggest a symbolic visual concept
+      let visualConcept = "abstract digital network with glowing nodes";
+      try {
+        const conceptResponse = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are a visual art director for a premium branding agency. Given an article title and a brief excerpt, suggest ONE specific symbolic visual concept for a header photo. The concept should be symbolic and metaphorical (e.g., 'a single key on a dark surface' for unlocking solutions, 'two hands shaking with light between them' for collaboration, 'a ladder ascending into mist' for growth, 'a compass on a map' for strategy). Maximum 2 people if people are shown. No text or symbols in the image. Reply with ONLY the visual concept description, 1-2 sentences max." },
+            { role: "user", content: `Article title: "${job.contentTitle}"\n\nBrief excerpt: ${richTextBody.replace(/<[^>]+>/g, "").substring(0, 300)}` }
+          ]
+        });
+        const conceptText = (conceptResponse?.choices?.[0]?.message?.content as string)?.trim();
+        if (conceptText && conceptText.length > 10) visualConcept = conceptText;
+      } catch (conceptErr: any) {
+        console.warn("[Webflow] Visual concept generation failed, using default:", conceptErr?.message);
+      }
+      // Step 2: Generate with hyperrealistic 4K teal/violet neon style
+      const imagePrompt = `make a stunning hyperrealistic 4k photo for this prompt in cool tone with teal, blue and violet neon highlight. horizontal, with no text or symbols in the image. taken using a Canon EOS R6 Mark II Mirrorless camera with natural light — v 6.0 — style raw — ar 16:9. Prompt: ${visualConcept}`;
       const { url: headerImageUrl } = await generateImage({ prompt: imagePrompt });
       if (headerImageUrl) {
         fieldData["main-image"] = { url: headerImageUrl, alt: job.contentTitle || "Article header image" };
@@ -858,7 +886,18 @@ const publishingRouter = router({
 
       // Convert body to HTML if needed
       let bulkRichTextBody = job.variantBody || "";
-      if (bulkRichTextBody && !bulkRichTextBody.includes("<p>")) {
+      // Strip platform prefix if present (e.g., "Platform: webflow\n")
+      bulkRichTextBody = bulkRichTextBody.replace(/^Platform:\s*\S+\s*\n/i, "").trim();
+      if (bulkRichTextBody && bulkRichTextBody.includes("<p>")) {
+        // Already HTML — clean up semicolons used as separators between tags
+        bulkRichTextBody = bulkRichTextBody
+          .replace(/>\s*;\s*</g, "><")
+          .replace(/;\s*<\/ol>/g, "</ol>")
+          .replace(/<ol>\s*<p>/g, "<ol><li>")
+          .replace(/<\/p>\s*(<\/ol>)/g, "</li>$1")
+          .replace(/<ol>\s*<\/ol>/g, "")
+          .trim();
+      } else if (bulkRichTextBody) {
         bulkRichTextBody = bulkRichTextBody.split(/\n\n+/).filter((p: string) => p.trim()).map((p: string) => `<p>${p.trim().replace(/\n/g, "<br/>")}</p>`).join("");
       }
 
@@ -876,14 +915,29 @@ const publishingRouter = router({
         if (firstParaMatch) fieldData["article-single-details"] = firstParaMatch[1].replace(/<[^>]+>/g, "").substring(0, 280);
       }
 
-      // Generate header image (non-fatal)
+      // Generate header image using two-step approach (non-fatal)
       try {
         const { generateImage } = await import("./_core/imageGeneration");
-        const imagePrompt = `Editorial photography style header image for a premium branding agency blog article titled "${job.contentTitle}". Cinematic, moody, sophisticated. Dark navy blue background, warm golden lighting, minimalist composition. No text. Ultra high quality, 4K, magazine aesthetic.`;
-        const { url: headerImageUrl } = await generateImage({ prompt: imagePrompt });
+        // Step 1: LLM suggests symbolic visual concept
+        let bulkVisualConcept = "abstract digital network with glowing nodes";
+        try {
+          const bulkConceptResponse = await invokeLLM({
+            messages: [
+              { role: "system", content: "You are a visual art director for a premium branding agency. Given an article title and a brief excerpt, suggest ONE specific symbolic visual concept for a header photo. The concept should be symbolic and metaphorical (e.g., 'a single key on a dark surface' for unlocking solutions, 'two hands shaking with light between them' for collaboration, 'a ladder ascending into mist' for growth, 'a compass on a map' for strategy). Maximum 2 people if people are shown. No text or symbols in the image. Reply with ONLY the visual concept description, 1-2 sentences max." },
+              { role: "user", content: `Article title: "${job.contentTitle}"\n\nBrief excerpt: ${bulkRichTextBody.replace(/<[^>]+>/g, "").substring(0, 300)}` }
+            ]
+          });
+          const bulkConceptText = (bulkConceptResponse?.choices?.[0]?.message?.content as string)?.trim();
+          if (bulkConceptText && bulkConceptText.length > 10) bulkVisualConcept = bulkConceptText;
+        } catch (conceptErr: any) {
+          console.warn("[Webflow] Bulk visual concept generation failed, using default:", conceptErr?.message);
+        }
+        // Step 2: Generate with hyperrealistic 4K teal/violet neon style
+        const bulkImagePrompt = `make a stunning hyperrealistic 4k photo for this prompt in cool tone with teal, blue and violet neon highlight. horizontal, with no text or symbols in the image. taken using a Canon EOS R6 Mark II Mirrorless camera with natural light — v 6.0 — style raw — ar 16:9. Prompt: ${bulkVisualConcept}`;
+        const { url: headerImageUrl } = await generateImage({ prompt: bulkImagePrompt });
         if (headerImageUrl) fieldData["main-image"] = { url: headerImageUrl, alt: job.contentTitle || "Article header image" };
       } catch (imgErr: any) {
-        console.warn("[Webflow] Header image generation failed:", imgErr?.message);
+        console.warn("[Webflow] Bulk header image generation failed:", imgErr?.message);
       }
 
       await updatePublishJob(job.id, { publishStatus: "publishing", lastAttemptAt: new Date() });

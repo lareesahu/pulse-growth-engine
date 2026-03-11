@@ -1,0 +1,94 @@
+{
+  "query": "SELECT id, publishStatus, variantId, contentPackageId FROM publish_jobs WHERE platform = 'webflow'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, publishStatus, variantId, contentPackageId FROM publish_jobs WHERE platform = 'webflow'",
+  "rows": [
+    {
+      "id": "120001",
+      "publishStatus": "queued",
+      "variantId": "210051",
+      "contentPackageId": "240011"
+    },
+    {
+      "id": "120006",
+      "publishStatus": "queued",
+      "variantId": "210106",
+      "contentPackageId": "240022"
+    },
+    {
+      "id": "150027",
+      "publishStatus": "queued",
+      "variantId": "240005",
+      "contentPackageId": "240016"
+    },
+    {
+      "id": "150046",
+      "publishStatus": "queued",
+      "variantId": "240020",
+      "contentPackageId": "240025"
+    },
+    {
+      "id": "180001",
+      "publishStatus": "queued",
+      "variantId": "240086",
+      "contentPackageId": "270009"
+    },
+    {
+      "id": "180002",
+      "publishStatus": "queued",
+      "variantId": "240054",
+      "contentPackageId": "270001"
+    },
+    {
+      "id": "180003",
+      "publishStatus": "queued",
+      "variantId": "240062",
+      "contentPackageId": "270003"
+    },
+    {
+      "id": "180004",
+      "publishStatus": "queued",
+      "variantId": "240066",
+      "contentPackageId": "270004"
+    },
+    {
+      "id": "180005",
+      "publishStatus": "queued",
+      "variantId": "240078",
+      "contentPackageId": "270007"
+    },
+    {
+      "id": "180006",
+      "publishStatus": "queued",
+      "variantId": "240074",
+      "contentPackageId": "270006"
+    },
+    {
+      "id": "180007",
+      "publishStatus": "queued",
+      "variantId": "240082",
+      "contentPackageId": "270008"
+    },
+    {
+      "id": "180008",
+      "publishStatus": "queued",
+      "variantId": "240070",
+      "contentPackageId": "270005"
+    },
+    {
+      "id": "180009",
+      "publishStatus": "queued",
+      "variantId": "240058",
+      "contentPackageId": "270002"
+    },
+    {
+      "id": "180019",
+      "publishStatus": "queued",
+      "variantId": "240090",
+      "contentPackageId": "270010"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tpublishStatus\tvariantId\tcontentPackageId\n120001\tqueued\t210051\t240011\n120006\tqueued\t210106\t240022\n150027\tqueued\t240005\t240016\n150046\tqueued\t240020\t240025\n180001\tqueued\t240086\t270009\n180002\tqueued\t240054\t270001\n180003\tqueued\t240062\t270003\n180004\tqueued\t240066\t270004\n180005\tqueued\t240078\t270007\n180006\tqueued\t240074\t270006\n180007\tqueued\t240082\t270008\n180008\tqueued\t240070\t270005\n180009\tqueued\t240058\t270002\n180019\tqueued\t240090\t270010\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

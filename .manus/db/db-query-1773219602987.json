@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, LEFT(body, 500) as bodyStart FROM platform_variants WHERE id = 210051",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, LEFT(body, 500) as bodyStart FROM platform_variants WHERE id = 210051",
+  "rows": [
+    {
+      "id": "210051",
+      "bodyStart": "Platform: webflow"
+    }
+  ],
+  "messages": [
+    "<p>Building a brand with emotional resonance means creating a brand that makes people feel something. It's about going beyond just selling a product or service and forming a real connection with your customers. Neuroscience insights can be a powerful tool to help ambitious founders achieve this.</p>",
+    "<p>Why does it matter? Well, when a brand can tap into the emotions of its customers, it becomes more than just a transaction. Emotional connections lead to loyalty. Customers are m"
+  ],
+  "stdout": "id\tbodyStart\n210051\tPlatform: webflow\n<p>Building a brand with emotional resonance means creating a brand that makes people feel something. It's about going beyond just selling a product or service and forming a real connection with your customers. Neuroscience insights can be a powerful tool to help ambitious founders achieve this.</p>\n<p>Why does it matter? Well, when a brand can tap into the emotions of its customers, it becomes more than just a transaction. Emotional connections lead to loyalty. Customers are m\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

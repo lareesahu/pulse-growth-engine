@@ -1,0 +1,23 @@
+{
+  "query": "SELECT id, LEFT(body, 100) as bodyPreview, LENGTH(body) as bodyLen FROM platform_variants WHERE id IN (210051, 210106, 240005) LIMIT 3",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, LEFT(body, 100) as bodyPreview, LENGTH(body) as bodyLen FROM platform_variants WHERE id IN (210051, 210106, 240005) LIMIT 3",
+  "rows": [
+    {
+      "id": "210106",
+      "bodyPreview": "The content needs to be shortened to meet the 300 - word limit. Here is a possible shortened version",
+      "bodyLen": "432"
+    },
+    {
+      "id": "240005",
+      "bodyPreview": "Guide founders in the conversion stage to design a brand identity with a positive impact on business",
+      "bodyLen": "141"
+    }
+  ],
+  "messages": [
+    "210051\tPlatform: webflow",
+    "<p>Building a brand with emotional resonance means creating a brand that makes peo\t2967"
+  ],
+  "stdout": "id\tbodyPreview\tbodyLen\n210051\tPlatform: webflow\n<p>Building a brand with emotional resonance means creating a brand that makes peo\t2967\n210106\tThe content needs to be shortened to meet the 300 - word limit. Here is a possible shortened version\t432\n240005\tGuide founders in the conversion stage to design a brand identity with a positive impact on business\t141\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

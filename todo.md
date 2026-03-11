@@ -311,3 +311,18 @@
 - [x] FEATURE: Webflow token scope auto-check — checkWebflowTokenScope endpoint added; PublishingCenter shows red warning banner if token missing cms:write scope
 - [x] BUG: Old WeChat/Xiaohongshu jobs in publishing queue — FIXED: deleted 10 stale wechat/xiaohongshu queued jobs from DB
 - [x] TESTS: All 29 tests passing (updated pipeline-engine.test.ts to match current buildContentPrompt implementation)
+
+## Critical Fixes (March 11 2026 — Round 21)
+- [ ] BUG: Published articles have no body content — only the test article had body text; all 14 need to be re-published with full body
+- [ ] BUG: Images wrong style — need two-step Zapier prompt: (1) LLM suggests contextual image concept from article content, (2) generate with "hyperrealistic 4K, cool tone, teal/blue/violet neon highlight, horizontal, no text, Canon EOS R6 Mark II, natural light, --v 6.0 --style raw --ar 16:9"
+- [ ] BUG: "AI Generated" tag appearing on published articles — find source in fieldData or Webflow template and remove
+- [ ] TASK: Re-publish all 14 articles with correct body + correct images + no AI tag
+
+## Critical Bug Fixes (March 11 2026)
+- [x] BUG: Webflow articles published with NO body content — root cause: webflow_field_mappings table was empty, so mapping.body was undefined. Fixed by inserting correct field mapping for brand 1 (collectionId: 673498ac936e891beb433701)
+- [x] BUG: Wrong image style — was using generic editorial dark navy style. Fixed: now uses two-step approach: (1) LLM suggests symbolic visual concept, (2) generates hyperrealistic 4K teal/blue/violet neon style with Canon EOS R6 Mark II prompt
+- [x] BUG: Body had "Platform: webflow\n" prefix — stripped before processing
+- [x] BUG: Body paragraphs separated by "; " semicolons — cleaned up with regex replacements
+- [x] BUG: Wrong collection ID in extraConfig — updated to correct Articles collection (673498ac936e891beb433701)
+- [x] CONFIRMED: No "AI Generated" tag in Webflow Articles collection — was a false alarm
+- [ ] RE-PUBLISH: Reset all 14 published jobs to queued — need to batch publish with correct content + new images
