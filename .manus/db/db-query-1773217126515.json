@@ -1,0 +1,55 @@
+{
+  "query": "SELECT platform, publishStatus, COUNT(*) as count FROM publish_jobs GROUP BY platform, publishStatus ORDER BY platform, publishStatus;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT platform, publishStatus, COUNT(*) as count FROM publish_jobs GROUP BY platform, publishStatus ORDER BY platform, publishStatus;",
+  "rows": [
+    {
+      "platform": "blog",
+      "publishStatus": "queued",
+      "count": "26"
+    },
+    {
+      "platform": "facebook",
+      "publishStatus": "queued",
+      "count": "2"
+    },
+    {
+      "platform": "instagram",
+      "publishStatus": "queued",
+      "count": "15"
+    },
+    {
+      "platform": "linkedin",
+      "publishStatus": "queued",
+      "count": "24"
+    },
+    {
+      "platform": "medium",
+      "publishStatus": "queued",
+      "count": "4"
+    },
+    {
+      "platform": "quora",
+      "publishStatus": "queued",
+      "count": "4"
+    },
+    {
+      "platform": "reddit",
+      "publishStatus": "queued",
+      "count": "2"
+    },
+    {
+      "platform": "tiktok",
+      "publishStatus": "queued",
+      "count": "2"
+    },
+    {
+      "platform": "webflow",
+      "publishStatus": "published",
+      "count": "14"
+    }
+  ],
+  "messages": [],
+  "stdout": "platform\tpublishStatus\tcount\nblog\tqueued\t26\nfacebook\tqueued\t2\ninstagram\tqueued\t15\nlinkedin\tqueued\t24\nmedium\tqueued\t4\nquora\tqueued\t4\nreddit\tqueued\t2\ntiktok\tqueued\t2\nwebflow\tpublished\t14\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

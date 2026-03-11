@@ -1,0 +1,9 @@
+{
+  "query": "SELECT pj.id, pj.platform, pj.publishStatus, pj.variantId, pj.brandId, pj.contentPackageId FROM publish_jobs pj WHERE pj.platform = 'webflow' AND pj.publishStatus = 'queued' ORDER BY pj.id ASC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT pj.id, pj.platform, pj.publishStatus, pj.variantId, pj.brandId, pj.contentPackageId FROM publish_jobs pj WHERE pj.platform = 'webflow' AND pj.publishStatus = 'queued' ORDER BY pj.id ASC LIMIT 20;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 66
+}

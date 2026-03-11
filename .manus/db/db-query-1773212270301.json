@@ -1,0 +1,172 @@
+{
+  "query": "SELECT pj.id, pj.platform, pj.publishStatus, pj.variantId, pj.brandId FROM publish_jobs pj ORDER BY pj.id DESC LIMIT 20; SELECT cp.id, cp.status, cp.brandId FROM content_packages cp ORDER BY cp.id DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT pj.id, pj.platform, pj.publishStatus, pj.variantId, pj.brandId FROM publish_jobs pj ORDER BY pj.id DESC LIMIT 20; SELECT cp.id, cp.status, cp.brandId FROM content_packages cp ORDER BY cp.id DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "150052",
+      "platform": "reddit",
+      "publishStatus": "queued",
+      "variantId": "240050",
+      "brandId": "1"
+    },
+    {
+      "id": "150051",
+      "platform": "blog",
+      "publishStatus": "queued",
+      "variantId": "240041",
+      "brandId": "1"
+    },
+    {
+      "id": "150050",
+      "platform": "medium",
+      "publishStatus": "queued",
+      "variantId": "240047",
+      "brandId": "1"
+    },
+    {
+      "id": "150048",
+      "platform": "reddit",
+      "publishStatus": "queued",
+      "variantId": "240014",
+      "brandId": "1"
+    },
+    {
+      "id": "150047",
+      "platform": "quora",
+      "publishStatus": "queued",
+      "variantId": "240029",
+      "brandId": "1"
+    },
+    {
+      "id": "150046",
+      "platform": "webflow",
+      "publishStatus": "failed",
+      "variantId": "240020",
+      "brandId": "1"
+    },
+    {
+      "id": "150045",
+      "platform": "quora",
+      "publishStatus": "queued",
+      "variantId": "240009",
+      "brandId": "1"
+    },
+    {
+      "id": "150044",
+      "platform": "medium",
+      "publishStatus": "queued",
+      "variantId": "240006",
+      "brandId": "1"
+    },
+    {
+      "id": "150042",
+      "platform": "quora",
+      "publishStatus": "queued",
+      "variantId": "240023",
+      "brandId": "1"
+    },
+    {
+      "id": "150041",
+      "platform": "facebook",
+      "publishStatus": "queued",
+      "variantId": "240032",
+      "brandId": "1"
+    },
+    {
+      "id": "150039",
+      "platform": "quora",
+      "publishStatus": "queued",
+      "variantId": "240003",
+      "brandId": "1"
+    },
+    {
+      "id": "150038",
+      "platform": "medium",
+      "publishStatus": "queued",
+      "variantId": "240026",
+      "brandId": "1"
+    },
+    {
+      "id": "150037",
+      "platform": "facebook",
+      "publishStatus": "queued",
+      "variantId": "240017",
+      "brandId": "1"
+    },
+    {
+      "id": "150035",
+      "platform": "tiktok",
+      "publishStatus": "queued",
+      "variantId": "240049",
+      "brandId": "1"
+    },
+    {
+      "id": "150033",
+      "platform": "linkedin",
+      "publishStatus": "queued",
+      "variantId": "240040",
+      "brandId": "1"
+    },
+    {
+      "id": "150032",
+      "platform": "linkedin",
+      "publishStatus": "queued",
+      "variantId": "240043",
+      "brandId": "1"
+    },
+    {
+      "id": "150031",
+      "platform": "medium",
+      "publishStatus": "queued",
+      "variantId": "240013",
+      "brandId": "1"
+    },
+    {
+      "id": "150030",
+      "platform": "blog",
+      "publishStatus": "queued",
+      "variantId": "240028",
+      "brandId": "1"
+    },
+    {
+      "id": "150029",
+      "platform": "linkedin",
+      "publishStatus": "queued",
+      "variantId": "240008",
+      "brandId": "1"
+    },
+    {
+      "id": "150028",
+      "platform": "tiktok",
+      "publishStatus": "queued",
+      "variantId": "240019",
+      "brandId": "1"
+    }
+  ],
+  "messages": [
+    "id\tstatus\tbrandId",
+    "270010\tgenerated\t1",
+    "270009\tgenerated\t1",
+    "270008\tgenerated\t1",
+    "270007\tgenerated\t1",
+    "270006\tgenerated\t1",
+    "270005\tgenerated\t1",
+    "270004\tgenerated\t1",
+    "270003\tgenerated\t1",
+    "270002\tgenerated\t1",
+    "270001\tgenerated\t1",
+    "240030\tapproved_for_publish\t1",
+    "240029\tapproved_for_publish\t1",
+    "240028\tapproved_for_publish\t1",
+    "240027\tapproved_for_publish\t1",
+    "240026\tapproved_for_publish\t1",
+    "240025\tapproved_for_publish\t1",
+    "240024\tapproved_for_publish\t1",
+    "240023\tapproved_for_publish\t1",
+    "240022\tapproved_for_publish\t1",
+    "240021\tapproved_for_publish\t1"
+  ],
+  "stdout": "id\tplatform\tpublishStatus\tvariantId\tbrandId\n150052\treddit\tqueued\t240050\t1\n150051\tblog\tqueued\t240041\t1\n150050\tmedium\tqueued\t240047\t1\n150048\treddit\tqueued\t240014\t1\n150047\tquora\tqueued\t240029\t1\n150046\twebflow\tfailed\t240020\t1\n150045\tquora\tqueued\t240009\t1\n150044\tmedium\tqueued\t240006\t1\n150042\tquora\tqueued\t240023\t1\n150041\tfacebook\tqueued\t240032\t1\n150039\tquora\tqueued\t240003\t1\n150038\tmedium\tqueued\t240026\t1\n150037\tfacebook\tqueued\t240017\t1\n150035\ttiktok\tqueued\t240049\t1\n150033\tlinkedin\tqueued\t240040\t1\n150032\tlinkedin\tqueued\t240043\t1\n150031\tmedium\tqueued\t240013\t1\n150030\tblog\tqueued\t240028\t1\n150029\tlinkedin\tqueued\t240008\t1\n150028\ttiktok\tqueued\t240019\t1\nid\tstatus\tbrandId\n270010\tgenerated\t1\n270009\tgenerated\t1\n270008\tgenerated\t1\n270007\tgenerated\t1\n270006\tgenerated\t1\n270005\tgenerated\t1\n270004\tgenerated\t1\n270003\tgenerated\t1\n270002\tgenerated\t1\n270001\tgenerated\t1\n240030\tapproved_for_publish\t1\n240029\tapproved_for_publish\t1\n240028\tapproved_for_publish\t1\n240027\tapproved_for_publish\t1\n240026\tapproved_for_publish\t1\n240025\tapproved_for_publish\t1\n240024\tapproved_for_publish\t1\n240023\tapproved_for_publish\t1\n240022\tapproved_for_publish\t1\n240021\tapproved_for_publish\t1\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}

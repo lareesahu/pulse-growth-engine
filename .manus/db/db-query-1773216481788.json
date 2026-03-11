@@ -1,0 +1,17 @@
+{
+  "query": "SELECT platform, LEFT(apiKey, 25) as key_start, LENGTH(apiKey) as key_len, LEFT(accessToken, 25) as token_start, LEFT(extraConfig, 80) as extra FROM integration_accounts WHERE platform = 'webflow';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT platform, LEFT(apiKey, 25) as key_start, LENGTH(apiKey) as key_len, LEFT(accessToken, 25) as token_start, LEFT(extraConfig, 80) as extra FROM integration_accounts WHERE platform = 'webflow';",
+  "rows": [
+    {
+      "platform": "webflow",
+      "key_start": "0c5726c672501ce3bc177700b",
+      "key_len": "64",
+      "token_start": "0c5726c672501ce3bc177700b",
+      "extra": "{\"apiToken\": \"0c5726c672501ce3bc177700b559431a11bb06cf92ec822a80be32e40d1ab014\","
+    }
+  ],
+  "messages": [],
+  "stdout": "platform\tkey_start\tkey_len\ttoken_start\textra\nwebflow\t0c5726c672501ce3bc177700b\t64\t0c5726c672501ce3bc177700b\t{\"apiToken\": \"0c5726c672501ce3bc177700b559431a11bb06cf92ec822a80be32e40d1ab014\",\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

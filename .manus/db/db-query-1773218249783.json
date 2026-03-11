@@ -1,0 +1,25 @@
+{
+  "query": "SELECT * FROM integration_accounts WHERE platform = 'webflow' LIMIT 1",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT * FROM integration_accounts WHERE platform = 'webflow' LIMIT 1",
+  "rows": [
+    {
+      "id": "2",
+      "brandId": "1",
+      "platform": "webflow",
+      "accountName": "673498ac936e891beb4335fd",
+      "apiKey": "0c5726c672501ce3bc177700b559431a11bb06cf92ec822a80be32e40d1ab014",
+      "apiSecret": "NULL",
+      "accessToken": "0c5726c672501ce3bc177700b559431a11bb06cf92ec822a80be32e40d1ab014",
+      "refreshToken": "NULL",
+      "extraConfig": "{\"apiToken\": \"0c5726c672501ce3bc177700b559431a11bb06cf92ec822a80be32e40d1ab014\", \"collectionId\": \"673498ac936e891beb433701\", \"siteId\": \"673498ac936e891beb4335fd\"}",
+      "status": "connected",
+      "lastTestedAt": "2026-03-09 11:08:45",
+      "createdAt": "2026-03-09 11:08:45",
+      "updatedAt": "2026-03-11 07:45:46"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tbrandId\tplatform\taccountName\tapiKey\tapiSecret\taccessToken\trefreshToken\textraConfig\tstatus\tlastTestedAt\tcreatedAt\tupdatedAt\n2\t1\twebflow\t673498ac936e891beb4335fd\t0c5726c672501ce3bc177700b559431a11bb06cf92ec822a80be32e40d1ab014\tNULL\t0c5726c672501ce3bc177700b559431a11bb06cf92ec822a80be32e40d1ab014\tNULL\t{\"apiToken\": \"0c5726c672501ce3bc177700b559431a11bb06cf92ec822a80be32e40d1ab014\", \"collectionId\": \"673498ac936e891beb433701\", \"siteId\": \"673498ac936e891beb4335fd\"}\tconnected\t2026-03-09 11:08:45\t2026-03-09 11:08:45\t2026-03-11 07:45:46\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

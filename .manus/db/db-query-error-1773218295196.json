@@ -1,0 +1,8 @@
+{
+  "query": "UPDATE integration_accounts SET extra_config = JSON_SET(COALESCE(extra_config, '{}'), '$.siteId', '673498ac936e891beb4335fd', '$.customDomain', 'pulse-branding.com') WHERE platform = 'webflow'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute UPDATE integration_accounts SET extra_config = JSON_SET(COALESCE(extra_config, '{}'), '$.siteId', '673498ac936e891beb4335fd', '$.customDomain', 'pulse-branding.com') WHERE platform = 'webflow'",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'extra_config' in 'field list'"
+  ]
+}

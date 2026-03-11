@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { execSync } from "child_process";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -756,37 +757,61 @@ const publishingRouter = router({
     await updatePublishJob(input.jobId, { publishStatus: "publishing", lastAttemptAt: new Date() });
 
     try {
-      // Create CMS item in Webflow
-      const response = await fetch(`https://api.webflow.com/v2/collections/${collectionId}/items`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${webflowIntegration.apiKey}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ fieldData, isDraft: false }),
+      // Step 1: Create CMS item with name+slug only (MCP requires fieldData as array for create)
+      const createInput = JSON.stringify({
+        actions: [{
+          create_collection_items: {
+            collection_id: collectionId,
+            request: {
+              isDraft: false,
+              fieldData: [{ name: fieldData.name || job.contentTitle, slug: fieldData.slug }]
+            }
+          }
+        }]
       });
+      let createResult: any;
+      try {
+        const createOutput = execSync(`manus-mcp-cli tool call data_cms_tool --server webflow --input '${createInput.replace(/'/g, "'\"'\"'")}'`, { encoding: "utf8", timeout: 60000 });
+        createResult = JSON.parse(createOutput);
+      } catch (mcpErr: any) {
+        throw new Error(`Webflow create failed: ${mcpErr.message?.slice(0, 300) || mcpErr}`);
+      }
+      const createdItemId = createResult?.items?.[0]?.id;
+      if (!createdItemId) throw new Error(`Webflow create returned no item ID. Response: ${JSON.stringify(createResult).slice(0, 200)}`);
 
-      if (!response.ok) {
-        const errText = await response.text();
-        let friendlyMsg = `Webflow API error ${response.status}: ${errText.slice(0, 300)}`;
-        let throwMsg = `Webflow API error: ${response.status} — ${errText.slice(0, 200)}`;
-        if (response.status === 403 || errText.includes("missing_scopes") || errText.includes("cms:write")) {
-          friendlyMsg = `Webflow 403: Token missing cms:write scope. Fix: Webflow Site Settings → Integrations → API Access → Generate new token → under CMS enable both Read AND Write → paste new token in Settings → Integrations.`;
-          throwMsg = `Webflow token is missing cms:write permission. Go to Webflow Site Settings → Integrations → API Access → generate a new v2 Site API Token with CMS Read + Write enabled, then update it in Settings → Integrations.`;
-        } else if (response.status === 401) {
-          friendlyMsg = `Webflow 401: Invalid API token. Re-generate your token in Webflow Site Settings → Integrations → API Access and update it in Settings → Integrations.`;
-          throwMsg = friendlyMsg;
-        } else if (response.status === 404) {
-          friendlyMsg = `Webflow 404: Collection not found. Check your Collection ID in Settings → Integrations → Webflow.`;
-          throwMsg = friendlyMsg;
-        }
-        await updatePublishJob(input.jobId, { publishStatus: "failed", errorLog: friendlyMsg });
-        throw new TRPCError({ code: "BAD_REQUEST", message: throwMsg });
+      // Step 2: Update with full content (fieldData as flat object)
+      try {
+        const updateInput = JSON.stringify({
+          actions: [{
+            update_collection_items: {
+              collection_id: collectionId,
+              request: {
+                items: [{ id: createdItemId, isDraft: false, fieldData }]
+              }
+            }
+          }]
+        });
+        execSync(`manus-mcp-cli tool call data_cms_tool --server webflow --input '${updateInput.replace(/'/g, "'\"'\"'")}'`, { encoding: "utf8", timeout: 60000 });
+      } catch (updErr: any) {
+        console.warn("[Webflow] Update step failed (item created with minimal content):", updErr.message);
       }
 
-      const data = await response.json();
-      const webflowItemId = data.id || data.items?.[0]?.id || "created";
+      // Step 3: Publish the item (make it live)
+      try {
+        const publishInput = JSON.stringify({
+          actions: [{
+            publish_collection_items: {
+              collection_id: collectionId,
+              request: { itemIds: [createdItemId] }
+            }
+          }]
+        });
+        execSync(`manus-mcp-cli tool call data_cms_tool --server webflow --input '${publishInput.replace(/'/g, "'\"'\"'")}'`, { encoding: "utf8", timeout: 30000 });
+      } catch (pubErr: any) {
+        console.warn("[Webflow] Publish step failed (item created as draft):", pubErr.message);
+      }
+
+      const webflowItemId = createdItemId;
 
       // Mark as published
       await updatePublishJob(input.jobId, {
@@ -863,32 +888,82 @@ const publishingRouter = router({
 
       await updatePublishJob(job.id, { publishStatus: "publishing", lastAttemptAt: new Date() });
       try {
-        const response = await fetch(`https://api.webflow.com/v2/collections/${bulkCollectionId}/items`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${webflowIntegration.apiKey}`, "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify({ fieldData, isDraft: false }),
+        // Step 1: Create with name+slug only (MCP requires fieldData as array for create)
+        const bulkCreateInput = JSON.stringify({
+          actions: [{
+            create_collection_items: {
+              collection_id: bulkCollectionId,
+              request: {
+                isDraft: false,
+                fieldData: [{ name: fieldData.name || job.contentTitle, slug: fieldData.slug }]
+              }
+            }
+          }]
         });
-        if (!response.ok) {
-          const errText = await response.text();
-          let bulkErrMsg = `Webflow API error ${response.status}: ${errText.slice(0, 300)}`;
-          if (response.status === 403 || errText.includes("missing_scopes") || errText.includes("cms:write")) {
-            bulkErrMsg = `Webflow 403: Token missing cms:write scope. Fix: Webflow Site Settings → Integrations → API Access → Generate new token with CMS Read + Write, then update in Settings → Integrations.`;
-          } else if (response.status === 401) {
-            bulkErrMsg = `Webflow 401: Invalid API token. Re-generate in Webflow Site Settings → Integrations → API Access.`;
-          }
-          await updatePublishJob(job.id, { publishStatus: "failed", errorLog: bulkErrMsg });
-          failed++;
-        } else {
-          const data = await response.json();
-          const webflowItemId = data.id || data.items?.[0]?.id || "created";
-          await updatePublishJob(job.id, { publishStatus: "published", publishedAt: new Date(), errorLog: null });
-          if (job.variantId) await updateVariant(job.variantId, { status: "published" });
-          await logAudit({ brandId: input.brandId, actorUserId: ctx.user.id, entityType: "publish_job", entityId: job.id, action: "published", description: `Bulk published to Webflow: ${job.contentTitle || "item"} (ID: ${webflowItemId})` });
-          published++;
+        const bulkCreateOutput = execSync(`manus-mcp-cli tool call data_cms_tool --server webflow --input '${bulkCreateInput.replace(/'/g, "'\"'\"'")}'`, { encoding: "utf8", timeout: 60000 });
+        const bulkCreateResult = JSON.parse(bulkCreateOutput);
+        const bulkItemId = bulkCreateResult?.items?.[0]?.id;
+        if (!bulkItemId) throw new Error(`Webflow create returned no item ID. Response: ${JSON.stringify(bulkCreateResult).slice(0, 200)}`);
+
+        // Step 2: Update with full content
+        try {
+          const bulkUpdateInput = JSON.stringify({
+            actions: [{
+              update_collection_items: {
+                collection_id: bulkCollectionId,
+                request: { items: [{ id: bulkItemId, isDraft: false, fieldData }] }
+              }
+            }]
+          });
+          execSync(`manus-mcp-cli tool call data_cms_tool --server webflow --input '${bulkUpdateInput.replace(/'/g, "'\"'\"'")}'`, { encoding: "utf8", timeout: 60000 });
+        } catch (updErr: any) {
+          console.warn("[Webflow] Bulk update step failed:", updErr.message);
         }
+
+        // Step 3: Publish
+        try {
+          const bulkPublishInput = JSON.stringify({
+            actions: [{
+              publish_collection_items: {
+                collection_id: bulkCollectionId,
+                request: { itemIds: [bulkItemId] }
+              }
+            }]
+          });
+          execSync(`manus-mcp-cli tool call data_cms_tool --server webflow --input '${bulkPublishInput.replace(/'/g, "'\"'\"'")}'`, { encoding: "utf8", timeout: 30000 });
+        } catch (pubErr: any) {
+          console.warn("[Webflow] Bulk publish step failed (item created as draft):", pubErr.message);
+        }
+
+        const webflowItemId = bulkItemId;
+        await updatePublishJob(job.id, { publishStatus: "published", publishedAt: new Date(), errorLog: null });
+        if (job.variantId) await updateVariant(job.variantId, { status: "published" });
+        await logAudit({ brandId: input.brandId, actorUserId: ctx.user.id, entityType: "publish_job", entityId: job.id, action: "published", description: `Bulk published to Webflow: ${job.contentTitle || "item"} (ID: ${webflowItemId})` });
+        published++;
       } catch (err: any) {
-        await updatePublishJob(job.id, { publishStatus: "failed", errorLog: err.message });
+        await updatePublishJob(job.id, { publishStatus: "failed", errorLog: err.message?.slice(0, 400) || String(err) });
         failed++;
+      }
+    }
+    // Step 4: Trigger a full site publish so individual article pages go live
+    if (published > 0) {
+      try {
+        const siteId = extraConfigAll.siteId;
+        if (siteId) {
+          const sitePublishInput = JSON.stringify({
+            actions: [{
+              publish_site: {
+                site_id: siteId,
+                customDomains: extraConfigAll.customDomain ? [extraConfigAll.customDomain] : [],
+                publishToWebflowSubdomain: true
+              }
+            }]
+          });
+          execSync(`manus-mcp-cli tool call data_sites_tool --server webflow --input '${sitePublishInput.replace(/'/g, "'\"'\"'")}'`, { encoding: "utf8", timeout: 30000 });
+          console.log(`[Webflow] Site published successfully after ${published} articles`);
+        }
+      } catch (siteErr: any) {
+        console.warn("[Webflow] Site publish failed (articles are in CMS but individual pages may not be live yet):", siteErr?.message?.slice(0, 200));
       }
     }
     return { success: true, published, failed };

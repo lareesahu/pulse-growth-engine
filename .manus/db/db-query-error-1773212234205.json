@@ -1,0 +1,25 @@
+{
+  "query": "DESCRIBE publish_jobs; SELECT id, platform, publish_status, content_title, variant_id, brand_id FROM publish_jobs WHERE platform = 'webflow' AND publish_status = 'queued' ORDER BY id ASC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute DESCRIBE publish_jobs; SELECT id, platform, publish_status, content_title, variant_id, brand_id FROM publish_jobs WHERE platform = 'webflow' AND publish_status = 'queued' ORDER BY id ASC LIMIT 20;",
+  "returncode": 1,
+  "logs": [
+    "Field\tType\tNull\tKey\tDefault\tExtra",
+    "id\tint\tNO\tPRI\tNULL\tauto_increment",
+    "variantId\tint\tNO\t\tNULL\t",
+    "contentPackageId\tint\tNO\t\tNULL\t",
+    "brandId\tint\tNO\t\tNULL\t",
+    "integrationAccountId\tint\tYES\t\tNULL\t",
+    "platform\tvarchar(64)\tNO\t\tNULL\t",
+    "actionType\tenum('publish_now','schedule')\tYES\t\tpublish_now\t",
+    "scheduledFor\ttimestamp\tYES\t\tNULL\t",
+    "publishStatus\tenum('draft','queued','scheduled','publishing','published','partial_failure','failed','canceled')\tNO\t\tdraft\t",
+    "externalPostId\tvarchar(255)\tYES\t\tNULL\t",
+    "errorLog\ttext\tYES\t\tNULL\t",
+    "retryCount\tint\tYES\t\t0\t",
+    "lastAttemptAt\ttimestamp\tYES\t\tNULL\t",
+    "publishedAt\ttimestamp\tYES\t\tNULL\t",
+    "createdAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t",
+    "updatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+    "ERROR 1054 (42S22) at line 1: Unknown column 'publish_status' in 'where clause'"
+  ]
+}
