@@ -434,3 +434,26 @@ export const scheduledPosts = mysqlTable("scheduled_posts", {
 });
 export type ScheduledPost = typeof scheduledPosts.$inferSelect;
 export type InsertScheduledPost = typeof scheduledPosts.$inferInsert;
+
+// ─── System Health Log ────────────────────────────────────────────────────────
+// Tracks scheduler heartbeats and health events so we can detect when the
+// scheduler has stopped, when publish failure rates spike, or when the queue
+// goes stale — and proactively notify the owner.
+export const systemHealthLog = mysqlTable("system_health_log", {
+  id: int("id").autoincrement().primaryKey(),
+  event: mysqlEnum("event", [
+    "scheduler_tick",
+    "scheduler_error",
+    "publish_success",
+    "publish_failure",
+    "mcp_auth_error",
+    "queue_stale_warning",
+    "notification_sent",
+    "pipeline_run",
+  ]).notNull(),
+  platform: varchar("platform", { length: 64 }),
+  detail: text("detail"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type SystemHealthLog = typeof systemHealthLog.$inferSelect;
+export type InsertSystemHealthLog = typeof systemHealthLog.$inferInsert;

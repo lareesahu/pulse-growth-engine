@@ -146,7 +146,7 @@ export default function PublishingCenter() {
 
   const webflowIntegration = (integration || []).find((i: any) => i.platform === "webflow" && i.status === "connected");
 
-  // tokenScope check removed — publishing uses MCP, not direct API token
+  // tokenScope check removed - publishing uses MCP, not direct API token
 
   const markPublished = trpc.publishing.markPublished.useMutation({ onSuccess: () => { refetch(); toast.success("Marked as published"); } });
   const markFailed = trpc.publishing.markFailed.useMutation({ onSuccess: () => { refetch(); toast.error("Marked as failed"); } });

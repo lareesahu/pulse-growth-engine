@@ -372,3 +372,12 @@
 - [ ] Backend: wire autoSchedule into review approval mutation (approvePackage) — if platform has autoSchedule=true, auto-queue all variants
 - [ ] Frontend: Auto-Schedule toggle per platform in Scheduling Settings
 - [ ] Frontend: Show "Auto-scheduled" badge on newly queued posts in Queue tab
+
+## Pipeline Health & Reminder System (March 12 2026)
+- [x] Webflow: all 14 articles already published via MCP (79 queued jobs were other platforms)
+- [x] Audit all failure modes: cron health, MCP token expiry, Webflow auth, scheduler DB errors
+- [x] DB: system_health_log table for scheduler heartbeats and health events
+- [x] Backend: systemHealth procedure — check scheduler last tick, MCP connectivity, publish failure rate, queue staleness
+- [x] Backend: proactive owner notifications — alert when scheduler is stuck, MCP auth expires, queue goes stale >48h, publish failure rate >20%
+- [x] Frontend: System Health panel on Dashboard — live status of all pipeline components with action prompts
+- [x] Scheduler: logs heartbeat every 10 ticks, logs publish success/failure events, detects MCP auth errors

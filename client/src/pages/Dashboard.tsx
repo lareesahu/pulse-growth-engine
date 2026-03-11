@@ -11,7 +11,8 @@ import {
   Zap, CheckCheck, Rocket, Brain, RefreshCw,
   Lightbulb, FileText, Globe, Send, Clock,
   TrendingUp, Activity, ChevronRight, Sparkles,
-  Loader2, CheckCircle2, AlertCircle, Play, Plus
+  Loader2, CheckCircle2, AlertCircle, Play, Plus,
+  ShieldCheck, ShieldAlert, ShieldX
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -71,6 +72,10 @@ export default function Dashboard() {
   const { data: publishStats } = trpc.publishing.stats.useQuery(
     { brandId: activeBrandId! },
     { enabled: !!activeBrandId }
+  );
+  const { data: pipelineHealth } = trpc.system.pipelineHealth.useQuery(
+    undefined,
+    { refetchInterval: 60_000 }
   );
 
   // Pipeline status polling for background job
@@ -450,6 +455,69 @@ export default function Dashboard() {
         </div>
 
         {/* ── RECENT ACTIVITY ── */}
+        {/* ── SYSTEM HEALTH PANEL ── */}
+        {pipelineHealth && (
+          <div className={`rounded-xl border p-4 ${
+            pipelineHealth.overallStatus === "critical" ? "border-red-500/30 bg-red-500/5" :
+            pipelineHealth.overallStatus === "warning" ? "border-amber-500/30 bg-amber-500/5" :
+            "border-emerald-500/20 bg-emerald-500/5"
+          }`}>
+            <div className="flex items-center gap-2 mb-3">
+              {pipelineHealth.overallStatus === "critical" ? (
+                <ShieldX className="w-4 h-4 text-red-400" />
+              ) : pipelineHealth.overallStatus === "warning" ? (
+                <ShieldAlert className="w-4 h-4 text-amber-400" />
+              ) : (
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              )}
+              <span className={`text-xs font-semibold ${
+                pipelineHealth.overallStatus === "critical" ? "text-red-400" :
+                pipelineHealth.overallStatus === "warning" ? "text-amber-400" :
+                "text-emerald-400"
+              }`}>
+                Pipeline Health: {pipelineHealth.overallStatus === "healthy" ? "All Systems Operational" :
+                  pipelineHealth.overallStatus === "warning" ? "Attention Required" : "Action Needed"}
+              </span>
+              <span className="ml-auto text-[10px] text-white/25">
+                {pipelineHealth.scheduler.lastSeen
+                  ? `Scheduler last seen ${new Date(pipelineHealth.scheduler.lastSeen).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                  : "Scheduler: no heartbeat yet"}
+              </span>
+            </div>
+            {/* Status row */}
+            <div className="grid grid-cols-4 gap-2 mb-3">
+              {[
+                { label: "Scheduler", ok: pipelineHealth.scheduler.alive, okText: "Running", failText: "Stopped" },
+                { label: "Queue", ok: pipelineHealth.queue.stale === 0, okText: `${pipelineHealth.queue.pending} pending`, failText: `${pipelineHealth.queue.stale} overdue` },
+                { label: "Published Today", ok: true, okText: `${pipelineHealth.queue.publishedToday}`, failText: "0" },
+                { label: "Failed Today", ok: pipelineHealth.queue.failedToday === 0, okText: "0", failText: `${pipelineHealth.queue.failedToday}` },
+              ].map(({ label, ok, okText, failText }) => (
+                <div key={label} className="bg-white/3 rounded-lg p-2 text-center">
+                  <p className="text-[10px] text-white/30 mb-1">{label}</p>
+                  <p className={`text-xs font-semibold ${ok ? "text-emerald-400" : "text-amber-400"}`}>{ok ? okText : failText}</p>
+                </div>
+              ))}
+            </div>
+            {/* Warnings and actions */}
+            {pipelineHealth.warnings.length > 0 && (
+              <div className="space-y-1.5">
+                {pipelineHealth.warnings.map((w, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <AlertCircle className="w-3 h-3 text-amber-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-[11px] text-white/60">{w}</span>
+                  </div>
+                ))}
+                {pipelineHealth.actions.map((a, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <ChevronRight className="w-3 h-3 text-[#5E6AD2] mt-0.5 flex-shrink-0" />
+                    <span className="text-[11px] text-[#5E6AD2]">{a}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {(recentActivity as any[]).length > 0 && (
           <div className="space-y-2">
             <p className="text-white/30 text-xs font-medium uppercase tracking-wider">Recent Activity</p>
