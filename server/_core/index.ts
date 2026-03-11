@@ -8,8 +8,8 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { getDb } from "../db";
-import { pipelineRuns } from "../../drizzle/schema";
-import { eq, lt, and } from "drizzle-orm";
+import { pipelineRuns, scheduledPosts } from "../../drizzle/schema";
+import { eq, lt, lte, and } from "drizzle-orm";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -48,6 +48,52 @@ async function resetStalePipelineRuns() {
   }
 }
 
+/**
+ * Background scheduler — runs every 60 seconds and publishes any pending
+ * scheduled posts whose scheduledAt time has passed.
+ */
+function startScheduler() {
+  const tick = async () => {
+    try {
+      const db = await getDb();
+      if (!db) return;
+      const now = new Date();
+      const duePosts = await db.select().from(scheduledPosts)
+        .where(and(eq(scheduledPosts.status, "pending"), lte(scheduledPosts.scheduledAt, now)));
+      if (duePosts.length === 0) return;
+      console.log(`[Scheduler] ${duePosts.length} post(s) due for publishing`);
+      for (const post of duePosts) {
+        try {
+          // Mark as publishing to prevent double-publish
+          await db.update(scheduledPosts)
+            .set({ status: "publishing" })
+            .where(eq(scheduledPosts.id, post.id));
+          // Trigger the publish via the publishing router
+          const { publishVariantToWebflow } = await import("../routers") as any;
+          if (post.platform === "webflow" && publishVariantToWebflow) {
+            await publishVariantToWebflow(post.variantId, post.contentPackageId);
+          }
+          await db.update(scheduledPosts)
+            .set({ status: "published", publishedAt: new Date() })
+            .where(eq(scheduledPosts.id, post.id));
+          console.log(`[Scheduler] Published post ${post.id} (${post.platform})`);
+        } catch (err: any) {
+          console.error(`[Scheduler] Failed to publish post ${post.id}:`, err.message);
+          await db.update(scheduledPosts)
+            .set({ status: "failed", errorMessage: err.message })
+            .where(eq(scheduledPosts.id, post.id));
+        }
+      }
+    } catch (err) {
+      console.warn("[Scheduler] tick error:", err);
+    }
+  };
+  // Run immediately on start, then every 60 seconds
+  tick();
+  setInterval(tick, 60_000);
+  console.log("[Scheduler] Background scheduler started (60s interval)");
+}
+
 async function startServer() {
   const app = express();
   const server = createServer(app);
@@ -80,6 +126,8 @@ async function startServer() {
 
   // Reset any stale pipeline runs from previous server crashes
   resetStalePipelineRuns();
+  // Start background scheduler — checks every 60s for posts due to publish
+  startScheduler();
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);

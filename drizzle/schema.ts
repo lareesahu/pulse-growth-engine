@@ -397,3 +397,39 @@ export const webflowFieldMappings = mysqlTable("webflow_field_mappings", {
 });
 export type WebflowFieldMapping = typeof webflowFieldMappings.$inferSelect;
 export type InsertWebflowFieldMapping = typeof webflowFieldMappings.$inferInsert;
+
+// ─── Platform Schedules ───────────────────────────────────────────────────────
+export const platformSchedules = mysqlTable("platform_schedules", {
+  id: int("id").autoincrement().primaryKey(),
+  brandId: int("brandId").notNull(),
+  platform: varchar("platform", { length: 64 }).notNull(),
+  enabled: boolean("enabled").default(true).notNull(),
+  bestPushTime: varchar("bestPushTime", { length: 8 }).default("09:00").notNull(),
+  timezone: varchar("timezone", { length: 64 }).default("Australia/Sydney").notNull(),
+  cadenceType: mysqlEnum("cadenceType", ["daily", "weekly", "monthly", "custom"]).default("weekly").notNull(),
+  cadenceDays: json("cadenceDays").$type<number[]>(),
+  cadenceDayOfMonth: int("cadenceDayOfMonth").default(1),
+  cadenceIntervalDays: int("cadenceIntervalDays").default(7),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PlatformSchedule = typeof platformSchedules.$inferSelect;
+export type InsertPlatformSchedule = typeof platformSchedules.$inferInsert;
+
+// ─── Scheduled Posts ──────────────────────────────────────────────────────────
+export const scheduledPosts = mysqlTable("scheduled_posts", {
+  id: int("id").autoincrement().primaryKey(),
+  brandId: int("brandId").notNull(),
+  variantId: int("variantId").notNull(),
+  contentPackageId: int("contentPackageId").notNull(),
+  platform: varchar("platform", { length: 64 }).notNull(),
+  scheduledAt: timestamp("scheduledAt").notNull(),
+  status: mysqlEnum("status", ["pending", "publishing", "published", "failed", "cancelled"]).default("pending").notNull(),
+  publishedAt: timestamp("publishedAt"),
+  errorMessage: text("errorMessage"),
+  publishJobId: int("publishJobId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ScheduledPost = typeof scheduledPosts.$inferSelect;
+export type InsertScheduledPost = typeof scheduledPosts.$inferInsert;

@@ -582,3 +582,65 @@ export async function hardDeleteAllIdeasForBrand(brandId: number) {
   const result = await db.delete(ideas).where(eq(ideas.brandId, brandId));
   return (result as any)[0]?.affectedRows ?? 0;
 }
+
+// ─── Platform Schedules ───────────────────────────────────────────────────────
+import { platformSchedules, scheduledPosts, InsertPlatformSchedule, InsertScheduledPost } from "../drizzle/schema";
+
+export async function getPlatformSchedules(brandId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(platformSchedules).where(eq(platformSchedules.brandId, brandId));
+}
+
+export async function getPlatformSchedule(brandId: number, platform: string) {
+  const db = await getDb(); if (!db) return null;
+  const rows = await db.select().from(platformSchedules)
+    .where(and(eq(platformSchedules.brandId, brandId), eq(platformSchedules.platform, platform)))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function upsertPlatformSchedule(brandId: number, platform: string, data: Partial<InsertPlatformSchedule>) {
+  const db = await getDb(); if (!db) return;
+  const existing = await getPlatformSchedule(brandId, platform);
+  if (existing) {
+    await db.update(platformSchedules).set({ ...data, updatedAt: new Date() }).where(eq(platformSchedules.id, existing.id));
+  } else {
+    await db.insert(platformSchedules).values({ brandId, platform, ...data } as InsertPlatformSchedule);
+  }
+}
+
+// ─── Scheduled Posts ──────────────────────────────────────────────────────────
+export async function getScheduledPosts(brandId: number, opts?: { platform?: string; status?: string; from?: Date; to?: Date }) {
+  const db = await getDb(); if (!db) return [];
+  let q = db.select().from(scheduledPosts).where(eq(scheduledPosts.brandId, brandId));
+  return (await q).filter(p => {
+    if (opts?.platform && p.platform !== opts.platform) return false;
+    if (opts?.status && p.status !== opts.status) return false;
+    if (opts?.from && p.scheduledAt < opts.from) return false;
+    if (opts?.to && p.scheduledAt > opts.to) return false;
+    return true;
+  }).sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
+}
+
+export async function createScheduledPost(data: InsertScheduledPost) {
+  const db = await getDb(); if (!db) return null;
+  const result = await db.insert(scheduledPosts).values(data);
+  return (result as any)[0]?.insertId ?? null;
+}
+
+export async function updateScheduledPost(id: number, data: Partial<InsertScheduledPost>) {
+  const db = await getDb(); if (!db) return;
+  await db.update(scheduledPosts).set({ ...data, updatedAt: new Date() }).where(eq(scheduledPosts.id, id));
+}
+
+export async function deleteScheduledPost(id: number) {
+  const db = await getDb(); if (!db) return;
+  await db.delete(scheduledPosts).where(eq(scheduledPosts.id, id));
+}
+
+export async function getDueScheduledPosts() {
+  const db = await getDb(); if (!db) return [];
+  const now = new Date();
+  const rows = await db.select().from(scheduledPosts).where(eq(scheduledPosts.status, "pending"));
+  return rows.filter(p => p.scheduledAt <= now);
+}

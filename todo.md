@@ -345,3 +345,22 @@
 - [x] Remove AI生成 watermarks from all 14 published Webflow articles (Seedream → crop → re-upload → publish)
 - [x] All 14 article images verified clean on pulse-branding.com (no text, no watermarks)
 - [x] Strengthened image prompt: "NO text, NO letters, NO words, NO characters, NO watermarks, NO labels, NO captions, NO symbols"
+
+## Content Scheduling System
+- [ ] DB: platform_schedules table (brandId, platform, bestPushTime, cadenceType, cadenceDays, timezone, enabled)
+- [ ] DB: scheduled_posts table (variantId, platform, scheduledAt, status: pending/published/failed, publishedAt)
+- [ ] Backend: schedule.getPlatformSchedules — get all platform schedule configs for a brand
+- [ ] Backend: schedule.savePlatformSchedule — save cadence + best push time per platform
+- [ ] Backend: schedule.scheduleVariant — assign a variant to a platform's next available slot
+- [ ] Backend: schedule.getScheduledPosts — list all scheduled posts with dates, platform, article title
+- [ ] Backend: schedule.reschedulePost — move a post to a different date/time
+- [ ] Backend: schedule.removeFromSchedule — unschedule a post (back to queue)
+- [ ] Backend: schedule.getCalendarView — posts grouped by date for calendar grid
+- [ ] Publishing Center: variant-platform assignment toggles per content package
+- [ ] Publishing Center: "Schedule" button per variant (assigns to next available slot)
+- [ ] Publishing Center: "Publish Now" still available as override
+- [ ] Schedule Queue page: ordered list per platform, shows date/time, article title, status
+- [ ] Calendar view: weekly/monthly grid, posts per day per platform, drag-to-reorder
+- [ ] Platform Settings (Integrations): best push time picker + cadence config per platform
+- [ ] Background scheduler: cron job checks scheduled_posts every minute, publishes due posts
+- [ ] Timezone support: per-brand timezone setting (default Sydney AEDT)

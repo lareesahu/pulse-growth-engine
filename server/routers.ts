@@ -1715,6 +1715,198 @@ const modelSettingsRouter = router({
     }),
 });
 
+// ─── Scheduling Router ──────────────────────────────────────────────────────
+const schedulingRouter = router({
+  // Get all platform schedules for a brand
+  getSchedules: protectedProcedure
+    .input(z.object({ brandId: z.number() }))
+    .query(async ({ input }) => {
+      const { getPlatformSchedules } = await import("./db");
+      return getPlatformSchedules(input.brandId);
+    }),
+
+  // Upsert a platform schedule
+  upsertSchedule: protectedProcedure
+    .input(z.object({
+      brandId: z.number(),
+      platform: z.string(),
+      enabled: z.boolean().optional(),
+      bestPushTime: z.string().optional(), // "HH:MM"
+      timezone: z.string().optional(),
+      cadenceType: z.enum(["daily", "weekly", "monthly", "custom"]).optional(),
+      cadenceDays: z.array(z.number()).optional(), // 0=Sun..6=Sat
+      cadenceDayOfMonth: z.number().optional(),
+      cadenceIntervalDays: z.number().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { upsertPlatformSchedule } = await import("./db");
+      const { brandId, platform, ...data } = input;
+      await upsertPlatformSchedule(brandId, platform, data);
+      return { success: true };
+    }),
+
+  // Get scheduled posts for a brand (optionally filtered)
+  getScheduledPosts: protectedProcedure
+    .input(z.object({
+      brandId: z.number(),
+      platform: z.string().optional(),
+      status: z.string().optional(),
+      from: z.date().optional(),
+      to: z.date().optional(),
+    }))
+    .query(async ({ input }) => {
+      const { getScheduledPosts, getVariantsByPackageId, getContentPackageById } = await import("./db");
+      const { brandId, ...opts } = input;
+      const posts = await getScheduledPosts(brandId, opts);
+      // Enrich with variant/package info
+      const enriched = await Promise.all(posts.map(async (p) => {
+        const pkg = await getContentPackageById(p.contentPackageId);
+        return {
+          ...p,
+          contentTitle: pkg?.masterHook ?? "Untitled",
+          contentAngle: pkg?.masterAngle ?? "",
+        };
+      }));
+      return enriched;
+    }),
+
+  // Schedule a variant for a specific platform
+  schedulePost: protectedProcedure
+    .input(z.object({
+      brandId: z.number(),
+      variantId: z.number(),
+      contentPackageId: z.number(),
+      platform: z.string(),
+      scheduledAt: z.date(),
+    }))
+    .mutation(async ({ input }) => {
+      const { createScheduledPost } = await import("./db");
+      const id = await createScheduledPost(input);
+      return { success: true, id };
+    }),
+
+  // Schedule all approved variants for a brand using platform cadence
+  scheduleAllApproved: protectedProcedure
+    .input(z.object({ brandId: z.number() }))
+    .mutation(async ({ input }) => {
+      const { getReviewQueue, getPlatformSchedules, getScheduledPosts, createScheduledPost } = await import("./db");
+      const queue = await getReviewQueue(input.brandId);
+      const schedules = await getPlatformSchedules(input.brandId);
+      const existing = await getScheduledPosts(input.brandId, { status: "pending" });
+      const existingKeys = new Set(existing.map(p => `${p.variantId}-${p.platform}`));
+
+      let scheduled = 0;
+      for (const schedule of schedules) {
+        if (!schedule.enabled) continue;
+        // Find approved packages that have a variant for this platform
+        const relevantPackages = queue.filter((pkg: any) => pkg.status === "approved");
+        // Get next available slot times for this platform
+        const platformExisting = existing.filter(p => p.platform === schedule.platform && p.status === "pending");
+        let nextSlot = getNextSlotTime(schedule, platformExisting);
+
+        for (const pkg of relevantPackages) {
+          const variantKey = `${pkg.id}-${schedule.platform}`;
+          if (existingKeys.has(variantKey)) continue;
+          // Find the variant for this platform
+          const { getVariantsByPackageId } = await import("./db");
+          const variants = await getVariantsByPackageId(pkg.id);
+          const variant = variants.find((v: any) => v.platform === schedule.platform);
+          if (!variant) continue;
+
+          await createScheduledPost({
+            brandId: input.brandId,
+            variantId: variant.id,
+            contentPackageId: pkg.id,
+            platform: schedule.platform,
+            scheduledAt: nextSlot,
+            status: "pending",
+          });
+          existingKeys.add(variantKey);
+          scheduled++;
+          nextSlot = advanceSlot(nextSlot, schedule);
+        }
+      }
+      return { success: true, scheduled };
+    }),
+
+  // Reschedule a post to a new time
+  reschedulePost: protectedProcedure
+    .input(z.object({ id: z.number(), scheduledAt: z.date() }))
+    .mutation(async ({ input }) => {
+      const { updateScheduledPost } = await import("./db");
+      await updateScheduledPost(input.id, { scheduledAt: input.scheduledAt });
+      return { success: true };
+    }),
+
+  // Cancel a scheduled post
+  cancelPost: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const { updateScheduledPost } = await import("./db");
+      await updateScheduledPost(input.id, { status: "cancelled" });
+      return { success: true };
+    }),
+
+  // Delete a scheduled post
+  deletePost: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const { deleteScheduledPost } = await import("./db");
+      await deleteScheduledPost(input.id);
+      return { success: true };
+    }),
+});
+
+// ─── Scheduling Helpers ───────────────────────────────────────────────────────
+function getNextSlotTime(schedule: any, existingPosts: any[]): Date {
+  const now = new Date();
+  const [hour, minute] = (schedule.bestPushTime || "09:00").split(":").map(Number);
+  let candidate = new Date(now);
+  candidate.setHours(hour, minute, 0, 0);
+  if (candidate <= now) candidate.setDate(candidate.getDate() + 1);
+
+  // Advance until we hit a valid cadence day
+  for (let i = 0; i < 365; i++) {
+    if (isValidCadenceDay(candidate, schedule)) {
+      // Check no existing post on same day+platform
+      const sameDay = existingPosts.some(p => {
+        const d = new Date(p.scheduledAt);
+        return d.toDateString() === candidate.toDateString();
+      });
+      if (!sameDay) return candidate;
+    }
+    candidate = new Date(candidate);
+    candidate.setDate(candidate.getDate() + 1);
+    candidate.setHours(hour, minute, 0, 0);
+  }
+  return candidate;
+}
+
+function advanceSlot(current: Date, schedule: any): Date {
+  const [hour, minute] = (schedule.bestPushTime || "09:00").split(":").map(Number);
+  let next = new Date(current);
+  next.setDate(next.getDate() + 1);
+  next.setHours(hour, minute, 0, 0);
+  for (let i = 0; i < 365; i++) {
+    if (isValidCadenceDay(next, schedule)) return next;
+    next = new Date(next);
+    next.setDate(next.getDate() + 1);
+  }
+  return next;
+}
+
+function isValidCadenceDay(date: Date, schedule: any): boolean {
+  const dow = date.getDay(); // 0=Sun
+  const dom = date.getDate();
+  switch (schedule.cadenceType) {
+    case "daily": return true;
+    case "weekly": return (schedule.cadenceDays ?? [1]).includes(dow);
+    case "monthly": return dom === (schedule.cadenceDayOfMonth ?? 1);
+    case "custom": return true; // handled by interval
+    default: return true;
+  }
+}
+
 // ─── App Router ─────────────────────────────────────────────────
 export const appRouter = router({
   system: systemRouter,
@@ -1738,6 +1930,7 @@ export const appRouter = router({
   inspector: inspectorRouter,
   pipeline: pipelineRouter,
   forum: forumRouter,
+  scheduling: schedulingRouter,
 });
 
 export type AppRouter = typeof appRouter;

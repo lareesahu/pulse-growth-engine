@@ -43,6 +43,13 @@
       "when": 1773070362308,
       "tag": "0005_tiny_dormammu",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1773231642199,
+      "tag": "0006_curvy_jamie_braddock",
+      "breakpoints": true
     }
   ]
 }
