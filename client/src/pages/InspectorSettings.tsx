@@ -30,27 +30,27 @@ const DIMENSIONS = [
     key: "authenticity",
     label: "Authenticity",
     icon: Fingerprint,
-    color: "text-[#3AC1EC]",
-    bg: "bg-[#3AC1EC]/10",
-    border: "border-[#3AC1EC]/30",
+    color: "text-[#5E6AD2]",
+    bg: "bg-[#5E6AD2]/10",
+    border: "border-[#5E6AD2]/30",
     description: "Consistent with the brand's actual voice — not generic marketing speak",
   },
   {
     key: "accuracy",
     label: "Accuracy",
     icon: ShieldCheck,
-    color: "text-[#56C4C4]",
-    bg: "bg-[#56C4C4]/10",
-    border: "border-[#56C4C4]/30",
+    color: "text-[#7C3AED]",
+    bg: "bg-[#7C3AED]/10",
+    border: "border-[#7C3AED]/30",
     description: "Claims are grounded, no hallucinated stats, brand facts are correct",
   },
   {
     key: "platformFit",
     label: "Platform Fit",
     icon: Target,
-    color: "text-[#2163AF]",
-    bg: "bg-[#2163AF]/10",
-    border: "border-[#2163AF]/30",
+    color: "text-[#5E6AD2]",
+    bg: "bg-[#5E6AD2]/10",
+    border: "border-[#5E6AD2]/30",
     description: "Format, length, tone, and hashtag count match the platform's best practices",
   },
   {
@@ -138,7 +138,7 @@ export default function InspectorSettings() {
         {/* Header */}
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
-            <ShieldCheck className="w-6 h-6 text-[#3AC1EC]" />
+            <ShieldCheck className="w-6 h-6 text-[#5E6AD2]" />
             AI Inspector Settings
           </h1>
           <p className="text-sm text-white/50 mt-1">
@@ -241,13 +241,13 @@ export default function InspectorSettings() {
             <div className="flex items-center justify-between">
               <p className="text-white/50 text-xs">{rules.length} rules active</p>
               <Button size="sm" onClick={() => setShowAddRule(!showAddRule)}
-                className="bg-[#3AC1EC]/20 text-[#3AC1EC] border border-[#3AC1EC]/30 hover:bg-[#3AC1EC]/30 text-xs h-8">
+                className="bg-[#5E6AD2]/20 text-[#5E6AD2] border border-[#5E6AD2]/30 hover:bg-[#5E6AD2]/30 text-xs h-8">
                 <Plus className="w-3 h-3 mr-1" /> Add Rule
               </Button>
             </div>
 
             {showAddRule && (
-              <Card className="bg-white/5 border-[#3AC1EC]/30">
+              <Card className="bg-white/5 border-[#5E6AD2]/30">
                 <CardContent className="p-4 space-y-3">
                   <p className="text-white text-sm font-medium">New Inspection Rule</p>
                   <div className="grid grid-cols-2 gap-2">
@@ -290,7 +290,7 @@ export default function InspectorSettings() {
                   )}
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => createRule.mutate({ brandId: activeBrandId!, ruleType: newRule.ruleType as any, name: newRule.ruleValue.substring(0, 50), ruleValue: newRule.ruleValue, platform: newRule.platform || undefined, severity: newRule.severity as any, autoFix: newRule.autoFix })}
-                      className="bg-[#3AC1EC] text-[#0A1931] text-xs h-8 flex-1">Save Rule</Button>
+                      className="bg-[#5E6AD2] text-[#0F0F10] text-xs h-8 flex-1">Save Rule</Button>
                     <Button size="sm" variant="outline" onClick={() => setShowAddRule(false)} className="text-xs h-8 border-white/10">Cancel</Button>
                   </div>
                 </CardContent>
@@ -360,7 +360,7 @@ export default function InspectorSettings() {
                       <p className="text-white/40 text-xs mt-1">Total Predictions</p>
                     </div>
                     <div className="bg-white/5 rounded-lg p-3 text-center">
-                      <p className="text-2xl font-bold text-[#3AC1EC]">{accuracy.resolvedPredictions}</p>
+                      <p className="text-2xl font-bold text-[#5E6AD2]">{accuracy.resolvedPredictions}</p>
                       <p className="text-white/40 text-xs mt-1">Resolved (vs. actual)</p>
                     </div>
                     <div className="bg-white/5 rounded-lg p-3 text-center">
@@ -381,7 +381,7 @@ export default function InspectorSettings() {
                   <div className="space-y-2">
                     {[
                       { icon: CheckCircle2, color: "text-emerald-400", text: "Every generated content package receives a Virality Score prediction (1–100)" },
-                      { icon: TrendingUp, color: "text-[#3AC1EC]", text: "When you log actual performance data (views, likes, shares) for published posts, the engine compares prediction vs. reality" },
+                      { icon: TrendingUp, color: "text-[#5E6AD2]", text: "When you log actual performance data (views, likes, shares) for published posts, the engine compares prediction vs. reality" },
                       { icon: Brain, color: "text-purple-400", text: "Weekly, the model recalibrates — patterns that consistently outperform get weighted higher in future predictions" },
                       { icon: AlertCircle, color: "text-amber-400", text: "The prediction accuracy score improves over time as more data is collected" },
                     ].map(({ icon: Icon, color, text }, i) => (

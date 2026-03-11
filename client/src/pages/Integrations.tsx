@@ -303,7 +303,7 @@ function WebflowFieldMapping({ brandId, apiToken, siteId }: { brandId: number; a
                   className="h-7 text-xs"
                   onClick={handleSaveMapping}
                   disabled={saveMapping.isPending}
-                  style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}
+                  style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}
                 >
                   <Save size={11} className="mr-1.5" />
                   {saveMapping.isPending ? "Saving..." : "Save Mapping"}
@@ -457,7 +457,7 @@ export default function Integrations() {
                           size="sm"
                           onClick={() => handleSave(platform)}
                           disabled={saving === platform.key}
-                          style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}
+                          style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}
                         >
                           <Save size={12} className="mr-1.5" />
                           {saving === platform.key ? "Saving..." : isConnected ? "Update Credentials" : "Connect"}

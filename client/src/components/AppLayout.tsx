@@ -129,7 +129,7 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
       <div className="flex items-center justify-center bg-background px-6" style={{ height: `calc(100dvh - ${bannerHeight}px)`, marginTop: `${bannerHeight}px` }}>
         <div className="text-center space-y-6 w-full max-w-sm">
           <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
               <Sparkles size={22} className="text-white" />
             </div>
             <div>
@@ -138,7 +138,7 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
             </div>
           </div>
           <p className="text-muted-foreground text-sm">Sign in to access your autonomous content growth engine.</p>
-          <Button asChild className="w-full h-12 text-base" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+          <Button asChild className="w-full h-12 text-base" style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
             <a href={getLoginUrl()}>Sign in to continue</a>
           </Button>
         </div>
@@ -152,7 +152,7 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
       <div className="p-4 border-b border-border flex items-center justify-between">
         <Link href="/dashboard">
           <div className="flex items-center gap-2.5 cursor-pointer">
-            <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+            <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
               <Sparkles size={16} className="text-white" />
             </div>
             <div>
@@ -176,7 +176,7 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="w-full flex items-center gap-2 px-2.5 py-2.5 rounded-md hover:bg-secondary transition-colors text-left min-h-[44px]">
-                <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 text-xs font-bold text-white" style={{ background: "linear-gradient(135deg, #3AC1EC, #291C53)" }}>
+                <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 text-xs font-bold text-white" style={{ background: "linear-gradient(135deg, #5E6AD2, #4338CA)" }}>
                   {(currentBrand?.name || "P")[0].toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -189,7 +189,7 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
             <DropdownMenuContent align="start" className="w-56">
               {brands.map(b => (
                 <DropdownMenuItem key={b.id} onClick={() => { onBrandChange?.(b.id); setDrawerOpen(false); }} className="cursor-pointer min-h-[44px]">
-                  <div className="w-6 h-6 rounded flex items-center justify-center text-xs font-bold text-white mr-2 flex-shrink-0" style={{ background: "linear-gradient(135deg, #3AC1EC, #291C53)" }}>
+                  <div className="w-6 h-6 rounded flex items-center justify-center text-xs font-bold text-white mr-2 flex-shrink-0" style={{ background: "linear-gradient(135deg, #5E6AD2, #4338CA)" }}>
                     {b.name[0].toUpperCase()}
                   </div>
                   <span className="truncate">{b.name}</span>
@@ -230,7 +230,7 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
       {/* Caelum Liu badge */}
       <div className="p-3 border-t border-border">
         <div className="flex items-center gap-2 px-2.5 py-2 rounded-md bg-primary/10 border border-primary/20">
-          <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+          <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
             <Sparkles size={11} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
@@ -309,7 +309,7 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
           </button>
           <Link href="/dashboard">
             <div className="flex items-center gap-2 cursor-pointer">
-              <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+              <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
                 <Sparkles size={14} className="text-white" />
               </div>
               <span className="font-semibold text-sm text-foreground">Pulse Content</span>

@@ -18,8 +18,8 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
-  proposed:  { label: "Proposed",  color: "text-[#3AC1EC]",  dot: "bg-[#3AC1EC]" },
-  in_review: { label: "In Review", color: "text-[#56C4C4]",  dot: "bg-[#56C4C4]" },
+  proposed:  { label: "Proposed",  color: "text-[#5E6AD2]",  dot: "bg-[#5E6AD2]" },
+  in_review: { label: "In Review", color: "text-[#7C3AED]",  dot: "bg-[#7C3AED]" },
   approved:  { label: "Approved",  color: "text-emerald-400", dot: "bg-emerald-400" },
   rejected:  { label: "Rejected",  color: "text-red-400",    dot: "bg-red-400" },
   archived:  { label: "Archived",  color: "text-white/30",   dot: "bg-white/20" },
@@ -130,7 +130,7 @@ export default function IdeasBoard() {
                   {[5, 10, 15, 20, 30].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Button size="sm" className="h-8 rounded-none text-xs px-3" onClick={handleBatchGenerate} disabled={generating} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+              <Button size="sm" className="h-8 rounded-none text-xs px-3" onClick={handleBatchGenerate} disabled={generating} style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
                 {generating ? <RefreshCw size={12} className="mr-1.5 animate-spin" /> : <Brain size={12} className="mr-1.5" />}
                 {generating ? "Generating..." : "Generate"}
               </Button>
@@ -164,7 +164,7 @@ export default function IdeasBoard() {
                     </div>
                   </div>
                   <div><Label className="text-xs">Angle / Notes</Label><Textarea value={newIdea.angle} onChange={e => setNewIdea(i => ({ ...i, angle: e.target.value }))} rows={3} className="mt-1 resize-none" /></div>
-                  <Button onClick={() => createIdea.mutate({ brandId: activeBrandId!, title: newIdea.title, angle: newIdea.angle, targetPlatforms: [newIdea.platform] })} disabled={!newIdea.title.trim()} className="w-full" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>Add Idea</Button>
+                  <Button onClick={() => createIdea.mutate({ brandId: activeBrandId!, title: newIdea.title, angle: newIdea.angle, targetPlatforms: [newIdea.platform] })} disabled={!newIdea.title.trim()} className="w-full" style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>Add Idea</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -261,7 +261,7 @@ export default function IdeasBoard() {
               {ideas.length === 0 ? "No ideas yet — hit Generate to let Caelum create some" : "No ideas match this filter"}
             </p>
             {ideas.length === 0 && (
-              <Button size="sm" onClick={handleBatchGenerate} disabled={generating} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+              <Button size="sm" onClick={handleBatchGenerate} disabled={generating} style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
                 {generating ? <RefreshCw size={12} className="mr-1.5 animate-spin" /> : <Brain size={12} className="mr-1.5" />}
                 Generate 10 Ideas
               </Button>

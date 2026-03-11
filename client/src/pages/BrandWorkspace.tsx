@@ -111,7 +111,7 @@ export default function BrandWorkspace() {
               <DialogHeader><DialogTitle>Create New Brand</DialogTitle></DialogHeader>
               <div className="space-y-4 pt-2">
                 <div><Label>Brand Name</Label><Input value={newBrandName} onChange={e => setNewBrandName(e.target.value)} placeholder="e.g. Pulse Branding" className="mt-1" /></div>
-                <Button onClick={() => createBrand.mutate({ name: newBrandName })} disabled={!newBrandName.trim()} className="w-full" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>Create Brand</Button>
+                <Button onClick={() => createBrand.mutate({ name: newBrandName })} disabled={!newBrandName.trim()} className="w-full" style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>Create Brand</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -155,7 +155,7 @@ export default function BrandWorkspace() {
                       ))}
                     </div>
                   </div>
-                  <Button onClick={handleSaveBrand} disabled={updateBrand.isPending} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+                  <Button onClick={handleSaveBrand} disabled={updateBrand.isPending} style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
                     <Save size={14} className="mr-2" />{updateBrand.isPending ? "Saving..." : "Save Strategy"}
                   </Button>
                 </CardContent>
@@ -169,7 +169,7 @@ export default function BrandWorkspace() {
                 <CardContent className="space-y-4">
                   <div><Label className="text-xs">Audience Summary</Label><Textarea value={brandForm.audienceSummary} onChange={e => setBrandForm(f => ({ ...f, audienceSummary: e.target.value }))} rows={3} placeholder="Who is the target audience?" className="mt-1 resize-none" /></div>
                   <div><Label className="text-xs">Tone of Voice</Label><Textarea value={brandForm.toneSummary} onChange={e => setBrandForm(f => ({ ...f, toneSummary: e.target.value }))} rows={4} placeholder="Describe the brand voice: authoritative, empathetic, forward-thinking..." className="mt-1 resize-none" /></div>
-                  <Button onClick={handleSaveBrand} disabled={updateBrand.isPending} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+                  <Button onClick={handleSaveBrand} disabled={updateBrand.isPending} style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
                     <Save size={14} className="mr-2" />{updateBrand.isPending ? "Saving..." : "Save Voice"}
                   </Button>
                 </CardContent>
@@ -191,7 +191,7 @@ export default function BrandWorkspace() {
                           <div><Label className="text-xs">Description</Label><Textarea value={newAudience.description} onChange={e => setNewAudience(a => ({ ...a, description: e.target.value }))} rows={2} className="mt-1 resize-none" /></div>
                           <div><Label className="text-xs">Pain Points</Label><Textarea value={newAudience.painPoints} onChange={e => setNewAudience(a => ({ ...a, painPoints: e.target.value }))} rows={2} className="mt-1 resize-none" /></div>
                           <div><Label className="text-xs">Goals</Label><Textarea value={newAudience.goals} onChange={e => setNewAudience(a => ({ ...a, goals: e.target.value }))} rows={2} className="mt-1 resize-none" /></div>
-                          <Button onClick={() => addAudience.mutate({ brandId: activeBrandId!, ...newAudience })} className="w-full" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>Add Segment</Button>
+                          <Button onClick={() => addAudience.mutate({ brandId: activeBrandId!, ...newAudience })} className="w-full" style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>Add Segment</Button>
                         </div>
                       </DialogContent>
                     </Dialog>
@@ -230,7 +230,7 @@ export default function BrandWorkspace() {
                         <div className="space-y-3 pt-2">
                           <div><Label className="text-xs">Pillar Name</Label><Input value={newPillar.name} onChange={e => setNewPillar(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Brand Strategy Insights" className="mt-1" /></div>
                           <div><Label className="text-xs">Description</Label><Textarea value={newPillar.description} onChange={e => setNewPillar(p => ({ ...p, description: e.target.value }))} rows={3} className="mt-1 resize-none" /></div>
-                          <Button onClick={() => addPillar.mutate({ brandId: activeBrandId!, ...newPillar })} className="w-full" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>Add Pillar</Button>
+                          <Button onClick={() => addPillar.mutate({ brandId: activeBrandId!, ...newPillar })} className="w-full" style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>Add Pillar</Button>
                         </div>
                       </DialogContent>
                     </Dialog>
@@ -241,7 +241,7 @@ export default function BrandWorkspace() {
                     <p className="text-sm text-muted-foreground text-center py-4">No content pillars yet.</p>
                   ) : pillars.map((p, i) => (
                     <div key={p.id} className="flex items-start gap-3 p-3 rounded-lg border border-border bg-secondary/30">
-                      <div className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ background: ["#3AC1EC", "#56C4C4", "#2163AF", "#291C53", "#0A1931", "#3AC1EC"][i % 6] }}>
+                      <div className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ background: ["#5E6AD2", "#7C3AED", "#5E6AD2", "#1E1B4B", "#0F0F10", "#5E6AD2"][i % 6] }}>
                         {i + 1}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -280,7 +280,7 @@ export default function BrandWorkspace() {
                           </div>
                           <div><Label className="text-xs">Pillar (optional)</Label><Input value={newPrompt.pillar} onChange={e => setNewPrompt(p => ({ ...p, pillar: e.target.value }))} placeholder="e.g. Brand Strategy" className="mt-1" /></div>
                           <div><Label className="text-xs">Prompt Text</Label><Textarea value={newPrompt.promptText} onChange={e => setNewPrompt(p => ({ ...p, promptText: e.target.value }))} rows={8} placeholder="Write your validated prompt here..." className="mt-1 resize-none font-mono text-xs" /></div>
-                          <Button onClick={() => addPrompt.mutate({ brandId: activeBrandId!, ...newPrompt })} className="w-full" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>Save Prompt Template</Button>
+                          <Button onClick={() => addPrompt.mutate({ brandId: activeBrandId!, ...newPrompt })} className="w-full" style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>Save Prompt Template</Button>
                         </div>
                       </DialogContent>
                     </Dialog>
@@ -348,7 +348,7 @@ export default function BrandWorkspace() {
                     <div><Label className="text-xs">Hashtag Strategy</Label><Input value={platformPrefForm.hashtagStrategy} onChange={e => setPlatformPrefForm(f => ({ ...f, hashtagStrategy: e.target.value }))} placeholder="e.g. 5-8 niche tags + 2 broad" className="mt-1" /></div>
                     <div><Label className="text-xs">Posting Frequency</Label><Input value={platformPrefForm.frequency} onChange={e => setPlatformPrefForm(f => ({ ...f, frequency: e.target.value }))} placeholder="e.g. 3x per week" className="mt-1" /></div>
                     <div><Label className="text-xs">Tone Notes</Label><Textarea value={platformPrefForm.toneNotes} onChange={e => setPlatformPrefForm(f => ({ ...f, toneNotes: e.target.value }))} rows={2} className="mt-1 resize-none" /></div>
-                    <Button onClick={() => { savePlatformPref.mutate({ brandId: activeBrandId!, platform: editingPlatformPref!, ...platformPrefForm }); setEditingPlatformPref(null); }} className="w-full" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>Save</Button>
+                    <Button onClick={() => { savePlatformPref.mutate({ brandId: activeBrandId!, platform: editingPlatformPref!, ...platformPrefForm }); setEditingPlatformPref(null); }} className="w-full" style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>Save</Button>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -373,7 +373,7 @@ export default function BrandWorkspace() {
                             </Select>
                           </div>
                           <div><Label className="text-xs">Rule Content</Label><Textarea value={newRule.content} onChange={e => setNewRule(r => ({ ...r, content: e.target.value }))} rows={3} placeholder="Describe the rule..." className="mt-1 resize-none" /></div>
-                          <Button onClick={() => addRule.mutate({ brandId: activeBrandId!, ruleType: newRule.ruleType, content: newRule.content })} className="w-full" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>Add Rule</Button>
+                          <Button onClick={() => addRule.mutate({ brandId: activeBrandId!, ruleType: newRule.ruleType, content: newRule.content })} className="w-full" style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>Add Rule</Button>
                         </div>
                       </DialogContent>
                     </Dialog>

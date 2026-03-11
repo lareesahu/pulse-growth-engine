@@ -20,9 +20,9 @@ import {
 
 const SCORE_DIMS = [
   { key: "humanisationScore", label: "Human", icon: Brain, color: "text-emerald-400" },
-  { key: "authenticityScore", label: "Authentic", icon: Fingerprint, color: "text-[#3AC1EC]" },
-  { key: "accuracyScore", label: "Accurate", icon: ShieldCheck, color: "text-[#56C4C4]" },
-  { key: "platformFitScore", label: "Platform", icon: Target, color: "text-[#2163AF]" },
+  { key: "authenticityScore", label: "Authentic", icon: Fingerprint, color: "text-[#5E6AD2]" },
+  { key: "accuracyScore", label: "Accurate", icon: ShieldCheck, color: "text-[#7C3AED]" },
+  { key: "platformFitScore", label: "Platform", icon: Target, color: "text-[#5E6AD2]" },
   { key: "originalityScore", label: "Original", icon: Sparkles, color: "text-purple-400" },
 ];
 
@@ -48,7 +48,7 @@ function OverallScoreBadge({ score }: { score: number }) {
   const cfg = score >= 85
     ? { label: "Excellent", cls: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" }
     : score >= 70
-    ? { label: "Good", cls: "bg-[#3AC1EC]/20 text-[#3AC1EC] border-[#3AC1EC]/30" }
+    ? { label: "Good", cls: "bg-[#5E6AD2]/20 text-[#5E6AD2] border-[#5E6AD2]/30" }
     : score >= 50
     ? { label: "Fair", cls: "bg-amber-500/20 text-amber-400 border-amber-500/30" }
     : { label: "Low", cls: "bg-red-500/20 text-red-400 border-red-500/30" };
@@ -89,14 +89,14 @@ function ContentCard({ item, selected, onToggleSelect, onApprove, onReject }: {
   const variants = item.variants || [];
   const hasIssues = (report?.issues?.length ?? 0) > 0;
   const overallScore = report?.overallScore ?? 0;
-  const borderColor = selected ? "border-[#3AC1EC]/60" : overallScore >= 85 ? "border-emerald-500/30" : overallScore >= 70 ? "border-[#3AC1EC]/20" : overallScore >= 50 ? "border-amber-500/20" : "border-red-500/20";
+  const borderColor = selected ? "border-[#5E6AD2]/60" : overallScore >= 85 ? "border-emerald-500/30" : overallScore >= 70 ? "border-[#5E6AD2]/20" : overallScore >= 50 ? "border-amber-500/20" : "border-red-500/20";
 
   return (
-    <Card className={`border transition-all ${borderColor} ${selected ? "bg-[#3AC1EC]/5" : "bg-white/3 hover:bg-white/5"}`}>
+    <Card className={`border transition-all ${borderColor} ${selected ? "bg-[#5E6AD2]/5" : "bg-white/3 hover:bg-white/5"}`}>
       <CardContent className="p-4">
         <div className="flex items-start gap-3 mb-3">
           <div className="mt-0.5 flex-shrink-0 cursor-pointer" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
-            <Checkbox checked={selected} className="border-white/30 data-[state=checked]:bg-[#3AC1EC] data-[state=checked]:border-[#3AC1EC]" />
+            <Checkbox checked={selected} className="border-white/30 data-[state=checked]:bg-[#5E6AD2] data-[state=checked]:border-[#5E6AD2]" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 flex-wrap">
@@ -361,13 +361,13 @@ export default function ReviewQueue() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
-              <CheckCheck className="w-6 h-6 text-[#3AC1EC]" />Review Queue
+              <CheckCheck className="w-6 h-6 text-[#5E6AD2]" />Review Queue
             </h1>
             <p className="text-sm text-white/50 mt-0.5">AI-inspected content ready for your final approval before publishing.</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Button onClick={() => { setBatchMode(b => !b); setSelectedIds(new Set()); }} variant="ghost" size="sm"
-              className={`h-8 text-xs ${batchMode ? "text-[#3AC1EC] bg-[#3AC1EC]/10" : "text-white/40 hover:text-white"}`}>
+              className={`h-8 text-xs ${batchMode ? "text-[#5E6AD2] bg-[#5E6AD2]/10" : "text-white/40 hover:text-white"}`}>
               {batchMode ? <CheckSquare className="w-3.5 h-3.5 mr-1" /> : <Square className="w-3.5 h-3.5 mr-1" />}
               {batchMode ? "Exit Select" : "Select"}
             </Button>
@@ -382,7 +382,7 @@ export default function ReviewQueue() {
           {[
             { label: "Awaiting Review", value: pendingItems.length, color: "text-amber-400" },
             { label: "Approved Today", value: approvedItems.length, color: "text-emerald-400" },
-            { label: "Total in Queue", value: queue.length, color: "text-[#3AC1EC]" },
+            { label: "Total in Queue", value: queue.length, color: "text-[#5E6AD2]" },
           ].map(({ label, value, color }) => (
             <div key={label} className="bg-white/5 rounded-lg p-3 text-center border border-white/10">
               <p className={`text-xl font-bold ${color}`}>{value}</p>
@@ -463,9 +463,9 @@ export default function ReviewQueue() {
 
         {/* Batch toolbar */}
         {batchMode && filteredItems.length > 0 && (
-          <div className="sticky top-2 z-20 bg-[#0f1117]/95 backdrop-blur border border-[#3AC1EC]/30 rounded-xl p-3 flex items-center gap-2 flex-wrap">
+          <div className="sticky top-2 z-20 bg-[#0f1117]/95 backdrop-blur border border-[#5E6AD2]/30 rounded-xl p-3 flex items-center gap-2 flex-wrap">
             <button onClick={toggleSelectAll} className="flex items-center gap-1.5 text-xs text-white/60 hover:text-white mr-1">
-              {allSelected ? <CheckSquare className="w-4 h-4 text-[#3AC1EC]" /> : <Square className="w-4 h-4" />}
+              {allSelected ? <CheckSquare className="w-4 h-4 text-[#5E6AD2]" /> : <Square className="w-4 h-4" />}
               {allSelected ? "Deselect All" : `All (${filteredItems.length})`}
             </button>
             <div className="flex-1" />
@@ -504,7 +504,7 @@ export default function ReviewQueue() {
               <Inbox className="w-12 h-12 text-white/10 mx-auto mb-3" />
               <p className="text-white/40 text-base font-medium">Queue is empty</p>
               <p className="text-white/25 text-sm mt-1">Run the pipeline from the Dashboard to generate and inspect new content.</p>
-              <Button onClick={() => navigate("/")} className="mt-4 bg-[#3AC1EC]/20 text-[#3AC1EC] border border-[#3AC1EC]/30 hover:bg-[#3AC1EC]/30 text-sm">
+              <Button onClick={() => navigate("/")} className="mt-4 bg-[#5E6AD2]/20 text-[#5E6AD2] border border-[#5E6AD2]/30 hover:bg-[#5E6AD2]/30 text-sm">
                 Go to Dashboard
               </Button>
             </CardContent>
@@ -515,7 +515,7 @@ export default function ReviewQueue() {
               <Filter className="w-8 h-8 text-white/10 mx-auto mb-2" />
               <p className="text-white/40 text-sm font-medium">No items match these filters</p>
               <button onClick={() => { setScoreFilter("all"); setPlatformFilter("all"); setPillarFilter("all"); }}
-                className="mt-2 text-xs text-[#3AC1EC] hover:underline">Clear filters</button>
+                className="mt-2 text-xs text-[#5E6AD2] hover:underline">Clear filters</button>
             </CardContent>
           </Card>
         ) : (

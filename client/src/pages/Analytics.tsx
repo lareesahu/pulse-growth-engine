@@ -10,7 +10,7 @@ import { Brain, TrendingUp, Lightbulb, ArrowRight, Zap, Target, FileText } from 
 import { useState } from "react";
 import { toast } from "sonner";
 
-const COLORS = ["#3AC1EC", "#56C4C4", "#2163AF", "#291C53", "#0A1931"];
+const COLORS = ["#5E6AD2", "#7C3AED", "#8B5CF6", "#A78BFA", "#C4B5FD"];
 
 export default function Analytics() {
   const { activeBrand, activeBrandId, setActiveBrandId } = useBrand();
@@ -36,9 +36,9 @@ export default function Analytics() {
   };
 
   const statCards = [
-    { label: "Total Ideas", value: summary?.totalIdeas || 0, icon: <Lightbulb size={16} />, color: "#3AC1EC" },
-    { label: "Approved Ideas", value: summary?.approvedIdeas || 0, icon: <Target size={16} />, color: "#56C4C4" },
-    { label: "Content Packages", value: summary?.totalPackages || 0, icon: <FileText size={16} />, color: "#2163AF" },
+    { label: "Total Ideas", value: summary?.totalIdeas || 0, icon: <Lightbulb size={16} />, color: "#5E6AD2" },
+    { label: "Approved Ideas", value: summary?.approvedIdeas || 0, icon: <Target size={16} />, color: "#7C3AED" },
+    { label: "Content Packages", value: summary?.totalPackages || 0, icon: <FileText size={16} />, color: "#5E6AD2" },
     { label: "Published", value: summary?.totalPublished || 0, icon: <Zap size={16} />, color: "#22c55e" },
   ];
 
@@ -67,7 +67,7 @@ export default function Analytics() {
               <p className="text-xs text-muted-foreground mt-0.5">{activeBrand?.name} · Content performance</p>
             </div>
           </div>
-          <Button onClick={handleGetRecommendations} disabled={loadingRecs} className="w-full min-h-[44px]" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+          <Button onClick={handleGetRecommendations} disabled={loadingRecs} className="w-full min-h-[44px]" style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
             <Brain size={14} className="mr-2" />
             {loadingRecs ? "Analysing..." : "Get AI Recommendations from Caelum"}
           </Button>
@@ -101,7 +101,7 @@ export default function Analytics() {
                     <Pie data={funnelData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={10}>
                       {funnelData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                     </Pie>
-                    <Tooltip contentStyle={{ background: "#0A1931", border: "1px solid #2163AF", borderRadius: "6px", fontSize: "11px" }} />
+                    <Tooltip contentStyle={{ background: "#0F0F10", border: "1px solid #5E6AD2", borderRadius: "6px", fontSize: "11px" }} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : <div className="h-[180px] flex items-center justify-center text-xs text-muted-foreground">No data yet</div>}
@@ -115,10 +115,10 @@ export default function Analytics() {
               {pillarData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={pillarData} layout="vertical" margin={{ left: 0, right: 10 }}>
-                    <XAxis type="number" tick={{ fontSize: 10 }} stroke="#56C4C4" />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 9 }} width={80} stroke="#56C4C4" />
-                    <Tooltip contentStyle={{ background: "#0A1931", border: "1px solid #2163AF", borderRadius: "6px", fontSize: "11px" }} />
-                    <Bar dataKey="value" fill="#3AC1EC" radius={[0, 3, 3, 0]} />
+                    <XAxis type="number" tick={{ fontSize: 10 }} stroke="#7C3AED" />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 9 }} width={80} stroke="#7C3AED" />
+                    <Tooltip contentStyle={{ background: "#0F0F10", border: "1px solid #5E6AD2", borderRadius: "6px", fontSize: "11px" }} />
+                    <Bar dataKey="value" fill="#5E6AD2" radius={[0, 3, 3, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : <div className="h-[180px] flex items-center justify-center text-xs text-muted-foreground">No data yet</div>}
@@ -132,10 +132,10 @@ export default function Analytics() {
               {platformData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={platformData}>
-                    <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="#56C4C4" />
-                    <YAxis tick={{ fontSize: 10 }} stroke="#56C4C4" />
-                    <Tooltip contentStyle={{ background: "#0A1931", border: "1px solid #2163AF", borderRadius: "6px", fontSize: "11px" }} />
-                    <Bar dataKey="value" fill="#2163AF" radius={[3, 3, 0, 0]} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="#7C3AED" />
+                    <YAxis tick={{ fontSize: 10 }} stroke="#7C3AED" />
+                    <Tooltip contentStyle={{ background: "#0F0F10", border: "1px solid #5E6AD2", borderRadius: "6px", fontSize: "11px" }} />
+                    <Bar dataKey="value" fill="#5E6AD2" radius={[3, 3, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : <div className="h-[180px] flex items-center justify-center text-xs text-muted-foreground">No data yet</div>}

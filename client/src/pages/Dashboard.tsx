@@ -17,10 +17,10 @@ import { Link } from "wouter";
 
 const PIPELINE_STEPS = [
   { key: "ideas", label: "Generating Ideas", icon: Lightbulb, color: "text-amber-400" },
-  { key: "packages", label: "Building Content", icon: FileText, color: "text-[#3AC1EC]" },
-  { key: "variants", label: "Crafting Variants", icon: Globe, color: "text-[#56C4C4]" },
+  { key: "packages", label: "Building Content", icon: FileText, color: "text-[#5E6AD2]" },
+  { key: "variants", label: "Crafting Variants", icon: Globe, color: "text-[#7C3AED]" },
   { key: "images", label: "Generating Images", icon: Sparkles, color: "text-purple-400" },
-  { key: "inspection", label: "AI Inspection", icon: Brain, color: "text-[#2163AF]" },
+  { key: "inspection", label: "AI Inspection", icon: Brain, color: "text-[#5E6AD2]" },
   { key: "done", label: "Ready to Review", icon: CheckCheck, color: "text-emerald-400" },
 ];
 
@@ -190,14 +190,14 @@ export default function Dashboard() {
     return (
       <AppLayout brandId={activeBrandId} onBrandChange={setActiveBrandId}>
         <div className="flex flex-col items-center justify-center h-full gap-6 text-center p-8">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
             <Sparkles size={28} className="text-white" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-white mb-2">Welcome to Pulse Content Engine</h2>
             <p className="text-white/50 text-sm max-w-sm">Create your first brand workspace to start generating content with Caelum Liu, your AI Growth Officer.</p>
           </div>
-          <Button asChild style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+          <Button asChild style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
             <Link href="/workspace"><Plus size={16} className="mr-2" /> Create Brand Workspace</Link>
           </Button>
         </div>
@@ -231,17 +231,17 @@ export default function Dashboard() {
 
         {/* ── RUN PIPELINE CARD ── */}
         <Card className={`border transition-all duration-500 ${
-          pipeline.status === "running" ? "border-[#3AC1EC]/40 bg-[#3AC1EC]/5" :
+          pipeline.status === "running" ? "border-[#5E6AD2]/40 bg-[#5E6AD2]/5" :
           pipeline.status === "done" ? "border-emerald-500/40 bg-emerald-500/5" :
           pipeline.status === "error" ? "border-red-500/40 bg-red-500/5" :
-          "border-white/10 bg-white/3 hover:border-[#3AC1EC]/30"
+          "border-white/10 bg-white/3 hover:border-[#5E6AD2]/30"
         }`}>
           <CardContent className="p-5">
             {pipeline.status === "idle" && (
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="flex-1">
                   <h2 className="text-white font-bold text-base flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-[#3AC1EC]" />
+                    <Zap className="w-5 h-5 text-[#5E6AD2]" />
                     Run Content Pipeline
                   </h2>
                   <p className="text-white/40 text-sm mt-1">
@@ -250,7 +250,7 @@ export default function Dashboard() {
                 </div>
                 <Button
                   onClick={handleRunPipeline}
-                  className="flex-shrink-0 bg-[#3AC1EC] hover:bg-[#3AC1EC]/90 text-[#0A1931] font-bold text-sm h-11 px-6 gap-2 w-full sm:w-auto"
+                  className="flex-shrink-0 bg-[#5E6AD2] hover:bg-[#5E6AD2]/90 text-[#0F0F10] font-bold text-sm h-11 px-6 gap-2 w-full sm:w-auto"
                 >
                   <Play className="w-4 h-4" />
                   Run Now
@@ -261,10 +261,10 @@ export default function Dashboard() {
             {pipeline.status === "running" && (
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <Loader2 className="w-5 h-5 text-[#3AC1EC] animate-spin flex-shrink-0" />
+                  <Loader2 className="w-5 h-5 text-[#5E6AD2] animate-spin flex-shrink-0" />
                   <div>
                     <p className="text-white font-semibold text-sm">Pipeline Running</p>
-                    <p className="text-[#3AC1EC] text-xs">{PIPELINE_STEPS[Math.max(0, pipeline.currentStep)]?.label}</p>
+                    <p className="text-[#5E6AD2] text-xs">{PIPELINE_STEPS[Math.max(0, pipeline.currentStep)]?.label}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -283,7 +283,7 @@ export default function Dashboard() {
                     })();
                     return (
                       <div key={step.key} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
-                        isActive ? "bg-[#3AC1EC]/10 border border-[#3AC1EC]/30" :
+                        isActive ? "bg-[#5E6AD2]/10 border border-[#5E6AD2]/30" :
                         isDone ? "bg-emerald-500/10" : "bg-white/3"
                       }`}>
                         {isDone ? (
@@ -294,7 +294,7 @@ export default function Dashboard() {
                           <Icon className="w-4 h-4 text-white/20" />
                         )}
                         <span className={`text-[9px] text-center leading-tight ${
-                          isActive ? "text-[#3AC1EC]" : isDone ? "text-emerald-400" : "text-white/20"
+                          isActive ? "text-[#5E6AD2]" : isDone ? "text-emerald-400" : "text-white/20"
                         }`}>{step.label}</span>
                         {(isDone || isActive) && countBadge && (
                           <span className={`text-[9px] font-bold tabular-nums ${
@@ -317,8 +317,8 @@ export default function Dashboard() {
                     <div className="flex flex-wrap gap-4 mt-2">
                       {[
                         { label: "Ideas", value: pipeline.ideasGenerated, color: "text-amber-400" },
-                        { label: "Packages", value: pipeline.packagesGenerated, color: "text-[#3AC1EC]" },
-                        { label: "Variants", value: pipeline.variantsGenerated, color: "text-[#56C4C4]" },
+                        { label: "Packages", value: pipeline.packagesGenerated, color: "text-[#5E6AD2]" },
+                        { label: "Variants", value: pipeline.variantsGenerated, color: "text-[#7C3AED]" },
                         { label: "Ready", value: pipeline.readyForReview, color: "text-emerald-400" },
                       ].map(({ label, value, color }) => (
                         <div key={label} className="text-center">
@@ -371,7 +371,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
             { label: "Ideas Generated", value: summary?.totalIdeas ?? 0, icon: Lightbulb, color: "text-amber-400", path: "/ideas" },
-            { label: "Content Packages", value: summary?.totalPackages ?? 0, icon: FileText, color: "text-[#3AC1EC]", path: "/ideas" },
+            { label: "Content Packages", value: summary?.totalPackages ?? 0, icon: FileText, color: "text-[#5E6AD2]", path: "/ideas" },
             { label: "Published", value: publishStats?.published ?? 0, icon: Send, color: "text-emerald-400", path: "/publishing" },
             { label: "Pending Review", value: pendingReview, icon: CheckCheck, color: "text-purple-400", path: "/review" },
           ].map(({ label, value, icon: Icon, color, path }) => (
@@ -401,7 +401,7 @@ export default function Dashboard() {
                 </p>
                 <Badge className={`text-[10px] border ${
                   (latestRun as any).status === "completed" ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" :
-                  (latestRun as any).status === "running" ? "bg-[#3AC1EC]/20 text-[#3AC1EC] border-[#3AC1EC]/30" :
+                  (latestRun as any).status === "running" ? "bg-[#5E6AD2]/20 text-[#5E6AD2] border-[#5E6AD2]/30" :
                   "bg-red-500/20 text-red-400 border-red-500/30"
                 }`}>
                   {(latestRun as any).status}
@@ -433,7 +433,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 gap-2">
           {[
             { label: "Review Queue", desc: `${pendingReview} waiting`, icon: CheckCheck, color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", path: "/review" },
-            { label: "Brand Workspace", desc: "Edit DNA & prompts", icon: Brain, color: "text-[#3AC1EC]", bg: "bg-[#3AC1EC]/10 border-[#3AC1EC]/20", path: "/workspace" },
+            { label: "Brand Workspace", desc: "Edit DNA & prompts", icon: Brain, color: "text-[#5E6AD2]", bg: "bg-[#5E6AD2]/10 border-[#5E6AD2]/20", path: "/workspace" },
             { label: "Publishing Center", desc: "Manage publish jobs", icon: Rocket, color: "text-purple-400", bg: "bg-purple-500/10 border-purple-500/20", path: "/publishing" },
             { label: "Forum Opportunities", desc: "Find & reply to threads", icon: TrendingUp, color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20", path: "/forums" },
           ].map(({ label, desc, icon: Icon, color, bg, path }) => (
@@ -455,7 +455,7 @@ export default function Dashboard() {
             <p className="text-white/30 text-xs font-medium uppercase tracking-wider">Recent Activity</p>
             {(recentActivity as any[]).slice(0, 5).map((event: any) => (
               <div key={event.id} className="flex items-start gap-2.5 py-2 border-b border-white/5 last:border-0">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#3AC1EC] mt-1.5 flex-shrink-0" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[#5E6AD2] mt-1.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-white/60 text-xs truncate">{event.description}</p>
                   <p className="text-white/25 text-[10px] mt-0.5">

@@ -163,7 +163,7 @@ export default function ContentDetail() {
               <div className="text-center py-8 text-muted-foreground space-y-3">
                 <Sparkles size={32} className="mx-auto opacity-30" />
                 <p className="text-sm">No content package yet. Click below to generate content for this idea.</p>
-                <Button onClick={handleRetryGenerate} disabled={retrying} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+                <Button onClick={handleRetryGenerate} disabled={retrying} style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
                   {retrying ? <RefreshCw size={14} className="mr-2 animate-spin" /> : <Sparkles size={14} className="mr-2" />}
                   {retrying ? "Generating..." : "Generate Content Package"}
                 </Button>
@@ -172,7 +172,7 @@ export default function ContentDetail() {
           ) : (
             <div className="text-center py-12 text-muted-foreground space-y-3">
               <p className="text-sm">No content package found for this idea.</p>
-              <Button asChild style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+              <Button asChild style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
                 <Link href="/ideas">Go to Ideas Board</Link>
               </Button>
             </div>
@@ -207,7 +207,7 @@ export default function ContentDetail() {
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 flex items-center justify-between gap-3">
             <p className="text-xs text-amber-400">This package has no content yet (generation failed previously). Click Regenerate to retry.</p>
             <Button size="sm" className="text-xs shrink-0" onClick={handleRetryFromPackage} disabled={retrying}
-              style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+              style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
               {retrying ? <RefreshCw size={12} className="mr-1 animate-spin" /> : <Sparkles size={12} className="mr-1" />}
               {retrying ? "Regenerating..." : "Regenerate"}
             </Button>
@@ -293,7 +293,7 @@ export default function ContentDetail() {
                     <ul className="space-y-2">
                       {(pkg.keyPoints as string[]).map((kp, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                          <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 mt-0.5" style={{ background: "#3AC1EC" }}>{i + 1}</span>
+                          <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 mt-0.5" style={{ background: "#5E6AD2" }}>{i + 1}</span>
                           {kp}
                         </li>
                       ))}
@@ -341,7 +341,7 @@ export default function ContentDetail() {
                     <FileText size={32} className="mx-auto mb-3 opacity-30" />
                     <p className="text-sm font-medium mb-1">No blog article yet</p>
                     <p className="text-xs mb-4 opacity-60">Generate a full 800–1200 word article based on this content package</p>
-                    <Button onClick={handleGenerateBlog} disabled={generatingVariants} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+                    <Button onClick={handleGenerateBlog} disabled={generatingVariants} style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
                       {generatingVariants ? <RefreshCw size={14} className="mr-2 animate-spin" /> : <Sparkles size={14} className="mr-2" />}
                       {generatingVariants ? "Generating..." : "Generate Blog Article"}
                     </Button>
@@ -357,7 +357,7 @@ export default function ContentDetail() {
               <div className="text-center py-12 text-muted-foreground">
                 <Sparkles size={32} className="mx-auto mb-3 opacity-30" />
                 <p className="text-sm mb-3">No platform variants yet.</p>
-                <Button onClick={handleGenerateVariants} disabled={generatingVariants} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+                <Button onClick={handleGenerateVariants} disabled={generatingVariants} style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
                   {generatingVariants ? <RefreshCw size={14} className="mr-2 animate-spin" /> : <Sparkles size={14} className="mr-2" />}
                   Generate Platform Variants
                 </Button>
@@ -369,7 +369,7 @@ export default function ContentDetail() {
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full" style={{ background: PLATFORM_COLORS[v.platform] || "#3AC1EC" }} />
+                          <div className="w-3 h-3 rounded-full" style={{ background: PLATFORM_COLORS[v.platform] || "#5E6AD2" }} />
                           <span className="text-sm font-medium capitalize">{v.platform}</span>
                           <Badge variant="outline" className={`text-[10px] px-1.5 py-0 status-${v.status}`}>{v.status}</Badge>
                         </div>
@@ -435,7 +435,7 @@ export default function ContentDetail() {
                   <Card className="border-border bg-card">
                     <CardContent className="p-4 text-center">
                       <p className="text-xs text-muted-foreground mb-1">Virality</p>
-                      <p className="text-3xl font-bold" style={{ color: "#3AC1EC" }}>{latestReport.viralityScore ?? "—"}</p>
+                      <p className="text-3xl font-bold" style={{ color: "#5E6AD2" }}>{latestReport.viralityScore ?? "—"}</p>
                       <p className="text-[10px] text-muted-foreground">/100</p>
                     </CardContent>
                   </Card>
@@ -512,7 +512,7 @@ export default function ContentDetail() {
               <div className="text-center py-12 text-muted-foreground">
                 <Image size={32} className="mx-auto mb-3 opacity-30" />
                 <p className="text-sm mb-3">No image assets yet.</p>
-                <Button onClick={handleGenerateImages} disabled={generatingImages} style={{ background: "linear-gradient(135deg, #3AC1EC, #2163AF)" }}>
+                <Button onClick={handleGenerateImages} disabled={generatingImages} style={{ background: "linear-gradient(135deg, #5E6AD2, #7C3AED)" }}>
                   {generatingImages ? <RefreshCw size={14} className="mr-2 animate-spin" /> : <Image size={14} className="mr-2" />}
                   Generate Image Assets
                 </Button>

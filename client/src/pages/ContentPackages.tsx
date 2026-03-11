@@ -16,7 +16,7 @@ import { Link, useLocation } from "wouter";
 
 const STATUS_TABS = [
   { key: "all",                  label: "All",         color: "text-muted-foreground" },
-  { key: "generated",            label: "Generated",   color: "text-[#3AC1EC]" },
+  { key: "generated",            label: "Generated",   color: "text-[#5E6AD2]" },
   { key: "approved_for_publish", label: "Approved",    color: "text-emerald-400" },
   { key: "needs_revision",       label: "Needs Fix",   color: "text-amber-400" },
   { key: "archived",             label: "Archived",    color: "text-gray-500" },
@@ -33,7 +33,7 @@ function statusBadge(status: string) {
   const map: Record<string, { label: string; cls: string }> = {
     pending_generation:   { label: "Pending",   cls: "bg-gray-500/20 text-gray-400 border-gray-500/30" },
     generating:           { label: "Generating",cls: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-    generated:            { label: "Generated", cls: "bg-[#3AC1EC]/20 text-[#3AC1EC] border-[#3AC1EC]/30" },
+    generated:            { label: "Generated", cls: "bg-[#5E6AD2]/20 text-[#5E6AD2] border-[#5E6AD2]/30" },
     needs_revision:       { label: "Needs Fix", cls: "bg-amber-500/20 text-amber-400 border-amber-500/30" },
     approved_for_publish: { label: "Approved",  cls: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
     archived:             { label: "Archived",  cls: "bg-gray-500/20 text-gray-500 border-gray-500/30" },
@@ -194,8 +194,8 @@ export default function ContentPackages() {
 
         {/* Batch action bar */}
         {selectedIds.size > 0 && (
-          <div className="flex items-center gap-2 mb-4 p-3 rounded-xl border border-[#3AC1EC]/30 bg-[#3AC1EC]/5 animate-in fade-in slide-in-from-top-2 duration-200">
-            <span className="text-xs text-[#3AC1EC] font-medium flex-1">
+          <div className="flex items-center gap-2 mb-4 p-3 rounded-xl border border-[#5E6AD2]/30 bg-[#5E6AD2]/5 animate-in fade-in slide-in-from-top-2 duration-200">
+            <span className="text-xs text-[#5E6AD2] font-medium flex-1">
               {selectedIds.size} selected
             </span>
             <Button
@@ -276,7 +276,7 @@ export default function ContentPackages() {
               onClick={allSelected ? deselectAll : selectAll}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-white transition-colors"
             >
-              {allSelected ? <CheckSquare size={14} className="text-[#3AC1EC]" /> : <Square size={14} />}
+              {allSelected ? <CheckSquare size={14} className="text-[#5E6AD2]" /> : <Square size={14} />}
               {allSelected ? "Deselect all" : "Select all"}
             </button>
             <span className="text-[10px] text-muted-foreground/40">
@@ -312,7 +312,7 @@ export default function ContentPackages() {
                   key={pkg.id}
                   className={`border overflow-hidden transition-all cursor-pointer ${
                     isSelected
-                      ? "border-[#3AC1EC]/50 bg-[#3AC1EC]/5"
+                      ? "border-[#5E6AD2]/50 bg-[#5E6AD2]/5"
                       : "border-border bg-card/50 hover:border-border/80"
                   }`}
                   onClick={() => toggleSelect(pkg.id)}
@@ -326,7 +326,7 @@ export default function ContentPackages() {
                         onClick={(e) => { e.stopPropagation(); toggleSelect(pkg.id); }}
                       >
                         {isSelected
-                          ? <CheckSquare size={16} className="text-[#3AC1EC]" />
+                          ? <CheckSquare size={16} className="text-[#5E6AD2]" />
                           : <Square size={16} className="text-muted-foreground/40 hover:text-muted-foreground" />
                         }
                       </button>
@@ -397,7 +397,7 @@ export default function ContentPackages() {
                       {pkg.status === "approved_for_publish" && (
                         <Button
                           size="sm"
-                          className="flex-1 h-8 text-xs bg-[#2163AF]/20 text-[#3AC1EC] border border-[#3AC1EC]/30 hover:bg-[#2163AF]/30"
+                          className="flex-1 h-8 text-xs bg-[#5E6AD2]/20 text-[#5E6AD2] border border-[#5E6AD2]/30 hover:bg-[#5E6AD2]/30"
                           onClick={() => navigate("/publishing")}
                         >
                           <Rocket size={13} className="mr-1.5" /> Publish

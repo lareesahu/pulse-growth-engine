@@ -577,8 +577,8 @@ export default function Scheduling() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Page header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #3AC1EC22, #2163AF22)", border: "1px solid #3AC1EC40" }}>
-            <CalendarDays size={20} className="text-[#3AC1EC]" />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #5E6AD222, #5E6AD222)", border: "1px solid #5E6AD240" }}>
+            <CalendarDays size={20} className="text-[#5E6AD2]" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-foreground">Content Scheduling</h1>

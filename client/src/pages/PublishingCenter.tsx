@@ -42,7 +42,7 @@ function JobCard({ job, onMarkPublished, onMarkFailed, onRetry, onPublishToWebfl
 }) {
   const [expanded, setExpanded] = useState(false);
   const Icon = PLATFORM_ICONS[job.platform] || Globe;
-  const color = PLATFORM_COLORS[job.platform] || "#3AC1EC";
+  const color = PLATFORM_COLORS[job.platform] || "#5E6AD2";
 
   return (
     <div className="rounded-lg border border-border hover:border-primary/20 transition-colors bg-card/50">
@@ -197,7 +197,7 @@ export default function PublishingCenter() {
   const filtered = filterStatus === "all" ? jobs : jobs.filter((j: any) => j.publishStatus === filterStatus);
 
   const statCards = [
-    { label: "Total Jobs", value: stats?.total || 0, color: "#3AC1EC" },
+    { label: "Total Jobs", value: stats?.total || 0, color: "#5E6AD2" },
     { label: "Published", value: stats?.published || 0, color: "#22c55e" },
     { label: "Queued", value: stats?.queued || 0, color: "#eab308" },
     { label: "Failed", value: stats?.failed || 0, color: "#ef4444" },
@@ -380,7 +380,7 @@ export default function PublishingCenter() {
             <Button
               onClick={confirmPublishToWebflow}
               disabled={!webflowIntegration || publishToWebflow.isPending}
-              style={{ background: "linear-gradient(135deg, #4353FF, #3AC1EC)" }}
+              style={{ background: "linear-gradient(135deg, #4353FF, #5E6AD2)" }}
             >
               {publishToWebflow.isPending ? <RefreshCw size={14} className="mr-2 animate-spin" /> : <Send size={14} className="mr-2" />}
               {publishToWebflow.isPending ? "Publishing..." : "Confirm & Publish"}

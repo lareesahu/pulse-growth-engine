@@ -15,7 +15,7 @@ import {
 const PLATFORM_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
   reddit:        { label: "Reddit",        color: "text-orange-400",   bg: "bg-orange-500/10",   border: "border-orange-500/20" },
   quora:         { label: "Quora",         color: "text-red-400",      bg: "bg-red-500/10",      border: "border-red-500/20" },
-  linkedin:      { label: "LinkedIn",      color: "text-[#3AC1EC]",   bg: "bg-[#3AC1EC]/10",   border: "border-[#3AC1EC]/20" },
+  linkedin:      { label: "LinkedIn",      color: "text-[#5E6AD2]",   bg: "bg-[#5E6AD2]/10",   border: "border-[#5E6AD2]/20" },
   hackernews:    { label: "Hacker News",   color: "text-amber-400",   bg: "bg-amber-500/10",   border: "border-amber-500/20" },
   producthunt:   { label: "Product Hunt",  color: "text-rose-400",    bg: "bg-rose-500/10",    border: "border-rose-500/20" },
   indiehackers:  { label: "IndieHackers",  color: "text-blue-400",    bg: "bg-blue-500/10",    border: "border-blue-500/20" },
@@ -258,7 +258,7 @@ export default function ForumOpportunities() {
                 {/* Keyword tag */}
                 <div className="flex items-center gap-2">
                   <span className="text-white/20 text-[10px]">Matched keyword:</span>
-                  <span className="text-[#3AC1EC] text-[10px] bg-[#3AC1EC]/10 px-2 py-0.5 rounded-full">{opp.keyword}</span>
+                  <span className="text-[#5E6AD2] text-[10px] bg-[#5E6AD2]/10 px-2 py-0.5 rounded-full">{opp.keyword}</span>
                 </div>
 
                 {/* Suggested Reply Preview */}
