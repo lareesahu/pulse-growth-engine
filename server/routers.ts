@@ -703,9 +703,20 @@ const publishingRouter = router({
     const fieldData: Record<string, any> = {};
     const mapping = (fieldMapping?.fieldMapping as Record<string, string>) || {};
 
+    // Convert body to Webflow rich text format (HTML with proper paragraph wrapping)
+    let richTextBody = job.variantBody || "";
+    if (richTextBody && !richTextBody.includes("<p>")) {
+      // If not already HTML, wrap paragraphs
+      richTextBody = richTextBody
+        .split(/\n\n+/)
+        .filter((p: string) => p.trim())
+        .map((p: string) => `<p>${p.trim().replace(/\n/g, "<br/>")}</p>`)
+        .join("");
+    }
+
     // Map our content fields to Webflow field slugs
     if (mapping.name && job.contentTitle) fieldData[mapping.name] = job.contentTitle;
-    if (mapping.body && job.variantBody) fieldData[mapping.body] = job.variantBody;
+    if (mapping.body && richTextBody) fieldData[mapping.body] = richTextBody;
     if (mapping.slug && job.contentTitle) {
       fieldData[mapping.slug] = job.contentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 80);
     }

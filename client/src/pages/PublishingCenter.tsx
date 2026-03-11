@@ -13,15 +13,15 @@ import { toast } from "sonner";
 
 const PLATFORM_COLORS: Record<string, string> = {
   linkedin: "#0077B5", instagram: "#E1306C", webflow: "#4353FF",
-  wechat: "#07C160", facebook: "#1877F2", tiktok: "#000000",
+  facebook: "#1877F2", tiktok: "#000000",
   blog: "#F59E0B", medium: "#000000", reddit: "#FF4500",
-  quora: "#B92B27", xiaohongshu: "#FF2442",
+  quora: "#B92B27",
 };
 
 const PLATFORM_ICONS: Record<string, any> = {
   linkedin: Linkedin, instagram: Instagram, webflow: Globe,
-  wechat: MessageSquare, blog: Globe, facebook: Globe,
-  tiktok: Globe, medium: Globe, reddit: Globe, quora: Globe, xiaohongshu: Globe,
+  blog: Globe, facebook: Globe,
+  tiktok: Globe, medium: Globe, reddit: Globe, quora: Globe,
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {

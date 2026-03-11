@@ -290,3 +290,16 @@
 - [x] FEATURE: Review Queue — batch Regen w/ Feedback: passes inspector issues + failed dimensions as LLM context, re-generates all selected packages
 - [x] FEATURE: Review Queue — empty state when filters match nothing, with Clear filters link
 - [x] E2E TESTED: sort/filter/batch-select/Regen w/ Feedback all confirmed working in dev server
+
+## Feature (March 11 2026 — Round 18)
+- [ ] FEATURE: Hide Chinese platforms completely — remove WeChat, Xiaohongshu from all UI (dashboard, publishing, forums, platform filters)
+- [ ] FEATURE: Keep WeChat/Xiaohongshu content generation for manual copy-paste only (no auto-publishing)
+- [ ] BUG: Webflow body field empty when article published — need to map HTML/markdown content to Webflow rich text format
+- [ ] FEATURE: Inspect Webflow CMS field structure and types to understand body field requirements
+- [ ] TEST: Full E2E publish test — generate → review → publish to Webflow → verify article appears in CMS with populated body
+
+
+## Feature (March 11 2026 — Round 18)
+- [x] FEATURE: Hide Chinese platforms (WeChat, Xiaohongshu) from all UI — removed from dashboard, publishing, forums, platform filters, integrations, content detail, review queue; kept content generation for manual copy-paste only
+- [x] BUG FIX: Webflow body field empty — now converts plain text/markdown to proper HTML format with <p> tags and <br/> line breaks before sending to Webflow API; tested end-to-end (fails only due to missing cms:write scope on token, not body field issue)
+- [x] FEATURE: Improved Webflow error messages — 403 now shows exact step-by-step fix (Site Settings → Integrations → API Access → generate new v2 token with CMS Read+Write → paste in Settings → Integrations)

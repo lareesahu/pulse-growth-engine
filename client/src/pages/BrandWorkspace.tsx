@@ -14,7 +14,7 @@ import { Plus, Trash2, Save, Sparkles, BookOpen, Users, Target, MessageSquare, S
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
-const PLATFORMS = ["linkedin", "instagram", "webflow", "wechat", "facebook", "tiktok", "xiaohongshu", "reddit", "quora"];
+const PLATFORMS = ["linkedin", "instagram", "webflow", "facebook", "tiktok", "reddit", "quora", "blog", "medium"];
 const RULE_TYPES = ["do_say", "dont_say", "banned_claim", "required_phrase", "cta_style", "platform_rule", "visual_rule", "prompt_guardrail"];
 
 export default function BrandWorkspace() {

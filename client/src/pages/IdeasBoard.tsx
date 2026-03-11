@@ -158,7 +158,7 @@ export default function IdeasBoard() {
                       <Select value={newIdea.platform} onValueChange={v => setNewIdea(i => ({ ...i, platform: v }))}>
                         <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          {["linkedin", "instagram", "webflow", "wechat", "all"].map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                          {["linkedin", "instagram", "webflow", "blog", "all"].map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>

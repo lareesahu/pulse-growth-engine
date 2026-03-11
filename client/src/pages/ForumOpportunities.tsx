@@ -21,8 +21,6 @@ const PLATFORM_CONFIG: Record<string, { label: string; color: string; bg: string
   indiehackers:  { label: "IndieHackers",  color: "text-blue-400",    bg: "bg-blue-500/10",    border: "border-blue-500/20" },
   growthhackers: { label: "GrowthHackers", color: "text-green-400",   bg: "bg-green-500/10",   border: "border-green-500/20" },
   medium:        { label: "Medium",        color: "text-white",       bg: "bg-white/10",       border: "border-white/20" },
-  zhihu:         { label: "Zhihu 知乎",     color: "text-blue-300",    bg: "bg-blue-400/10",    border: "border-blue-400/20" },
-  xiaohongshu:   { label: "Xiaohongshu 小红书", color: "text-pink-400", bg: "bg-pink-500/10",    border: "border-pink-500/20" },
 };
 const ALL_PLATFORM_KEYS = Object.keys(PLATFORM_CONFIG);
 

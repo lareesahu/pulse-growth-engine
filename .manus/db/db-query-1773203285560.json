@@ -1,0 +1,79 @@
+{
+  "query": "SHOW TABLES",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SHOW TABLES",
+  "rows": [
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "assets"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "audience_profiles"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "audit_events"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "brand_rules"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "brands"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "campaigns"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "content_packages"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "content_pillars"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "ideas"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "inspection_reports"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "inspector_rules"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "inspector_thresholds"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "integration_accounts"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "performance_records"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "pipeline_runs"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "platform_preferences"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "platform_variants"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "prompt_templates"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "publish_jobs"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "users"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "vitality_predictions"
+    },
+    {
+      "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo": "webflow_field_mappings"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_AU2Bbcsi9Q6EAtrWDQRvTo\n__drizzle_migrations\nassets\naudience_profiles\naudit_events\nbrand_rules\nbrands\ncampaigns\ncontent_packages\ncontent_pillars\nideas\ninspection_reports\ninspector_rules\ninspector_thresholds\nintegration_accounts\nperformance_records\npipeline_runs\nplatform_preferences\nplatform_variants\nprompt_templates\npublish_jobs\nusers\nvitality_predictions\nwebflow_field_mappings\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

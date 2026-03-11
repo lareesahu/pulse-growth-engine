@@ -93,7 +93,7 @@ export default function Home() {
           {[
             { icon: <Brain size={20} />, title: "AI Idea Generation", desc: "Batch-generate 10–30 content ideas aligned to your brand DNA" },
             { icon: <Sparkles size={20} />, title: "Content Packages", desc: "Blog + social captions + image prompts generated in one click" },
-            { icon: <Rocket size={20} />, title: "Multi-Platform", desc: "LinkedIn, Instagram, WeChat, Webflow — all from one queue" },
+            { icon: <Rocket size={20} />, title: "Multi-Platform", desc: "LinkedIn, Instagram, Webflow, Blog — all from one queue" },
             { icon: <BarChart3 size={20} />, title: "Analytics", desc: "Track performance and get AI-powered content recommendations" },
           ].map((f, i) => (
             <div key={i} className="p-4 rounded-xl border border-border bg-card text-left">

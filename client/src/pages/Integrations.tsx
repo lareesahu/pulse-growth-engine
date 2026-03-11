@@ -97,24 +97,7 @@ const PLATFORMS: PlatformConfig[] = [
       },
     ],
   },
-  {
-    key: "wechat",
-    label: "WeChat",
-    color: "#07C160",
-    description: "Publish articles to your WeChat Official Account.",
-    fields: [
-      {
-        key: "appId", label: "App ID", placeholder: "WeChat Official Account App ID",
-        helpText: "Log in to mp.weixin.qq.com (WeChat Official Accounts Platform). Go to Settings → Developer Settings to find your AppID. Requires a verified Official Account.",
-        helpUrl: "https://mp.weixin.qq.com/",
-      },
-      {
-        key: "appSecret", label: "App Secret", placeholder: "WeChat Official Account App Secret",
-        helpText: "Found in the same Developer Settings page as your AppID. Keep this secret — it's used to generate access tokens. Reset it immediately if compromised.",
-        helpUrl: "https://mp.weixin.qq.com/",
-      },
-    ],
-  },
+
   {
     key: "facebook",
     label: "Facebook",

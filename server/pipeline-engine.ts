@@ -686,7 +686,7 @@ CRITICAL RULES:
 
     // STEP 2: Save ideas and auto-approve
     updateProgress("saving_ideas");
-    const VALID_PLATFORMS = ["instagram","facebook","linkedin","tiktok","webflow","medium","xiaohongshu","wechat","reddit","quora","blog"];
+    const VALID_PLATFORMS = ["instagram","facebook","linkedin","tiktok","webflow","medium","reddit","quora","blog"];
     const approvedIdeaIds: number[] = [];
     
     for (const idea of generatedIdeas.slice(0, input.ideaCount)) {
@@ -801,20 +801,6 @@ CRITICAL RULES:
           title: content9.blogTitle,
           body: cleanedBlogHtml,
           caption: content9.blogSummary,
-          hashtags: [],
-          status: "generated",
-          version: 1,
-        });
-
-        // Save WeChat variant
-        await createVariant({
-          contentPackageId: pkgId,
-          brandId: idea.brandId,
-          platform: "wechat" as any,
-          formatType: "article",
-          title: content9.wechatTitle || content9.blogTitle,
-          body: cleanedWechatHtml,
-          caption: "",
           hashtags: [],
           status: "generated",
           version: 1,

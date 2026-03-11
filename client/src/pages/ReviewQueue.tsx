@@ -28,7 +28,7 @@ const SCORE_DIMS = [
 
 const PLATFORM_ICONS: Record<string, any> = {
   linkedin: Linkedin, instagram: Instagram, webflow: Globe,
-  wechat: MessageSquare, blog: Globe, facebook: Globe,
+  blog: Globe, facebook: Globe,
 };
 
 function ScoreBar({ score, color }: { score: number; color: string }) {

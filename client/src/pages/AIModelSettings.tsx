@@ -139,33 +139,6 @@ export default function AIModelSettings() {
           </CardContent>
         </Card>
 
-        {/* Chinese Text Model */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Brain size={18} className="text-red-400" />
-              <CardTitle className="text-base">Chinese Text Model</CardTitle>
-              <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 font-medium">WeChat &amp; Xiaohongshu</span>
-            </div>
-            <CardDescription>
-              Used for WeChat articles and Xiaohongshu captions. A second Doubao humanizer pass runs automatically on all Chinese content to remove AI filler phrases.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Label>Active model</Label>
-            {isLoading ? (
-              <div className="h-10 bg-muted rounded animate-pulse" />
-            ) : (
-              <ModelSelect models={TEXT_MODELS} value={zhTextModel} onChange={setZhTextModel} />
-            )}
-            {zhTextModel && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <Cpu size={12} /> {getModelNote(TEXT_MODELS, zhTextModel)} — Chinese humanizer runs after generation
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
         {/* Image Model */}
         <Card>
           <CardHeader className="pb-3">

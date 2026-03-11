@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 const PLATFORM_COLORS: Record<string, string> = {
   linkedin: "#0077B5", instagram: "#E1306C", webflow: "#4353FF",
-  wechat: "#07C160", facebook: "#1877F2", tiktok: "#000000",
+  facebook: "#1877F2", tiktok: "#000000", blog: "#808080",
 };
 
 export default function ContentDetail() {
