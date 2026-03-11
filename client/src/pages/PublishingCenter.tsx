@@ -263,11 +263,12 @@ export default function PublishingCenter() {
           </div>
         )}
         {webflowIntegration && tokenScope && !tokenScope.hasWriteScope && (
-          <div className="flex items-start gap-3 p-3 rounded-lg border border-red-500/30 bg-red-500/5">
-            <AlertCircle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 p-4 rounded-lg border border-red-500/30 bg-red-500/5">
+            <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-xs text-red-300 font-medium">Webflow token missing cms:write scope</p>
-              <p className="text-xs text-red-400/70 mt-0.5">Publishing will fail with 403. Fix: Webflow Site Settings → Integrations → API Access → Generate new v2 token → enable CMS Read + Write → paste in Settings → Integrations.</p>
+              <p className="text-sm text-red-300 font-semibold">Webflow token needs CMS write permission</p>
+              <p className="text-xs text-red-400/70 mt-1 leading-relaxed">Your existing token is read-only. To fix: go to <strong className="text-red-300">Webflow → Site Settings → Integrations → API Access</strong>, generate a new v2 token with <strong className="text-red-300">CMS Read + Write</strong> enabled, then paste it in <a href="/settings" className="underline text-red-300 hover:text-red-200">Settings → Integrations</a>.</p>
+              <a href="/settings" className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-red-300 hover:text-red-200 underline">Update token in Settings →</a>
             </div>
           </div>
         )}

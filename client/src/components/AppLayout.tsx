@@ -327,8 +327,9 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
         </main>
 
         {/* ── Mobile Bottom Tab Bar ── */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t border-border flex items-center justify-around px-2" style={{ background: "oklch(12% 0.045 268)", paddingBottom: "env(safe-area-inset-bottom)" }}>
-          {/* Ideas */}
+        {/* Flow: Ideas → Content → [Home] → Review → Schedule */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t border-border flex items-center justify-around px-2" style={{ background: "oklch(10.5% 0.005 280)", paddingBottom: "env(safe-area-inset-bottom)" }}>
+          {/* Left pair: Ideas + Content */}
           {[{ label: "Ideas", href: "/ideas", icon: <Brain size={20} /> }, { label: "Content", href: "/content", icon: <FileText size={20} /> }].map(item => {
             const isActive = location === item.href || location.startsWith(item.href + "/");
             return (
@@ -348,16 +349,19 @@ export default function AppLayout({ children, brandId, onBrandChange }: AppLayou
             <div className="flex flex-col items-center justify-center -mt-5">
               <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all ${
                 location === "/dashboard" || location === "/"
-                  ? "bg-primary text-primary-foreground shadow-primary/40"
+                  ? "bg-primary text-primary-foreground"
                   : "bg-primary/90 text-primary-foreground hover:bg-primary"
-              }`} style={{ boxShadow: "0 0 20px oklch(70% 0.2 200 / 0.4)" }}>
+              }`} style={{ boxShadow: "0 0 24px oklch(57% 0.16 270 / 0.5)" }}>
                 <LayoutDashboard size={24} />
               </div>
               <span className="text-[9px] font-medium mt-1 text-muted-foreground">Home</span>
             </div>
           </Link>
-          {/* Review + Publishing */}
-          {[{ label: "Review", href: "/review", icon: <CheckCheck size={20} />, badge: pendingReviewCount }, { label: "Publish", href: "/publishing", icon: <Rocket size={20} />, badge: 0 }].map(item => {
+          {/* Right pair: Review (with badge) + Schedule */}
+          {[
+            { label: "Review", href: "/review", icon: <CheckCheck size={20} />, badge: pendingReviewCount },
+            { label: "Schedule", href: "/scheduling", icon: <CalendarDays size={20} />, badge: 0 },
+          ].map(item => {
             const isActive = location === item.href || location.startsWith(item.href + "/");
             return (
               <Link key={item.href} href={item.href}>
