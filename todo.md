@@ -326,3 +326,11 @@
 - [x] BUG: Wrong collection ID in extraConfig — updated to correct Articles collection (673498ac936e891beb433701)
 - [x] CONFIRMED: No "AI Generated" tag in Webflow Articles collection — was a false alarm
 - [ ] RE-PUBLISH: Reset all 14 published jobs to queued — need to batch publish with correct content + new images
+
+## Critical Fixes (March 11 2026 — Round 22)
+- [x] BUG: Published articles have no body content — ROOT CAUSE: (1) webflow_field_mappings table was empty → mapping.body was undefined → body never set; FIXED: inserted correct field mapping; (2) 8 articles had truncated platform_variants.body → FIXED: updated from content_packages.blogContent; (3) 2 articles had no blogContent → FIXED: manually wrote full blog content and updated Webflow directly
+- [x] BUG: Images wrong style — FIXED: two-step image generation: (1) LLM reads article and suggests symbolic visual concept (handshake/key/ladder/etc), (2) generates "hyperrealistic 4K, cool tone, teal/blue/violet neon highlight, horizontal, no text, Canon EOS R6 Mark II, natural light, --v 6.0 --style raw --ar 16:9"
+- [x] BUG: "AI Generated" tag — CONFIRMED: no such field exists in Webflow Articles collection; was a misidentification
+- [x] BUG: MCP shell escaping — FIXED: replaced execSync with spawnSync helper (callMcpTool) to safely pass JSON without shell escaping issues
+- [x] BUG: Slug conflicts on retry — FIXED: both single and bulk publish now add unique 5-char timestamp suffix to slug
+- [x] TASK: Re-published all 14 articles — DONE: 14/14 published with full body (2200-4200c) + images; Webflow site published

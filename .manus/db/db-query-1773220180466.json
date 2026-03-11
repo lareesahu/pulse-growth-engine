@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, platform, publishStatus, errorLog FROM publish_jobs WHERE platform = 'webflow' AND publishStatus = 'failed' LIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT id, platform, publishStatus, errorLog FROM publish_jobs WHERE platform = 'webflow' AND publishStatus = 'failed' LIMIT 5",
+  "rows": [
+    {
+      "id": "180001",
+      "platform": "webflow",
+      "publishStatus": "failed",
+      "errorLog": "Webflow create failed: Unexpected token 'T', \"Tool execu\"... is not valid JSON"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tplatform\tpublishStatus\terrorLog\n180001\twebflow\tfailed\tWebflow create failed: Unexpected token 'T', \"Tool execu\"... is not valid JSON\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

@@ -1,6 +1,32 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { execSync } from "child_process";
+import { spawnSync } from "child_process";
+// Helper: call manus-mcp-cli safely without shell escaping issues
+function callMcpTool(toolName: string, server: string, input: object, timeoutMs = 60000): any {
+  const result = spawnSync(
+    "manus-mcp-cli",
+    ["tool", "call", toolName, "--server", server, "--input", JSON.stringify(input)],
+    { encoding: "utf8", timeout: timeoutMs }
+  );
+  if (result.error) throw result.error;
+  const output = (result.stdout || "").trim();
+  const stderr = (result.stderr || "").trim();
+  // manus-mcp-cli outputs: "Tool execution result saved to: ...\nTool execution result:\n{json}"
+  const jsonStart = output.indexOf("\nTool execution result:\n");
+  const jsonStr = jsonStart >= 0 ? output.slice(jsonStart + "\nTool execution result:\n".length).trim() : output;
+  if (!jsonStr) {
+    throw new Error(`MCP tool ${toolName} returned empty output. stderr: ${stderr.slice(0, 200)}`);
+  }
+  try {
+    return JSON.parse(jsonStr);
+  } catch (e) {
+    // Check if it's an error response
+    if (jsonStr.startsWith("Error:") || stderr.includes("error")) {
+      throw new Error(`MCP tool ${toolName} error: ${jsonStr.slice(0, 300)} | stderr: ${stderr.slice(0, 200)}`);
+    }
+    throw new Error(`MCP tool ${toolName} returned invalid JSON: ${jsonStr.slice(0, 200)}`);
+  }
+}
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -729,13 +755,16 @@ const publishingRouter = router({
     // Map our content fields to Webflow field slugs
     if (mapping.name && job.contentTitle) fieldData[mapping.name] = job.contentTitle;
     if (mapping.body && richTextBody) fieldData[mapping.body] = richTextBody;
+    const slugBase = job.contentTitle ? job.contentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 70) : "article";
+    const slugSuffix = Date.now().toString(36).slice(-5);
+    const slug = `${slugBase}-${slugSuffix}`;
     if (mapping.slug && job.contentTitle) {
-      fieldData[mapping.slug] = job.contentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 80);
+      fieldData[mapping.slug] = slug;
     }
     // Always set a name/slug if not mapped
     if (!fieldData.name && job.contentTitle) fieldData.name = job.contentTitle;
     if (!fieldData.slug && job.contentTitle) {
-      fieldData.slug = job.contentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 80) + "-" + Date.now().toString(36);
+      fieldData.slug = slug;
     }
 
     // Set author name and publish date
@@ -786,21 +815,19 @@ const publishingRouter = router({
 
     try {
       // Step 1: Create CMS item with name+slug only (MCP requires fieldData as array for create)
-      const createInput = JSON.stringify({
-        actions: [{
-          create_collection_items: {
-            collection_id: collectionId,
-            request: {
-              isDraft: false,
-              fieldData: [{ name: fieldData.name || job.contentTitle, slug: fieldData.slug }]
-            }
-          }
-        }]
-      });
       let createResult: any;
       try {
-        const createOutput = execSync(`manus-mcp-cli tool call data_cms_tool --server webflow --input '${createInput.replace(/'/g, "'\"'\"'")}'`, { encoding: "utf8", timeout: 60000 });
-        createResult = JSON.parse(createOutput);
+        createResult = callMcpTool("data_cms_tool", "webflow", {
+          actions: [{
+            create_collection_items: {
+              collection_id: collectionId,
+              request: {
+                isDraft: false,
+                fieldData: [{ name: fieldData.name || job.contentTitle, slug: fieldData.slug }]
+              }
+            }
+          }]
+        }, 60000);
       } catch (mcpErr: any) {
         throw new Error(`Webflow create failed: ${mcpErr.message?.slice(0, 300) || mcpErr}`);
       }
@@ -809,7 +836,7 @@ const publishingRouter = router({
 
       // Step 2: Update with full content (fieldData as flat object)
       try {
-        const updateInput = JSON.stringify({
+        callMcpTool("data_cms_tool", "webflow", {
           actions: [{
             update_collection_items: {
               collection_id: collectionId,
@@ -818,23 +845,42 @@ const publishingRouter = router({
               }
             }
           }]
-        });
-        execSync(`manus-mcp-cli tool call data_cms_tool --server webflow --input '${updateInput.replace(/'/g, "'\"'\"'")}'`, { encoding: "utf8", timeout: 60000 });
+        }, 60000);
       } catch (updErr: any) {
-        console.warn("[Webflow] Update step failed (item created with minimal content):", updErr.message);
+        console.warn("[Webflow] Update with full content failed:", updErr.message?.slice(0, 500));
+        // Retry without image if image field caused the error
+        if (fieldData["main-image"]) {
+          console.warn("[Webflow] Retrying update without image field...");
+          const fieldDataNoImage = { ...fieldData };
+          delete fieldDataNoImage["main-image"];
+          try {
+            callMcpTool("data_cms_tool", "webflow", {
+              actions: [{
+                update_collection_items: {
+                  collection_id: collectionId,
+                  request: {
+                    items: [{ id: createdItemId, isDraft: false, fieldData: fieldDataNoImage }]
+                  }
+                }
+              }]
+            }, 60000);
+            console.log("[Webflow] Update without image succeeded");
+          } catch (retryErr: any) {
+            console.warn("[Webflow] Update retry also failed:", retryErr.message?.slice(0, 300));
+          }
+        }
       }
 
       // Step 3: Publish the item (make it live)
       try {
-        const publishInput = JSON.stringify({
+        callMcpTool("data_cms_tool", "webflow", {
           actions: [{
             publish_collection_items: {
               collection_id: collectionId,
               request: { itemIds: [createdItemId] }
             }
           }]
-        });
-        execSync(`manus-mcp-cli tool call data_cms_tool --server webflow --input '${publishInput.replace(/'/g, "'\"'\"'")}'`, { encoding: "utf8", timeout: 30000 });
+        }, 30000);
       } catch (pubErr: any) {
         console.warn("[Webflow] Publish step failed (item created as draft):", pubErr.message);
       }
@@ -903,9 +949,12 @@ const publishingRouter = router({
 
       if (mapping.name && job.contentTitle) fieldData[mapping.name] = job.contentTitle;
       if (mapping.body && bulkRichTextBody) fieldData[mapping.body] = bulkRichTextBody;
-      if (mapping.slug && job.contentTitle) fieldData[mapping.slug] = job.contentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 80);
+      const bulkSlugBase = job.contentTitle ? job.contentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 70) : "article";
+      const bulkSlugSuffix = Date.now().toString(36).slice(-5);
+      const bulkSlug = `${bulkSlugBase}-${bulkSlugSuffix}`;
+      if (mapping.slug && job.contentTitle) fieldData[mapping.slug] = bulkSlug;
       if (!fieldData.name && job.contentTitle) fieldData.name = job.contentTitle;
-      if (!fieldData.slug && job.contentTitle) fieldData.slug = job.contentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 80) + "-" + Date.now().toString(36);
+      if (!fieldData.slug && job.contentTitle) fieldData.slug = bulkSlug;
 
       // Author, publish date, opening paragraph
       fieldData["author-name"] = fieldData["author-name"] || "Pulse Branding";
@@ -943,7 +992,7 @@ const publishingRouter = router({
       await updatePublishJob(job.id, { publishStatus: "publishing", lastAttemptAt: new Date() });
       try {
         // Step 1: Create with name+slug only (MCP requires fieldData as array for create)
-        const bulkCreateInput = JSON.stringify({
+        const bulkCreateResult = callMcpTool("data_cms_tool", "webflow", {
           actions: [{
             create_collection_items: {
               collection_id: bulkCollectionId,
@@ -953,38 +1002,52 @@ const publishingRouter = router({
               }
             }
           }]
-        });
-        const bulkCreateOutput = execSync(`manus-mcp-cli tool call data_cms_tool --server webflow --input '${bulkCreateInput.replace(/'/g, "'\"'\"'")}'`, { encoding: "utf8", timeout: 60000 });
-        const bulkCreateResult = JSON.parse(bulkCreateOutput);
+        }, 60000);
         const bulkItemId = bulkCreateResult?.items?.[0]?.id;
         if (!bulkItemId) throw new Error(`Webflow create returned no item ID. Response: ${JSON.stringify(bulkCreateResult).slice(0, 200)}`);
 
         // Step 2: Update with full content
         try {
-          const bulkUpdateInput = JSON.stringify({
+          callMcpTool("data_cms_tool", "webflow", {
             actions: [{
               update_collection_items: {
                 collection_id: bulkCollectionId,
                 request: { items: [{ id: bulkItemId, isDraft: false, fieldData }] }
               }
             }]
-          });
-          execSync(`manus-mcp-cli tool call data_cms_tool --server webflow --input '${bulkUpdateInput.replace(/'/g, "'\"'\"'")}'`, { encoding: "utf8", timeout: 60000 });
+          }, 60000);
         } catch (updErr: any) {
-          console.warn("[Webflow] Bulk update step failed:", updErr.message);
+          console.warn("[Webflow] Bulk update with full content failed:", updErr.message?.slice(0, 500));
+          // Retry without image if image field caused the error
+          if (fieldData["main-image"]) {
+            const fieldDataNoImage = { ...fieldData };
+            delete fieldDataNoImage["main-image"];
+            try {
+              callMcpTool("data_cms_tool", "webflow", {
+                actions: [{
+                  update_collection_items: {
+                    collection_id: bulkCollectionId,
+                    request: { items: [{ id: bulkItemId, isDraft: false, fieldData: fieldDataNoImage }] }
+                  }
+                }]
+              }, 60000);
+              console.log("[Webflow] Bulk update without image succeeded");
+            } catch (retryErr: any) {
+              console.warn("[Webflow] Bulk update retry also failed:", retryErr.message?.slice(0, 300));
+            }
+          }
         }
 
         // Step 3: Publish
         try {
-          const bulkPublishInput = JSON.stringify({
+          callMcpTool("data_cms_tool", "webflow", {
             actions: [{
               publish_collection_items: {
                 collection_id: bulkCollectionId,
                 request: { itemIds: [bulkItemId] }
               }
             }]
-          });
-          execSync(`manus-mcp-cli tool call data_cms_tool --server webflow --input '${bulkPublishInput.replace(/'/g, "'\"'\"'")}'`, { encoding: "utf8", timeout: 30000 });
+          }, 30000);
         } catch (pubErr: any) {
           console.warn("[Webflow] Bulk publish step failed (item created as draft):", pubErr.message);
         }
@@ -1004,7 +1067,7 @@ const publishingRouter = router({
       try {
         const siteId = extraConfigAll.siteId;
         if (siteId) {
-          const sitePublishInput = JSON.stringify({
+          callMcpTool("data_sites_tool", "webflow", {
             actions: [{
               publish_site: {
                 site_id: siteId,
@@ -1012,8 +1075,7 @@ const publishingRouter = router({
                 publishToWebflowSubdomain: true
               }
             }]
-          });
-          execSync(`manus-mcp-cli tool call data_sites_tool --server webflow --input '${sitePublishInput.replace(/'/g, "'\"'\"'")}'`, { encoding: "utf8", timeout: 30000 });
+          }, 30000);
           console.log(`[Webflow] Site published successfully after ${published} articles`);
         }
       } catch (siteErr: any) {

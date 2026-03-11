@@ -1,0 +1,46 @@
+{
+  "query": "SELECT pv.body FROM platform_variants pv JOIN publish_jobs pj ON pj.variantId = pv.id WHERE pj.platform = 'webflow' AND pj.publishStatus = 'published' LIMIT 1",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT pv.body FROM platform_variants pv JOIN publish_jobs pj ON pj.variantId = pv.id WHERE pj.platform = 'webflow' AND pj.publishStatus = 'published' LIMIT 1",
+  "rows": [
+    {
+      "body": "Platform: webflow"
+    },
+    {
+      "body": "<p>Building a global brand as a Chinese - speaking business owner means getting your products or services known all over the world. It's like taking your local store and making it famous on a global scale. You want people from different countries to recognize and trust your brand.</p>"
+    },
+    {
+      "body": "<p>This matters because the global market is huge. By building a global brand, you can reach more customers, increase your sales, and make your business more stable. It also gives you a chance to compete with big international brands and gain more influence in the business world.</p>"
+    },
+    {
+      "body": "<p>practical advice:</p>"
+    },
+    {
+      "body": "<ol>"
+    },
+    {
+      "body": "<p><strong>Understand your target audience</strong>: Research different cultures and markets. Find out what people in other countries like, what their needs are, and how they make purchasing decisions. For example, if you're selling fashion, you need to know the latest fashion trends in different regions.</p>"
+    },
+    {
+      "body": "<p><strong>Create a unique brand identity</strong>: Your brand should stand out. This includes having a memorable logo, a clear brand message, and a consistent look and feel across all your marketing materials. Make sure your brand values are something that can resonate with people globally.</p>"
+    },
+    {
+      "body": "<p><strong>Use digital marketing</strong>: The internet is a great tool to reach a global audience. Use social media platforms, email marketing, and search engine optimization (SEO) to get your brand in front of more people. For instance, you can create engaging content on platforms like Instagram or TikTok to attract international followers.</p>"
+    },
+    {
+      "body": "<p><strong>Build partnerships</strong>: Collaborate with other businesses or influencers in different countries. This can help you expand your reach and gain credibility in new markets. For example, partnering with a well - known local influencer can introduce your brand to their followers.</p>"
+    },
+    {
+      "body": "<p><strong>Provide excellent customer service</strong>: No matter where your customers are from, they expect good service. Make sure you can communicate effectively with international customers, handle their inquiries and complaints promptly, and provide high - quality after - sales support.</p>"
+    },
+    {
+      "body": "</ol>"
+    },
+    {
+      "body": "<p>To apply this to your business, start by making a plan. Set clear goals for your global brand building, like the number of international customers you want to reach in a year. Then, start implementing these strategies one by one. Monitor your progress and make adjustments as needed. For example, if a particular digital marketing channel isn't working well, try a different one. With time and effort, you can build a successful global brand."
+    }
+  ],
+  "messages": [],
+  "stdout": "body\nPlatform: webflow\n<p>Building a global brand as a Chinese - speaking business owner means getting your products or services known all over the world. It's like taking your local store and making it famous on a global scale. You want people from different countries to recognize and trust your brand.</p>\n<p>This matters because the global market is huge. By building a global brand, you can reach more customers, increase your sales, and make your business more stable. It also gives you a chance to compete with big international brands and gain more influence in the business world.</p>\n<p>practical advice:</p>\n<ol>\n<p><strong>Understand your target audience</strong>: Research different cultures and markets. Find out what people in other countries like, what their needs are, and how they make purchasing decisions. For example, if you're selling fashion, you need to know the latest fashion trends in different regions.</p>\n<p><strong>Create a unique brand identity</strong>: Your brand should stand out. This includes having a memorable logo, a clear brand message, and a consistent look and feel across all your marketing materials. Make sure your brand values are something that can resonate with people globally.</p>\n<p><strong>Use digital marketing</strong>: The internet is a great tool to reach a global audience. Use social media platforms, email marketing, and search engine optimization (SEO) to get your brand in front of more people. For instance, you can create engaging content on platforms like Instagram or TikTok to attract international followers.</p>\n<p><strong>Build partnerships</strong>: Collaborate with other businesses or influencers in different countries. This can help you expand your reach and gain credibility in new markets. For example, partnering with a well - known local influencer can introduce your brand to their followers.</p>\n<p><strong>Provide excellent customer service</strong>: No matter where your customers are from, they expect good service. Make sure you can communicate effectively with international customers, handle their inquiries and complaints promptly, and provide high - quality after - sales support.</p>\n</ol>\n<p>To apply this to your business, start by making a plan. Set clear goals for your global brand building, like the number of international customers you want to reach in a year. Then, start implementing these strategies one by one. Monitor your progress and make adjustments as needed. For example, if a particular digital marketing channel isn't working well, try a different one. With time and effort, you can build a successful global brand.\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}
