@@ -92,7 +92,7 @@ export default function ContentPackages() {
     onError: (e) => toast.error(e.message),
   });
   const approveMut = trpc.content.approvePackage.useMutation({
-    onSuccess: () => { refetch(); toast.success("Package approved for publishing"); },
+    onSuccess: () => { refetch(); toast.success("Package approved for publishing"); utils.scheduling.getScheduledPosts.invalidate(); },
     onError: (e) => toast.error(e.message),
   });
   const resetStuck = trpc.content.resetStuckPackages.useMutation({
@@ -102,7 +102,12 @@ export default function ContentPackages() {
 
   // Batch mutations
   const batchApprove = trpc.content.batchApprove.useMutation({
-    onSuccess: (r) => { refetch(); setSelectedIds(new Set()); toast.success(`${r.count} packages approved`); },
+    onSuccess: (r) => {
+      refetch(); setSelectedIds(new Set());
+      const autoMsg = r.autoScheduled && r.autoScheduled > 0 ? ` · ${r.autoScheduled} auto-scheduled` : "";
+      toast.success(`${r.count} packages approved${autoMsg}`);
+      utils.scheduling.getScheduledPosts.invalidate();
+    },
     onError: (e) => toast.error(e.message),
   });
   const batchArchive = trpc.content.batchArchive.useMutation({

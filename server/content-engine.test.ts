@@ -76,6 +76,33 @@ vi.mock("./db", () => ({
     totalPublished: 4, platformBreakdown: { linkedin: 2, instagram: 2 },
     ideaStatusBreakdown: { proposed: 3, approved: 2, rejected: 0 },
   }),
+  // Scheduling helpers
+  getPlatformSchedules: vi.fn().mockResolvedValue([]),
+  getPlatformSchedule: vi.fn().mockResolvedValue(null),
+  getScheduledPosts: vi.fn().mockResolvedValue([]),
+  createScheduledPost: vi.fn().mockResolvedValue(1),
+  upsertPlatformSchedule: vi.fn().mockResolvedValue(undefined),
+  updateScheduledPost: vi.fn().mockResolvedValue(undefined),
+  deleteScheduledPost: vi.fn().mockResolvedValue(undefined),
+  getDueScheduledPosts: vi.fn().mockResolvedValue([]),
+  // Other helpers used by various routers
+  getAllInspectorRules: vi.fn().mockResolvedValue([]),
+  createInspectorRule: vi.fn().mockResolvedValue({ id: 1 }),
+  updateInspectorRule: vi.fn().mockResolvedValue(undefined),
+  deleteInspectorRule: vi.fn().mockResolvedValue(undefined),
+  getInspectionReportsByPackage: vi.fn().mockResolvedValue([]),
+  createInspectionReport: vi.fn().mockResolvedValue({ id: 1 }),
+  getLatestPipelineRun: vi.fn().mockResolvedValue(null),
+  getPipelineRuns: vi.fn().mockResolvedValue([]),
+  createPipelineRun: vi.fn().mockResolvedValue({ id: 1 }),
+  updatePipelineRun: vi.fn().mockResolvedValue(undefined),
+  getInspectorThresholds: vi.fn().mockResolvedValue([]),
+  upsertInspectorThreshold: vi.fn().mockResolvedValue(undefined),
+  getVitalityModelAccuracy: vi.fn().mockResolvedValue(null),
+  getReviewQueue: vi.fn().mockResolvedValue([]),
+  deleteVariantsByPackageId: vi.fn().mockResolvedValue(undefined),
+  deleteAllIdeasForBrand: vi.fn().mockResolvedValue(undefined),
+  hardDeleteAllIdeasForBrand: vi.fn().mockResolvedValue(undefined),
 }));
 
 // ─── Mock LLM ─────────────────────────────────────────────────────────────────

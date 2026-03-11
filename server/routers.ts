@@ -59,6 +59,7 @@ import {
   getVitalityModelAccuracy, getReviewQueue,
   getWebflowFieldMapping, upsertWebflowFieldMapping,
   deleteAllIdeasForBrand, hardDeleteAllIdeasForBrand,
+  getPlatformSchedules, getPlatformSchedule, createScheduledPost, getScheduledPosts,
 } from "./db";
 
 // ─── Brand Router ─────────────────────────────────────────────────────────────
@@ -380,13 +381,53 @@ const contentRouter = router({
   }),
   approvePackage: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
     await updateContentPackage(input.id, { status: "approved_for_publish" });
+    // Auto-schedule variants for platforms with autoSchedule=true
+    const pkg = await getContentPackageById(input.id);
+    if (pkg) {
+      const schedules = await getPlatformSchedules(pkg.brandId);
+      const existingPending = await getScheduledPosts(pkg.brandId, { status: "pending" });
+      const variants = await getVariantsByPackageId(input.id);
+      for (const variant of variants) {
+        const sched = schedules.find(s => s.platform === variant.platform && s.autoSchedule && s.enabled);
+        if (sched && !existingPending.some(p => p.variantId === variant.id)) {
+          const platformPending = existingPending.filter(p => p.platform === sched.platform);
+          const nextSlot = getNextSlotTime(sched, platformPending);
+          await createScheduledPost({ brandId: pkg.brandId, variantId: variant.id, contentPackageId: input.id, platform: variant.platform, scheduledAt: nextSlot, status: "pending" });
+          existingPending.push({ id: 0, brandId: pkg.brandId, variantId: variant.id, contentPackageId: input.id, platform: variant.platform, scheduledAt: nextSlot, status: "pending", publishedAt: null, errorMessage: null, publishJobId: null, createdAt: new Date(), updatedAt: new Date() });
+        }
+      }
+    }
     return { success: true };
   }),
 
   // Batch operations
   batchApprove: protectedProcedure.input(z.object({ ids: z.array(z.number()) })).mutation(async ({ input }) => {
-    await Promise.all(input.ids.map(id => updateContentPackage(id, { status: "approved_for_publish" })));
-    return { success: true, count: input.ids.length };
+    let autoScheduled = 0;
+    let schedules: any[] = [];
+    let existingPending: any[] = [];
+    let schedulesLoaded = false;
+    for (const id of input.ids) {
+      await updateContentPackage(id, { status: "approved_for_publish" });
+      const pkg = await getContentPackageById(id);
+      if (!pkg) continue;
+      if (!schedulesLoaded) {
+        schedules = await getPlatformSchedules(pkg.brandId);
+        existingPending = await getScheduledPosts(pkg.brandId, { status: "pending" });
+        schedulesLoaded = true;
+      }
+      const variants = await getVariantsByPackageId(id);
+      for (const variant of variants) {
+        const sched = schedules.find((s: any) => s.platform === variant.platform && s.autoSchedule && s.enabled);
+        if (sched && !existingPending.some((p: any) => p.variantId === variant.id)) {
+          const platformPending = existingPending.filter((p: any) => p.platform === sched.platform);
+          const nextSlot = getNextSlotTime(sched, platformPending);
+          await createScheduledPost({ brandId: pkg.brandId, variantId: variant.id, contentPackageId: id, platform: variant.platform, scheduledAt: nextSlot, status: "pending" });
+          existingPending.push({ id: 0, brandId: pkg.brandId, variantId: variant.id, contentPackageId: id, platform: variant.platform, scheduledAt: nextSlot, status: "pending", publishedAt: null, errorMessage: null, publishJobId: null, createdAt: new Date(), updatedAt: new Date() });
+          autoScheduled++;
+        }
+      }
+    }
+    return { success: true, count: input.ids.length, autoScheduled };
   }),
   batchArchive: protectedProcedure.input(z.object({ ids: z.array(z.number()) })).mutation(async ({ input }) => {
     await Promise.all(input.ids.map(id => updateContentPackage(id, { status: "archived" })));
@@ -1373,45 +1414,101 @@ const pipelineRouter = router({
     const targetVariants = input.platforms
       ? variants.filter(v => input.platforms!.includes(v.platform))
       : variants;
+    // Auto-schedule variants for platforms with autoSchedule=true
+    const autoScheduled: string[] = [];
+    const schedules = await getPlatformSchedules(pkg.brandId);
+    const existingPending = await getScheduledPosts(pkg.brandId, { status: "pending" });
     for (const variant of targetVariants) {
-      await updateVariant(variant.id, { status: "queued" });
-      await createPublishJob({
-        contentPackageId: input.contentPackageId,
-        variantId: variant.id,
-        brandId: pkg.brandId,
-        platform: variant.platform,
-        publishStatus: "queued",
-        actionType: "publish_now",
-      });
-    }
-    await logAudit({ brandId: pkg.brandId, actorUserId: ctx.user.id, entityType: "content_package", entityId: input.contentPackageId, action: "approved_for_publish", description: `Content package approved for publishing on ${targetVariants.length} platform(s)` });
-    return { success: true, jobsCreated: targetVariants.length };
-  }),
-
-  batchApproveForPublishing: protectedProcedure.input(z.object({
-    contentPackageIds: z.array(z.number()),
-  })).mutation(async ({ ctx, input }) => {
-    let totalJobs = 0;
-    for (const id of input.contentPackageIds) {
-      const pkg = await getContentPackageById(id);
-      if (!pkg) continue;
-      await updateContentPackage(id, { status: "approved_for_publish" });
-      const variants = await getVariantsByPackageId(id);
-      for (const variant of variants) {
+      const sched = schedules.find(s => s.platform === variant.platform && s.autoSchedule && s.enabled);
+      if (sched) {
+        // Check not already scheduled
+        const alreadyScheduled = existingPending.some(p => p.variantId === variant.id);
+        if (!alreadyScheduled) {
+          const platformPending = existingPending.filter(p => p.platform === sched.platform);
+          const nextSlot = getNextSlotTime(sched, platformPending);
+          await createScheduledPost({
+            brandId: pkg.brandId,
+            variantId: variant.id,
+            contentPackageId: input.contentPackageId,
+            platform: variant.platform,
+            scheduledAt: nextSlot,
+            status: "pending",
+          });
+          existingPending.push({ id: 0, brandId: pkg.brandId, variantId: variant.id, contentPackageId: input.contentPackageId, platform: variant.platform, scheduledAt: nextSlot, status: "pending", publishedAt: null, errorMessage: null, publishJobId: null, createdAt: new Date(), updatedAt: new Date() });
+          autoScheduled.push(variant.platform);
+        }
+        await updateVariant(variant.id, { status: "queued" });
+      } else {
         await updateVariant(variant.id, { status: "queued" });
         await createPublishJob({
-          contentPackageId: id,
+          contentPackageId: input.contentPackageId,
           variantId: variant.id,
           brandId: pkg.brandId,
           platform: variant.platform,
           publishStatus: "queued",
           actionType: "publish_now",
         });
-        totalJobs++;
+      }
+    }
+    await logAudit({ brandId: pkg.brandId, actorUserId: ctx.user.id, entityType: "content_package", entityId: input.contentPackageId, action: "approved_for_publish", description: `Content package approved for publishing on ${targetVariants.length} platform(s)${autoScheduled.length > 0 ? "; auto-scheduled: " + autoScheduled.join(", ") : ""}` });
+    return { success: true, jobsCreated: targetVariants.length, autoScheduled };
+  }),
+
+  batchApproveForPublishing: protectedProcedure.input(z.object({
+    contentPackageIds: z.array(z.number()),
+  })).mutation(async ({ ctx, input }) => {
+    let totalJobs = 0;
+    let totalAutoScheduled = 0;
+    // Pre-load schedules once for the first package's brand (assume same brand)
+    let schedules: any[] = [];
+    let existingPending: any[] = [];
+    let schedulesLoaded = false;
+    for (const id of input.contentPackageIds) {
+      const pkg = await getContentPackageById(id);
+      if (!pkg) continue;
+      await updateContentPackage(id, { status: "approved_for_publish" });
+      // Load schedules once per brand
+      if (!schedulesLoaded) {
+        schedules = await getPlatformSchedules(pkg.brandId);
+        existingPending = await getScheduledPosts(pkg.brandId, { status: "pending" });
+        schedulesLoaded = true;
+      }
+      const variants = await getVariantsByPackageId(id);
+      for (const variant of variants) {
+        const sched = schedules.find((s: any) => s.platform === variant.platform && s.autoSchedule && s.enabled);
+        if (sched) {
+          const alreadyScheduled = existingPending.some((p: any) => p.variantId === variant.id);
+          if (!alreadyScheduled) {
+            const platformPending = existingPending.filter((p: any) => p.platform === sched.platform);
+            const nextSlot = getNextSlotTime(sched, platformPending);
+            await createScheduledPost({
+              brandId: pkg.brandId,
+              variantId: variant.id,
+              contentPackageId: id,
+              platform: variant.platform,
+              scheduledAt: nextSlot,
+              status: "pending",
+            });
+            existingPending.push({ id: 0, brandId: pkg.brandId, variantId: variant.id, contentPackageId: id, platform: variant.platform, scheduledAt: nextSlot, status: "pending", publishedAt: null, errorMessage: null, publishJobId: null, createdAt: new Date(), updatedAt: new Date() });
+            totalAutoScheduled++;
+          }
+          await updateVariant(variant.id, { status: "queued" });
+        } else {
+          await updateVariant(variant.id, { status: "queued" });
+          await createPublishJob({
+            contentPackageId: id,
+            variantId: variant.id,
+            brandId: pkg.brandId,
+            platform: variant.platform,
+            publishStatus: "queued",
+            actionType: "publish_now",
+          });
+          totalJobs++;
+        }
       }
       await logAudit({ brandId: pkg.brandId, actorUserId: ctx.user.id, entityType: "content_package", entityId: id, action: "approved_for_publish", description: `Batch approved for publishing` });
     }
-    return { success: true, approved: input.contentPackageIds.length, jobsCreated: totalJobs };
+    return { success: true, approved: input.contentPackageIds.length, jobsCreated: totalJobs, autoScheduled: totalAutoScheduled };
   }),
   batchRejectFromQueue: protectedProcedure.input(z.object({
     contentPackageIds: z.array(z.number()),
@@ -1737,6 +1834,7 @@ const schedulingRouter = router({
       cadenceDays: z.array(z.number()).optional(), // 0=Sun..6=Sat
       cadenceDayOfMonth: z.number().optional(),
       cadenceIntervalDays: z.number().optional(),
+      autoSchedule: z.boolean().optional(),
     }))
     .mutation(async ({ input }) => {
       const { upsertPlatformSchedule } = await import("./db");

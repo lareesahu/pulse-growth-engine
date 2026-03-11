@@ -73,6 +73,7 @@ function ScheduleSettingsPanel({ brandId }: { brandId: number }) {
       cadenceDays:         local?.cadenceDays         ?? saved?.cadenceDays         ?? [1, 4], // Mon+Thu
       cadenceDayOfMonth:   local?.cadenceDayOfMonth   ?? saved?.cadenceDayOfMonth   ?? 1,
       cadenceIntervalDays: local?.cadenceIntervalDays ?? saved?.cadenceIntervalDays ?? 7,
+      autoSchedule:        local?.autoSchedule        ?? saved?.autoSchedule        ?? false,
     };
   }
 
@@ -225,6 +226,21 @@ function ScheduleSettingsPanel({ brandId }: { brandId: number }) {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Auto-schedule toggle */}
+                <div className="flex items-center justify-between rounded-lg border border-border/40 bg-background/40 px-3 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <Zap size={13} className={form.autoSchedule ? "text-amber-400" : "text-muted-foreground"} />
+                    <div>
+                      <p className="text-xs font-medium text-foreground">Auto-schedule on approval</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">When content is approved, automatically queue it to the next available slot on this platform</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={form.autoSchedule}
+                    onCheckedChange={v => setField(platform.id, "autoSchedule", v)}
+                  />
                 </div>
 
                 <Button

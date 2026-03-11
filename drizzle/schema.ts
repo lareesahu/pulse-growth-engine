@@ -410,6 +410,7 @@ export const platformSchedules = mysqlTable("platform_schedules", {
   cadenceDays: json("cadenceDays").$type<number[]>(),
   cadenceDayOfMonth: int("cadenceDayOfMonth").default(1),
   cadenceIntervalDays: int("cadenceIntervalDays").default(7),
+  autoSchedule: boolean("autoSchedule").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

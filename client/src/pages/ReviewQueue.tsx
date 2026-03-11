@@ -235,7 +235,12 @@ export default function ReviewQueue() {
   const utils = trpc.useUtils();
 
   const approveForPublish = trpc.pipeline.approveForPublishing.useMutation({
-    onSuccess: (data) => { toast.success(`Approved — ${data.jobsCreated} publish job${data.jobsCreated !== 1 ? "s" : ""} created`); utils.pipeline.getReviewQueue.invalidate(); },
+    onSuccess: (data) => {
+      const autoMsg = data.autoScheduled && data.autoScheduled.length > 0 ? ` · Auto-scheduled: ${data.autoScheduled.join(", ")}` : "";
+      toast.success(`Approved — ${data.jobsCreated} publish job${data.jobsCreated !== 1 ? "s" : ""} created${autoMsg}`);
+      utils.pipeline.getReviewQueue.invalidate();
+      utils.scheduling.getScheduledPosts.invalidate();
+    },
     onError: (e) => toast.error(e.message),
   });
 
@@ -245,7 +250,13 @@ export default function ReviewQueue() {
   });
 
   const batchApprove = trpc.pipeline.batchApproveForPublishing.useMutation({
-    onSuccess: (data) => { toast.success(`${data.approved} packages approved — ${data.jobsCreated} publish jobs created`); setSelectedIds(new Set()); setBatchMode(false); utils.pipeline.getReviewQueue.invalidate(); },
+    onSuccess: (data) => {
+      const autoMsg = data.autoScheduled && data.autoScheduled > 0 ? ` · ${data.autoScheduled} auto-scheduled` : "";
+      toast.success(`${data.approved} packages approved — ${data.jobsCreated} publish jobs created${autoMsg}`);
+      setSelectedIds(new Set()); setBatchMode(false);
+      utils.pipeline.getReviewQueue.invalidate();
+      utils.scheduling.getScheduledPosts.invalidate();
+    },
     onError: (e) => toast.error(e.message),
   });
 

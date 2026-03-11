@@ -50,6 +50,13 @@
       "when": 1773231642199,
       "tag": "0006_curvy_jamie_braddock",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1773234047815,
+      "tag": "0007_amusing_shadow_king",
+      "breakpoints": true
     }
   ]
 }

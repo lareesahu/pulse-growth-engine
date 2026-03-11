@@ -1,0 +1,1 @@
+ALTER TABLE `platform_schedules` ADD `autoSchedule` boolean DEFAULT false NOT NULL;

@@ -364,3 +364,11 @@
 - [ ] Platform Settings (Integrations): best push time picker + cadence config per platform
 - [ ] Background scheduler: cron job checks scheduled_posts every minute, publishes due posts
 - [ ] Timezone support: per-brand timezone setting (default Sydney AEDT)
+
+## Auto-Schedule Feature (March 11 2026)
+- [ ] DB: add autoSchedule boolean column to platform_schedules table
+- [ ] Backend: computeNextSlot() — finds next available date/time after last queued post for a platform
+- [ ] Backend: autoScheduleVariants() — given a list of approved variantIds, assigns each to next slot per platform
+- [ ] Backend: wire autoSchedule into review approval mutation (approvePackage) — if platform has autoSchedule=true, auto-queue all variants
+- [ ] Frontend: Auto-Schedule toggle per platform in Scheduling Settings
+- [ ] Frontend: Show "Auto-scheduled" badge on newly queued posts in Queue tab
