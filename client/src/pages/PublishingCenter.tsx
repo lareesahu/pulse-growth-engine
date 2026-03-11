@@ -146,10 +146,7 @@ export default function PublishingCenter() {
 
   const webflowIntegration = (integration || []).find((i: any) => i.platform === "webflow" && i.status === "connected");
 
-  const { data: tokenScope } = trpc.integrations.checkWebflowTokenScope.useQuery(
-    { brandId: activeBrandId! },
-    { enabled: !!activeBrandId && !!webflowIntegration, staleTime: 60000 }
-  );
+  // tokenScope check removed — publishing uses MCP, not direct API token
 
   const markPublished = trpc.publishing.markPublished.useMutation({ onSuccess: () => { refetch(); toast.success("Marked as published"); } });
   const markFailed = trpc.publishing.markFailed.useMutation({ onSuccess: () => { refetch(); toast.error("Marked as failed"); } });
@@ -262,20 +259,10 @@ export default function PublishingCenter() {
             <p className="text-xs text-amber-300 flex-1">Webflow is not connected. Connect it in <a href="/settings" className="underline text-amber-400">Settings → Integrations</a> to enable one-click publishing.</p>
           </div>
         )}
-        {webflowIntegration && tokenScope && !tokenScope.hasWriteScope && (
-          <div className="flex items-start gap-3 p-4 rounded-lg border border-red-500/30 bg-red-500/5">
-            <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm text-red-300 font-semibold">Webflow token needs CMS write permission</p>
-              <p className="text-xs text-red-400/70 mt-1 leading-relaxed">Your existing token is read-only. To fix: go to <strong className="text-red-300">Webflow → Site Settings → Integrations → API Access</strong>, generate a new v2 token with <strong className="text-red-300">CMS Read + Write</strong> enabled, then paste it in <a href="/settings" className="underline text-red-300 hover:text-red-200">Settings → Integrations</a>.</p>
-              <a href="/settings" className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-red-300 hover:text-red-200 underline">Update token in Settings →</a>
-            </div>
-          </div>
-        )}
-        {webflowIntegration && (!tokenScope || tokenScope.hasWriteScope) && (
-          <div className="flex items-center gap-3 p-3 rounded-lg border border-[#4353FF]/30 bg-[#4353FF]/5">
-            <Globe size={14} className="text-[#4353FF] flex-shrink-0" />
-            <p className="text-xs text-[#4353FF]/80 flex-1">Webflow connected — <span className="font-medium text-[#4353FF]">{webflowIntegration.accountName || "your site"}</span>. Click "Push to Webflow" on any queued Webflow job to publish.</p>
+        {webflowIntegration && (
+          <div className="flex items-center gap-3 p-3 rounded-lg border border-primary/20 bg-primary/5">
+            <Globe size={14} className="text-primary flex-shrink-0" />
+            <p className="text-xs text-primary/80 flex-1">Webflow connected — <span className="font-medium text-primary">{webflowIntegration.accountName || "your site"}</span>. Publishing uses your connected Webflow account via MCP.</p>
           </div>
         )}
 

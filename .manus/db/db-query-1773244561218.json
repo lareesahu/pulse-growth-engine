@@ -1,0 +1,17 @@
+{
+  "query": "SELECT platform, status, accountName, LEFT(apiKey, 40) as token_preview, LENGTH(apiKey) as token_length FROM integration_accounts WHERE platform = 'webflow' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3X7ymVRNW2gRHR2.root --database AU2Bbcsi9Q6EAtrWDQRvTo --execute SELECT platform, status, accountName, LEFT(apiKey, 40) as token_preview, LENGTH(apiKey) as token_length FROM integration_accounts WHERE platform = 'webflow' LIMIT 5;",
+  "rows": [
+    {
+      "platform": "webflow",
+      "status": "connected",
+      "accountName": "673498ac936e891beb4335fd",
+      "token_preview": "0c5726c672501ce3bc177700b559431a11bb06cf",
+      "token_length": "64"
+    }
+  ],
+  "messages": [],
+  "stdout": "platform\tstatus\taccountName\ttoken_preview\ttoken_length\nwebflow\tconnected\t673498ac936e891beb4335fd\t0c5726c672501ce3bc177700b559431a11bb06cf\t64\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}
