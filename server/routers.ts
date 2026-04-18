@@ -2005,6 +2005,91 @@ function isValidCadenceDay(date: Date, schedule: any): boolean {
   }
 }
 
+// ─── Payload Router ──────────────────────────────────────────────────────────
+const payloadRouter = router({
+  list: protectedProcedure
+    .input(z.object({ brandId: z.number() }))
+    .query(async ({ input }) => {
+      const { getExecutionPayloadsByBrand } = await import("./db");
+      return getExecutionPayloadsByBrand(input.brandId);
+    }),
+
+  listByIdea: protectedProcedure
+    .input(z.object({ ideaId: z.number() }))
+    .query(async ({ input }) => {
+      const { getExecutionPayloadsByIdea } = await import("./db");
+      return getExecutionPayloadsByIdea(input.ideaId);
+    }),
+
+  get: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const { getExecutionPayloadById } = await import("./db");
+      return getExecutionPayloadById(input.id);
+    }),
+
+  compose: protectedProcedure
+    .input(
+      z.object({
+        ideaId: z.number(),
+        brandId: z.number(),
+        platform: z.enum(["linkedin", "x", "webflow", "reddit", "email"]),
+        contentPackageId: z.number(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { composePayload } = await import("./services/payload-composer");
+      const { createExecutionPayload } = await import("./db");
+      const composed = await composePayload(input);
+      const result = await createExecutionPayload({ ...composed, brandId: input.brandId });
+      return { success: true, insertId: (result as any)?.[0]?.insertId ?? null };
+    }),
+
+  updateStatus: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        status: z.enum(["draft", "approved", "handed_off", "executed"]),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { updateExecutionPayload } = await import("./db");
+      await updateExecutionPayload(input.id, { status: input.status });
+      return { success: true };
+    }),
+
+  sendToWebhook: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        webhookUrl: z.string().url(),
+        secret: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { getExecutionPayloadById, updateExecutionPayload } = await import("./db");
+      const row = await getExecutionPayloadById(input.id);
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Payload not found" });
+      const { sendToWebhook } = await import("./connectors/webhook");
+      const executionPayload = {
+        id: String(row.id),
+        ideaId: row.ideaId,
+        platform: row.platform,
+        status: row.status,
+        content: row.content,
+        metadata: row.metadata,
+        instructions: row.instructions,
+      } as import("../drizzle/schema").ExecutionPayload;
+      const deliveryResult = await sendToWebhook({
+        webhookUrl: input.webhookUrl,
+        payload: executionPayload,
+        secret: input.secret,
+      });
+      await updateExecutionPayload(input.id, { status: "handed_off" });
+      return deliveryResult;
+    }),
+});
+
 // ─── App Router ─────────────────────────────────────────────────
 export const appRouter = router({
   system: systemRouter,
@@ -2029,6 +2114,7 @@ export const appRouter = router({
   pipeline: pipelineRouter,
   forum: forumRouter,
   scheduling: schedulingRouter,
+  payload: payloadRouter,
 });
 
 export type AppRouter = typeof appRouter;

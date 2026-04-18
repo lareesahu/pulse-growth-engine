@@ -398,6 +398,60 @@ export const webflowFieldMappings = mysqlTable("webflow_field_mappings", {
 export type WebflowFieldMapping = typeof webflowFieldMappings.$inferSelect;
 export type InsertWebflowFieldMapping = typeof webflowFieldMappings.$inferInsert;
 
+// ─── Execution Payloads ───────────────────────────────────────────────────────
+export const executionPayloads = mysqlTable("execution_payloads", {
+  id: int("id").autoincrement().primaryKey(),
+  ideaId: int("ideaId").notNull(),
+  brandId: int("brandId").notNull(),
+  platform: mysqlEnum("platform", ["linkedin", "x", "webflow", "reddit", "email"]).notNull(),
+  status: mysqlEnum("status", ["draft", "approved", "handed_off", "executed"]).default("draft").notNull(),
+  content: json("content").$type<{
+    body: string;
+    caption: string;
+    headline?: string;
+    cta_url?: string;
+  }>().notNull(),
+  metadata: json("metadata").$type<{
+    hashtags: string[];
+    tags: string[];
+    optimal_time: string;
+    trending_score: number;
+  }>().notNull(),
+  instructions: json("instructions").$type<{
+    first_comment: string;
+    engagement_strategy: string;
+    follow_up_trigger: string;
+  }>().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ExecutionPayloadRow = typeof executionPayloads.$inferSelect;
+export type InsertExecutionPayload = typeof executionPayloads.$inferInsert;
+
+export interface ExecutionPayload {
+  id: string;
+  ideaId: number;
+  platform: "linkedin" | "x" | "webflow" | "reddit" | "email";
+  status: "draft" | "approved" | "handed_off" | "executed";
+  content: {
+    body: string;
+    caption: string;
+    headline?: string;
+    cta_url?: string;
+  };
+  metadata: {
+    hashtags: string[];
+    tags: string[];
+    optimal_time: string;
+    trending_score: number;
+  };
+  instructions: {
+    first_comment: string;
+    engagement_strategy: string;
+    follow_up_trigger: string;
+  };
+}
+
 // ─── Platform Schedules ───────────────────────────────────────────────────────
 export const platformSchedules = mysqlTable("platform_schedules", {
   id: int("id").autoincrement().primaryKey(),
