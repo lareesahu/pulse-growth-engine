@@ -18,11 +18,13 @@ import ForumOpportunities from "./pages/ForumOpportunities";
 import ContentPackages from "./pages/ContentPackages";
 import AIModelSettings from "./pages/AIModelSettings";
 import Scheduling from "./pages/Scheduling";
+import Login from "./pages/Login";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/workspace" component={BrandWorkspace} />
       <Route path="/ideas" component={IdeasBoard} />
