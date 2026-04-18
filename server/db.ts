@@ -644,3 +644,32 @@ export async function getDueScheduledPosts() {
   const rows = await db.select().from(scheduledPosts).where(eq(scheduledPosts.status, "pending"));
   return rows.filter(p => p.scheduledAt <= now);
 }
+
+// ─── Execution Payloads ───────────────────────────────────────────────────────
+import { executionPayloads, InsertExecutionPayload } from "../drizzle/schema";
+
+export async function createExecutionPayload(data: InsertExecutionPayload) {
+  const db = await getDb(); if (!db) throw new Error("DB not available");
+  return db.insert(executionPayloads).values(data);
+}
+
+export async function getExecutionPayloadById(id: number) {
+  const db = await getDb(); if (!db) return undefined;
+  const result = await db.select().from(executionPayloads).where(eq(executionPayloads.id, id)).limit(1);
+  return result[0];
+}
+
+export async function getExecutionPayloadsByBrand(brandId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(executionPayloads).where(eq(executionPayloads.brandId, brandId)).orderBy(desc(executionPayloads.createdAt));
+}
+
+export async function getExecutionPayloadsByIdea(ideaId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(executionPayloads).where(eq(executionPayloads.ideaId, ideaId)).orderBy(desc(executionPayloads.createdAt));
+}
+
+export async function updateExecutionPayload(id: number, data: Partial<InsertExecutionPayload>) {
+  const db = await getDb(); if (!db) throw new Error("DB not available");
+  return db.update(executionPayloads).set({ ...data, updatedAt: new Date() }).where(eq(executionPayloads.id, id));
+}

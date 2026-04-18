@@ -18,6 +18,7 @@ import ForumOpportunities from "./pages/ForumOpportunities";
 import ContentPackages from "./pages/ContentPackages";
 import AIModelSettings from "./pages/AIModelSettings";
 import Scheduling from "./pages/Scheduling";
+import PayloadConsole from "./pages/PayloadConsole";
 
 function Router() {
   return (
@@ -27,14 +28,16 @@ function Router() {
       <Route path="/workspace" component={BrandWorkspace} />
       <Route path="/ideas" component={IdeasBoard} />
       <Route path="/content/:id" component={ContentDetail} />
-      <Route path="/publishing" component={PublishingCenter} />
+      <Route path="/content" component={ContentPackages} />
+      <Route path="/payloads" component={PayloadConsole} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/integrations" component={Integrations} />
       <Route path="/review" component={ReviewQueue} />
       <Route path="/inspector" component={InspectorSettings} />
-      <Route path="/forums" component={ForumOpportunities} />
-      <Route path="/content" component={ContentPackages} />
       <Route path="/ai-models" component={AIModelSettings} />
+      {/* Experimental / admin-only routes — hidden from main nav */}
+      <Route path="/publishing" component={PublishingCenter} />
+      <Route path="/forums" component={ForumOpportunities} />
       <Route path="/scheduling" component={Scheduling} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

@@ -9,8 +9,9 @@ import {
   getIdeaById, createIdea, createContentPackage, updateContentPackage,
   getVariantsByPackageId, createVariant, updateVariant,
   createAsset, updateAsset, getAssetsByPackageId, getAllInspectorRules, createInspectionReport,
-  createPipelineRun, updatePipelineRun, logAudit,
+  createPipelineRun, updatePipelineRun, logAudit, createExecutionPayload,
 } from "./db";
+import { composePayload } from "./services/payload-composer";
 
 // ─── Pulse Branding Validated Content Prompts (9-step sequential generation) ──
 // Based on: /home/ubuntu/upload/Pasted_content_03.txt
@@ -895,6 +896,24 @@ CRITICAL RULES:
           }
         } else {
           packagesPassedInspection++;
+        }
+
+        // Compose ExecutionPayloads for each supported platform in this package
+        const payloadPlatforms = (idea.targetPlatforms || [])
+          .filter((p: string) => ["linkedin", "x", "webflow", "reddit", "email"].includes(p)) as Array<"linkedin" | "x" | "webflow" | "reddit" | "email">;
+
+        for (const payloadPlatform of payloadPlatforms.slice(0, 3)) {
+          try {
+            const composed = await composePayload({
+              ideaId: idea.id,
+              brandId: idea.brandId,
+              platform: payloadPlatform,
+              contentPackageId: pkgId,
+            });
+            await createExecutionPayload({ ...composed, brandId: idea.brandId });
+          } catch (payloadErr: any) {
+            console.warn(`[Pipeline ${runId}] Payload compose failed for ${payloadPlatform}:`, payloadErr.message);
+          }
         }
 
         await logAudit({
