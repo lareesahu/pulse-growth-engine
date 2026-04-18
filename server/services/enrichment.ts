@@ -8,7 +8,6 @@ export interface EnrichmentResult {
 
 /**
  * Enrich a payload with trending hashtags, tagging suggestions, and a trend score.
- * Uses LLM-simulated trend analysis per spec Section 2, Sprint 2.
  */
 export async function enrichPayload(params: {
   platform: string;

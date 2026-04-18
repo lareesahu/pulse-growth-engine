@@ -1,7 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBrand } from "@/hooks/useBrand";
 import { trpc } from "@/lib/trpc";
 import { CheckCircle, ClipboardCopy, ExternalLink, Send, Zap } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -55,7 +55,7 @@ function PayloadCard({ payload, onStatusChange }: {
     onError: (e) => toast.error(`Webhook failed: ${e.message}`),
   });
 
-  const fullPayloadJson = JSON.stringify({
+  const fullPayloadJson = useMemo(() => JSON.stringify({
     id: String(payload.id),
     ideaId: payload.ideaId,
     platform: payload.platform,
@@ -63,7 +63,7 @@ function PayloadCard({ payload, onStatusChange }: {
     content: payload.content,
     metadata: payload.metadata,
     instructions: payload.instructions,
-  }, null, 2);
+  }, null, 2), [payload]);
 
   function copyToClipboard() {
     navigator.clipboard.writeText(fullPayloadJson);
@@ -266,10 +266,12 @@ export default function PayloadConsole() {
     { enabled: !!brandId },
   );
 
-  const grouped = (payloads ?? []).reduce<Record<string, any[]>>((acc, p) => {
-    (acc[p.status] ??= []).push(p);
-    return acc;
-  }, {});
+  const grouped = useMemo(() =>
+    (payloads ?? []).reduce<Record<string, any[]>>((acc, p) => {
+      (acc[p.status] ??= []).push(p);
+      return acc;
+    }, {}),
+  [payloads]);
 
   const statusOrder = ["approved", "draft", "handed_off", "executed"];
 

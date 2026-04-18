@@ -14,7 +14,6 @@ type PayloadPlatform = ExecutionPayload["platform"];
 /**
  * Compose a fully-structured ExecutionPayload from existing brand brain data.
  * Aggregates: brand context, content variant, enrichment, and timing.
- * Spec: Section 2, Sprint 1 — PayloadComposer service.
  */
 export async function composePayload(params: {
   ideaId: number;
@@ -24,10 +23,12 @@ export async function composePayload(params: {
 }): Promise<Omit<ExecutionPayload, "id">> {
   const { ideaId, brandId, platform, contentPackageId } = params;
 
-  const [brand, pkg, idea] = await Promise.all([
+  const [brand, pkg, idea, variants, rules] = await Promise.all([
     getBrandById(brandId),
     getContentPackageById(contentPackageId),
     getIdeaById(ideaId),
+    getVariantsByPackageId(contentPackageId),
+    getBrandRules(brandId),
   ]);
 
   if (!brand) throw new Error(`Brand ${brandId} not found`);
@@ -35,12 +36,8 @@ export async function composePayload(params: {
   if (!idea) throw new Error(`Idea ${ideaId} not found`);
 
   // Pick the best matching variant for the requested platform
-  const variants = await getVariantsByPackageId(contentPackageId);
   const platformAlias = platform === "x" ? "linkedin" : platform;
   const variant = variants.find(v => v.platform === platformAlias) ?? variants[0];
-
-  // Gather competitor/tagging context from brand rules
-  const rules = await getBrandRules(brandId);
   const competitorMap = rules
     .filter(r => r.ruleType === "platform_rule")
     .map(r => r.content)

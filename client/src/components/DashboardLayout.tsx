@@ -24,15 +24,17 @@ import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
   BarChart2,
-  Blocks,
   BookOpen,
   BrainCircuit,
+  CalendarDays,
   ClipboardCheck,
   Globe,
   LayoutDashboard,
   Lightbulb,
   LogOut,
+  MessageSquare,
   PanelLeft,
+  Send,
   Settings,
   ShieldCheck,
   Zap,
@@ -57,9 +59,9 @@ const mainMenuItems = [
 
 // Admin-only items (hidden from standard users; still accessible by direct URL)
 const adminMenuItems = [
-  { icon: Blocks, label: "Publishing",  path: "/publishing" },
-  { icon: Blocks, label: "Forums",      path: "/forums" },
-  { icon: Blocks, label: "Scheduling",  path: "/scheduling" },
+  { icon: Send,          label: "Publishing",  path: "/publishing" },
+  { icon: MessageSquare, label: "Forums",      path: "/forums" },
+  { icon: CalendarDays,  label: "Scheduling",  path: "/scheduling" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -142,7 +144,7 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const isAdmin = (user as any)?.role === "admin";
+  const isAdmin = user?.role === "admin";
   const activeMenuItem =
     mainMenuItems.find(item => item.path === location) ??
     adminMenuItems.find(item => item.path === location);

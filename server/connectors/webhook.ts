@@ -6,10 +6,7 @@ export interface WebhookDeliveryResult {
   response?: unknown;
 }
 
-/**
- * Push an ExecutionPayload to any external agent via HTTP webhook.
- * Spec: Sprint 3 — Webhook Connector (Manus, n8n, Zapier, etc.).
- */
+/** Push an ExecutionPayload to any external agent via HTTP webhook (Manus, n8n, Zapier, etc.). */
 export async function sendToWebhook(params: {
   webhookUrl: string;
   payload: ExecutionPayload;

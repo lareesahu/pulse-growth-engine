@@ -2,10 +2,7 @@ export interface LinkedInPostResult {
   postId: string;
 }
 
-/**
- * Publish a post to LinkedIn via the UGC Posts API.
- * Spec: Sprint 3 — LinkedIn Connector.
- */
+/** Publish a post to LinkedIn via the UGC Posts API. */
 export async function publishToLinkedIn(params: {
   accessToken: string;
   authorUrn: string;

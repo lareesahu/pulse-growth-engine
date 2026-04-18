@@ -898,12 +898,15 @@ CRITICAL RULES:
           packagesPassedInspection++;
         }
 
-        // Compose ExecutionPayloads for each supported platform in this package
+        // Compose payloads for each supported platform in parallel (non-fatal failures skipped)
+        const EXECUTION_PLATFORMS = ["linkedin", "x", "webflow", "reddit", "email"] as const;
+        type ExecPlatform = typeof EXECUTION_PLATFORMS[number];
         const payloadPlatforms = (idea.targetPlatforms || [])
-          .filter((p: string) => ["linkedin", "x", "webflow", "reddit", "email"].includes(p)) as Array<"linkedin" | "x" | "webflow" | "reddit" | "email">;
+          .filter((p: string): p is ExecPlatform => (EXECUTION_PLATFORMS as readonly string[]).includes(p))
+          .slice(0, 3);
 
-        for (const payloadPlatform of payloadPlatforms.slice(0, 3)) {
-          try {
+        await Promise.allSettled(
+          payloadPlatforms.map(async (payloadPlatform) => {
             const composed = await composePayload({
               ideaId: idea.id,
               brandId: idea.brandId,
@@ -911,10 +914,13 @@ CRITICAL RULES:
               contentPackageId: pkgId,
             });
             await createExecutionPayload({ ...composed, brandId: idea.brandId });
-          } catch (payloadErr: any) {
-            console.warn(`[Pipeline ${runId}] Payload compose failed for ${payloadPlatform}:`, payloadErr.message);
-          }
-        }
+          }),
+        ).then(results => {
+          results.forEach((r, i) => {
+            if (r.status === "rejected")
+              console.warn(`[Pipeline ${runId}] Payload compose failed for ${payloadPlatforms[i]}:`, r.reason?.message);
+          });
+        });
 
         await logAudit({
           brandId: input.brandId,

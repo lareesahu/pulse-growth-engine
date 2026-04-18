@@ -2,11 +2,7 @@ export interface XPostResult {
   tweetId: string;
 }
 
-/**
- * Publish a tweet to X (formerly Twitter) via the v2 API.
- * Text is automatically trimmed to 280 characters including hashtags.
- * Spec: Sprint 3 — X Connector.
- */
+/** Publish to X via the v2 API. Text is trimmed to 280 characters including hashtags. */
 export async function publishToX(params: {
   accessToken: string;
   text: string;

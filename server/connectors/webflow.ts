@@ -5,10 +5,7 @@ export interface WebflowPostResult {
   slug?: string;
 }
 
-/**
- * Map an ExecutionPayload to Webflow CMS fields using a stored field mapping.
- * The mapping keys are Pulse field names; values are Webflow field slugs.
- */
+/** Map an ExecutionPayload to Webflow CMS fields. Keys are Pulse field names; values are Webflow field slugs. */
 export function mapPayloadToWebflowFields(
   payload: ExecutionPayload,
   fieldMapping: Record<string, string>,
@@ -31,10 +28,7 @@ export function mapPayloadToWebflowFields(
   return fields;
 }
 
-/**
- * Publish an item to a Webflow CMS collection.
- * Spec: Sprint 3 — Webflow Connector.
- */
+/** Publish an item to a Webflow CMS collection. */
 export async function publishToWebflow(params: {
   apiToken: string;
   collectionId: string;

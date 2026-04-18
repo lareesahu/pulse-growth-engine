@@ -60,7 +60,13 @@ import {
   getWebflowFieldMapping, upsertWebflowFieldMapping,
   deleteAllIdeasForBrand, hardDeleteAllIdeasForBrand,
   getPlatformSchedules, getPlatformSchedule, createScheduledPost, getScheduledPosts,
+  createExecutionPayload, getExecutionPayloadById, getExecutionPayloadsByBrand,
+  getExecutionPayloadsByIdea, updateExecutionPayload,
 } from "./db";
+import { composePayload } from "./services/payload-composer";
+import { sendToWebhook } from "./connectors/webhook";
+
+const EXECUTION_PLATFORMS = ["linkedin", "x", "webflow", "reddit", "email"] as const;
 
 // ─── Brand Router ─────────────────────────────────────────────────────────────
 const brandRouter = router({
@@ -2009,37 +2015,26 @@ function isValidCadenceDay(date: Date, schedule: any): boolean {
 const payloadRouter = router({
   list: protectedProcedure
     .input(z.object({ brandId: z.number() }))
-    .query(async ({ input }) => {
-      const { getExecutionPayloadsByBrand } = await import("./db");
-      return getExecutionPayloadsByBrand(input.brandId);
-    }),
+    .query(({ input }) => getExecutionPayloadsByBrand(input.brandId)),
 
   listByIdea: protectedProcedure
     .input(z.object({ ideaId: z.number() }))
-    .query(async ({ input }) => {
-      const { getExecutionPayloadsByIdea } = await import("./db");
-      return getExecutionPayloadsByIdea(input.ideaId);
-    }),
+    .query(({ input }) => getExecutionPayloadsByIdea(input.ideaId)),
 
   get: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
-      const { getExecutionPayloadById } = await import("./db");
-      return getExecutionPayloadById(input.id);
-    }),
+    .query(({ input }) => getExecutionPayloadById(input.id)),
 
   compose: protectedProcedure
     .input(
       z.object({
         ideaId: z.number(),
         brandId: z.number(),
-        platform: z.enum(["linkedin", "x", "webflow", "reddit", "email"]),
+        platform: z.enum(EXECUTION_PLATFORMS),
         contentPackageId: z.number(),
       }),
     )
     .mutation(async ({ input }) => {
-      const { composePayload } = await import("./services/payload-composer");
-      const { createExecutionPayload } = await import("./db");
       const composed = await composePayload(input);
       const result = await createExecutionPayload({ ...composed, brandId: input.brandId });
       return { success: true, insertId: (result as any)?.[0]?.insertId ?? null };
@@ -2053,7 +2048,6 @@ const payloadRouter = router({
       }),
     )
     .mutation(async ({ input }) => {
-      const { updateExecutionPayload } = await import("./db");
       await updateExecutionPayload(input.id, { status: input.status });
       return { success: true };
     }),
@@ -2067,10 +2061,8 @@ const payloadRouter = router({
       }),
     )
     .mutation(async ({ input }) => {
-      const { getExecutionPayloadById, updateExecutionPayload } = await import("./db");
       const row = await getExecutionPayloadById(input.id);
       if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Payload not found" });
-      const { sendToWebhook } = await import("./connectors/webhook");
       const executionPayload = {
         id: String(row.id),
         ideaId: row.ideaId,
