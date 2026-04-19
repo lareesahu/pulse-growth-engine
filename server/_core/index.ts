@@ -262,6 +262,7 @@ async function startServer() {
     }
   } catch (err: any) {
     console.warn('[Migration] Auto-migration warning:', err?.message);
+    console.warn('[Migration] Full error:', JSON.stringify({ code: err?.code, errno: err?.errno, sqlState: err?.sqlState, sqlMessage: err?.sqlMessage }));
   }
 
   // Reset any stale pipeline runs from previous server crashes
