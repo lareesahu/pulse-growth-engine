@@ -333,19 +333,30 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
 
   // Use GPTs API proxy (primary) — supports OpenAI, Claude, Gemini via single key
   if (ENV.openaiApiKey) {
-    const gptsPayload = { ...payload, model: overrideModel || CONTENT_MODEL };
-    const response = await fetch(`${GPTSAPI_BASE}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${ENV.openaiApiKey}`,
-      },
-      body: JSON.stringify(gptsPayload),
-    });
+    // Resolve model: overrideModel (strategy/content tier) or default to CONTENT_MODEL
+    const resolvedModel = overrideModel || CONTENT_MODEL;
+    const gptsPayload = { ...payload, model: resolvedModel };
+    // Add a 120-second timeout to prevent 504 hangs on slow models
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120_000);
+    let response: Response;
+    try {
+      response = await fetch(`${GPTSAPI_BASE}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${ENV.openaiApiKey}`,
+        },
+        body: JSON.stringify(gptsPayload),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(
-        `LLM invoke failed: ${response.status} ${response.statusText} \u2013 ${errorText}`
+        `LLM invoke failed: ${response.status} ${response.statusText} \u2013 ${errorText.slice(0, 500)}`
       );
     }
     return (await response.json()) as InvokeResult;
