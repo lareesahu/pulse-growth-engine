@@ -8,10 +8,24 @@ This file is the complete reference for any AI agent to operate the Pulse Growth
 
 The **Pulse Growth Engine** is a content operations platform for **NeoLab Care** (`brandId: 2`). It:
 
-1. Generates content ideas using AI (GPT-4.1-mini via OpenAI)
-2. Produces full multi-platform content packages (Instagram, TikTok, LinkedIn, Xiaohongshu)
-3. Runs quality inspection against brand rules
+1. Generates content ideas using AI (**GPT-4.1** via GPTs API proxy — strategy tier)
+2. Produces full multi-platform content packages (Instagram, TikTok, LinkedIn, Xiaohongshu) using **GPT-4.1-mini** (content tier)
+3. Runs quality inspection against brand rules using **GPT-4.1** (strategy tier)
 4. Schedules and publishes content to Webflow, Notion, and other platforms
+
+### Model Tier Strategy
+
+The engine uses a two-tier model strategy via [gptsapi.net](https://api.gptsapi.net) (supports OpenAI, Claude, Gemini via one key):
+
+| Tier | Model | Used For |
+|---|---|---|
+| **Strategy** | `gpt-4.1` | Idea generation, quality inspection, brand analysis |
+| **Content** | `gpt-4.1-mini` | Blog writing, captions, WeChat articles, social copy |
+
+Override via Railway env vars: `STRATEGY_MODEL` and `CONTENT_MODEL`.
+The API key is stored as `OPENAI_API_KEY` on Railway and points to `https://api.gptsapi.net/v1`.
+
+To switch to Claude or Gemini, simply change the model names (e.g. `claude-opus-4-5`, `gemini-2.5-pro`) — the same key works for all.
 
 ---
 
