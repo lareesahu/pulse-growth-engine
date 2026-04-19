@@ -3,6 +3,8 @@ import {
   mysqlEnum,
   mysqlTable,
   text,
+  longtext,
+  tinyint,
   timestamp,
   varchar,
   boolean,
@@ -458,3 +460,41 @@ export const systemHealthLog = mysqlTable("system_health_log", {
 });
 export type SystemHealthLog = typeof systemHealthLog.$inferSelect;
 export type InsertSystemHealthLog = typeof systemHealthLog.$inferInsert;
+
+// ─── Brand Assets ─────────────────────────────────────────────────────────────
+// Stores uploaded brand images with AI analysis metadata
+export const brandAssets = mysqlTable("brand_assets", {
+  id: int("id").autoincrement().primaryKey(),
+  brandId: int("brandId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  originalBase64: longtext("originalBase64").notNull(),
+  processedBase64: longtext("processedBase64").notNull(),
+  mimeType: varchar("mimeType", { length: 64 }).notNull().default("image/webp"),
+  width: int("width").notNull().default(0),
+  height: int("height").notNull().default(0),
+  analysis: longtext("analysis"),
+  sizeBytes: int("sizeBytes").notNull().default(0),
+  originalSizeBytes: int("originalSizeBytes").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type BrandAsset = typeof brandAssets.$inferSelect;
+export type InsertBrandAsset = typeof brandAssets.$inferInsert;
+
+// ─── Package Images ───────────────────────────────────────────────────────────
+// Stores rendered images for content packages (one per platform)
+export const packageImages = mysqlTable("package_images", {
+  id: int("id").autoincrement().primaryKey(),
+  packageId: int("packageId").notNull(),
+  platform: varchar("platform", { length: 64 }).notNull(),
+  imageBase64: longtext("imageBase64").notNull(),
+  format: varchar("format", { length: 16 }).notNull().default("webp"),
+  width: int("width").notNull(),
+  height: int("height").notNull(),
+  sizeBytes: int("sizeBytes").notNull().default(0),
+  animated: tinyint("animated").notNull().default(0),
+  templateType: varchar("templateType", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PackageImage = typeof packageImages.$inferSelect;
+export type InsertPackageImage = typeof packageImages.$inferInsert;

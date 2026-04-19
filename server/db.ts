@@ -5,13 +5,14 @@ import {
   platformPreferences, campaigns, ideas, contentPackages, platformVariants,
   assets, integrationAccounts, publishJobs, auditEvents, performanceRecords,
   inspectorRules, inspectionReports, pipelineRuns, inspectorThresholds, vitalityPredictions,
-  webflowFieldMappings,
+  webflowFieldMappings, brandAssets, packageImages,
   InsertUser, InsertBrand, InsertBrandRule, InsertContentPillar, InsertAudienceProfile,
   InsertPromptTemplate, InsertPlatformPreference, InsertCampaign, InsertIdea,
   InsertContentPackage, InsertPlatformVariant, InsertAsset, InsertIntegrationAccount,
   InsertPublishJob, InsertAuditEvent, InsertPerformanceRecord,
   InsertInspectorRule, InsertInspectionReport, InsertPipelineRun,
   InsertInspectorThreshold, InsertVitalityPrediction, InsertWebflowFieldMapping,
+  InsertBrandAsset, InsertPackageImage,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -648,4 +649,44 @@ export async function getDueScheduledPosts() {
   const now = new Date();
   const rows = await db.select().from(scheduledPosts).where(eq(scheduledPosts.status, "pending"));
   return rows.filter(p => p.scheduledAt <= now);
+}
+
+// ─── Brand Assets ─────────────────────────────────────────────────────────────
+export async function createBrandAsset(data: InsertBrandAsset) {
+  const db = await getDb(); if (!db) throw new Error("DB not available");
+  const [result] = await db.insert(brandAssets).values(data).$returningId();
+  return { id: result.id, ...data };
+}
+
+export async function getBrandAsset(id: number) {
+  const db = await getDb(); if (!db) return null;
+  const [result] = await db.select().from(brandAssets).where(eq(brandAssets.id, id)).limit(1);
+  return result ?? null;
+}
+
+export async function listBrandAssets(brandId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(brandAssets).where(eq(brandAssets.brandId, brandId)).orderBy(desc(brandAssets.createdAt));
+}
+
+export async function savePackageImages(packageId: number, images: Record<string, { base64: string; format: string; width: number; height: number; sizeBytes: number }>) {
+  const db = await getDb(); if (!db) return;
+  const rows: InsertPackageImage[] = Object.entries(images).map(([platform, img]) => ({
+    packageId,
+    platform,
+    imageBase64: img.base64,
+    format: img.format,
+    width: img.width,
+    height: img.height,
+    sizeBytes: img.sizeBytes,
+    animated: 0,
+  }));
+  if (rows.length > 0) {
+    await db.insert(packageImages).values(rows);
+  }
+}
+
+export async function getPackageImages(packageId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(packageImages).where(eq(packageImages.packageId, packageId)).orderBy(packageImages.platform);
 }

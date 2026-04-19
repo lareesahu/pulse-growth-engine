@@ -35,6 +35,7 @@ import { invokeLLM } from "./_core/llm";
 import { callDataApi } from "./_core/dataApi";
 import { humanize, humanizeVariant, humanizePackage } from "./humanizer";
 import { runPipelineBackground, getPipelineStatus, buildContentPrompt, saveGeneratedContent, runInspector } from "./pipeline-engine";
+import { imageRouter } from "./image/image-router";
 import {
   upsertUser, getUserByOpenId,
   getBrandById, getBrandsByUserId, updateBrand, createBrand,
@@ -2029,6 +2030,7 @@ export const appRouter = router({
   pipeline: pipelineRouter,
   forum: forumRouter,
   scheduling: schedulingRouter,
+  image: imageRouter,
 });
 
 export type AppRouter = typeof appRouter;

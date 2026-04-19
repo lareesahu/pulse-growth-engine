@@ -64,6 +64,13 @@
       "when": 1773246496612,
       "tag": "0008_dizzy_cassandra_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1776531779930,
+      "tag": "0009_aromatic_lifeguard",
+      "breakpoints": true
     }
   ]
 }
