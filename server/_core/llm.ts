@@ -213,7 +213,9 @@ const ARK_BASE = "https://ark.cn-beijing.volces.com/api/v3";
 
 /** Returns the active text model — reads from env so Settings UI can override it at runtime */
 const getTextModel = () =>
-  process.env.DOUBAO_TEXT_MODEL || "doubao-1-5-pro-32k-250115";
+  process.env.OPENAI_TEXT_MODEL ||
+  process.env.DOUBAO_TEXT_MODEL ||
+  (ENV.openaiApiKey ? "gpt-4.1-mini" : "doubao-1-5-pro-32k-250115");
 
 const resolveApiUrl = () =>
   ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
@@ -221,8 +223,8 @@ const resolveApiUrl = () =>
     : "https://forge.manus.im/v1/chat/completions";
 
 const assertApiKey = () => {
-  if (!ENV.doubaoApiKey && !ENV.forgeApiKey) {
-    throw new Error("No LLM API key configured (DOUBAO_API_KEY or BUILT_IN_FORGE_API_KEY)");
+  if (!ENV.openaiApiKey && !ENV.doubaoApiKey && !ENV.forgeApiKey) {
+    throw new Error("No LLM API key configured (OPENAI_API_KEY, DOUBAO_API_KEY, or BUILT_IN_FORGE_API_KEY)");
   }
 };
 
@@ -318,7 +320,27 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  // Use Doubao/Ark if key is available, otherwise fall back to Manus Forge
+  // Use OpenAI if key is available (primary)
+  if (ENV.openaiApiKey) {
+    const openaiPayload = { ...payload, model: overrideModel || "gpt-4.1-mini" };
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${ENV.openaiApiKey}`,
+      },
+      body: JSON.stringify(openaiPayload),
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `LLM invoke failed: ${response.status} ${response.statusText} \u2013 ${errorText}`
+      );
+    }
+    return (await response.json()) as InvokeResult;
+  }
+
+  // Use Doubao/Ark if key is available
   if (ENV.doubaoApiKey) {
     const response = await fetch(`${ARK_BASE}/chat/completions`, {
       method: "POST",
