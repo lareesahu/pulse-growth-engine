@@ -211,36 +211,51 @@ async function startServer() {
   }
 
   // Auto-migrate new tables if they don't exist yet
+  // Column names must match Drizzle schema (camelCase as-is in MySQL)
   try {
     const db = await getDb();
     if (db) {
+      // Check if brand_assets has correct column names (camelCase)
+      // If it has snake_case columns from old migration, drop and recreate
+      try {
+        const [cols] = await db.execute(`SHOW COLUMNS FROM brand_assets LIKE 'brandId'`) as any;
+        if (!cols || (Array.isArray(cols) && cols.length === 0)) {
+          console.log('[Migration] brand_assets has wrong columns, dropping and recreating...');
+          await db.execute(`DROP TABLE IF EXISTS brand_assets` as any);
+          await db.execute(`DROP TABLE IF EXISTS package_images` as any);
+        }
+      } catch (e) {
+        // Table doesn't exist yet, that's fine
+      }
       await db.execute(`CREATE TABLE IF NOT EXISTS brand_assets (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        brand_id INT NOT NULL,
+        brandId INT NOT NULL,
         name VARCHAR(255) NOT NULL,
-        original_base64 LONGTEXT,
-        processed_base64 LONGTEXT,
-        mime_type VARCHAR(100) DEFAULT 'image/webp',
-        width INT,
-        height INT,
+        originalBase64 LONGTEXT NOT NULL DEFAULT '',
+        processedBase64 LONGTEXT NOT NULL DEFAULT '',
+        mimeType VARCHAR(100) NOT NULL DEFAULT 'image/webp',
+        width INT NOT NULL DEFAULT 0,
+        height INT NOT NULL DEFAULT 0,
         analysis LONGTEXT,
-        size_bytes INT,
-        original_size_bytes INT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_brand_id (brand_id)
+        sizeBytes INT NOT NULL DEFAULT 0,
+        originalSizeBytes INT NOT NULL DEFAULT 0,
+        createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_brandId (brandId)
       )` as any);
       await db.execute(`CREATE TABLE IF NOT EXISTS package_images (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        package_id INT NOT NULL,
+        packageId INT NOT NULL,
         platform VARCHAR(100) NOT NULL,
-        image_base64 LONGTEXT,
-        format VARCHAR(20) DEFAULT 'webp',
-        width INT,
-        height INT,
-        size_bytes INT,
-        animated TINYINT(1) DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_package_id (package_id)
+        imageBase64 LONGTEXT NOT NULL DEFAULT '',
+        format VARCHAR(20) NOT NULL DEFAULT 'webp',
+        width INT NOT NULL,
+        height INT NOT NULL,
+        sizeBytes INT NOT NULL DEFAULT 0,
+        animated TINYINT(1) NOT NULL DEFAULT 0,
+        templateType VARCHAR(64),
+        createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_packageId (packageId)
       )` as any);
       console.log('[Migration] brand_assets and package_images tables ready');
     }
