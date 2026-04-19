@@ -463,6 +463,7 @@ export async function runInspector(params: {
     .join("\n");
 
   const inspectResponse = await invokeLLM({
+    model: process.env.STRATEGY_MODEL || "gpt-4.1", // strategy tier: smarter model for quality inspection
     messages: [
       { role: "system", content: "You are a brand content quality inspector. Evaluate content quality across multiple dimensions. Return ONLY valid JSON." },
       { role: "user", content: `Inspect this content against the brand rules and return a quality report.
@@ -652,6 +653,7 @@ async function executePipeline(input: PipelineInput, brand: any, runId: number) 
     const promptExamples = prompts.slice(0, 3).map(p => p.promptText).join("\n");
 
     const ideaResponse = await invokeLLM({
+      model: process.env.STRATEGY_MODEL || "gpt-4.1", // strategy tier: smarter model for idea generation
       messages: [
         { role: "system", content: `You are Caelum Liu, CGO for ${brand.name}. Generate fresh, strategic content ideas. Return ONLY valid JSON.` },
         { role: "user", content: `Generate ${input.ideaCount} content ideas for ${brand.name}.

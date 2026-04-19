@@ -210,12 +210,23 @@ const normalizeToolChoice = (
 };
 
 const ARK_BASE = "https://ark.cn-beijing.volces.com/api/v3";
+const GPTSAPI_BASE = "https://api.gptsapi.net/v1";
+
+/**
+ * Model tier strategy:
+ * - STRATEGY tier (idea generation, brand analysis, inspection): gpt-4.1
+ * - CONTENT tier (writing variants, captions, copy): gpt-4.1-mini
+ *
+ * Override via STRATEGY_MODEL / CONTENT_MODEL env vars, or pass model directly in params.
+ */
+const STRATEGY_MODEL = process.env.STRATEGY_MODEL || "gpt-4.1";
+const CONTENT_MODEL = process.env.CONTENT_MODEL || "gpt-4.1-mini";
 
 /** Returns the active text model — reads from env so Settings UI can override it at runtime */
 const getTextModel = () =>
   process.env.OPENAI_TEXT_MODEL ||
   process.env.DOUBAO_TEXT_MODEL ||
-  (ENV.openaiApiKey ? "gpt-4.1-mini" : "doubao-1-5-pro-32k-250115");
+  CONTENT_MODEL;
 
 const resolveApiUrl = () =>
   ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
@@ -320,17 +331,16 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  // Use OpenAI if key is available (primary)
+  // Use GPTs API proxy (primary) — supports OpenAI, Claude, Gemini via single key
   if (ENV.openaiApiKey) {
-    const openaiBase = (process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, "");
-    const openaiPayload = { ...payload, model: overrideModel || "gpt-4.1-mini" };
-    const response = await fetch(`${openaiBase}/chat/completions`, {
+    const gptsPayload = { ...payload, model: overrideModel || CONTENT_MODEL };
+    const response = await fetch(`${GPTSAPI_BASE}/chat/completions`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
         authorization: `Bearer ${ENV.openaiApiKey}`,
       },
-      body: JSON.stringify(openaiPayload),
+      body: JSON.stringify(gptsPayload),
     });
     if (!response.ok) {
       const errorText = await response.text();
