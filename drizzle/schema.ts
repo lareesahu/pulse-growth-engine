@@ -463,38 +463,40 @@ export type InsertSystemHealthLog = typeof systemHealthLog.$inferInsert;
 
 // ─── Brand Assets ─────────────────────────────────────────────────────────────
 // Stores uploaded brand images with AI analysis metadata
+// NOTE: DB column names use snake_case (from original migration), TS props are camelCase
 export const brandAssets = mysqlTable("brand_assets", {
   id: int("id").autoincrement().primaryKey(),
-  brandId: int("brandId").notNull(),
+  brandId: int("brand_id").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  originalBase64: longtext("originalBase64").notNull(),
-  processedBase64: longtext("processedBase64").notNull(),
-  mimeType: varchar("mimeType", { length: 64 }).notNull().default("image/webp"),
-  width: int("width").notNull().default(0),
-  height: int("height").notNull().default(0),
+  originalBase64: longtext("original_base64"),
+  processedBase64: longtext("processed_base64"),
+  mimeType: varchar("mime_type", { length: 64 }).notNull().default("image/webp"),
+  width: int("width").default(0),
+  height: int("height").default(0),
   analysis: longtext("analysis"),
-  sizeBytes: int("sizeBytes").notNull().default(0),
-  originalSizeBytes: int("originalSizeBytes").notNull().default(0),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  sizeBytes: int("size_bytes").default(0),
+  originalSizeBytes: int("original_size_bytes").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
 export type BrandAsset = typeof brandAssets.$inferSelect;
 export type InsertBrandAsset = typeof brandAssets.$inferInsert;
 
 // ─── Package Images ───────────────────────────────────────────────────────────
 // Stores rendered images for content packages (one per platform)
+// NOTE: DB column names use snake_case (from original migration), TS props are camelCase
 export const packageImages = mysqlTable("package_images", {
   id: int("id").autoincrement().primaryKey(),
-  packageId: int("packageId").notNull(),
+  packageId: int("package_id").notNull(),
   platform: varchar("platform", { length: 64 }).notNull(),
-  imageBase64: longtext("imageBase64").notNull(),
-  format: varchar("format", { length: 16 }).notNull().default("webp"),
-  width: int("width").notNull(),
-  height: int("height").notNull(),
-  sizeBytes: int("sizeBytes").notNull().default(0),
-  animated: tinyint("animated").notNull().default(0),
-  templateType: varchar("templateType", { length: 64 }),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  imageBase64: longtext("image_base64"),
+  format: varchar("format", { length: 20 }).notNull().default("webp"),
+  width: int("width"),
+  height: int("height"),
+  sizeBytes: int("size_bytes").default(0),
+  animated: tinyint("animated").default(0),
+  templateType: varchar("template_type", { length: 64 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 export type PackageImage = typeof packageImages.$inferSelect;
 export type InsertPackageImage = typeof packageImages.$inferInsert;
