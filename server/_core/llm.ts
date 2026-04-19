@@ -322,8 +322,9 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
 
   // Use OpenAI if key is available (primary)
   if (ENV.openaiApiKey) {
+    const openaiBase = (process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, "");
     const openaiPayload = { ...payload, model: overrideModel || "gpt-4.1-mini" };
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch(`${openaiBase}/chat/completions`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
