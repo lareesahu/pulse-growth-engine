@@ -210,6 +210,44 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
+  // Auto-migrate new tables if they don't exist yet
+  try {
+    const db = await getDb();
+    if (db) {
+      await db.execute(`CREATE TABLE IF NOT EXISTS brand_assets (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        brand_id INT NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        original_base64 LONGTEXT,
+        processed_base64 LONGTEXT,
+        mime_type VARCHAR(100) DEFAULT 'image/webp',
+        width INT,
+        height INT,
+        analysis LONGTEXT,
+        size_bytes INT,
+        original_size_bytes INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_brand_id (brand_id)
+      )` as any);
+      await db.execute(`CREATE TABLE IF NOT EXISTS package_images (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        package_id INT NOT NULL,
+        platform VARCHAR(100) NOT NULL,
+        image_base64 LONGTEXT,
+        format VARCHAR(20) DEFAULT 'webp',
+        width INT,
+        height INT,
+        size_bytes INT,
+        animated TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_package_id (package_id)
+      )` as any);
+      console.log('[Migration] brand_assets and package_images tables ready');
+    }
+  } catch (err: any) {
+    console.warn('[Migration] Auto-migration warning:', err?.message);
+  }
+
   // Reset any stale pipeline runs from previous server crashes
   resetStalePipelineRuns();
   // Start background scheduler — checks every 60s for posts due to publish
